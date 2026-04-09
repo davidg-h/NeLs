@@ -1,2 +1,3 @@
-# NeLs
-NeLs: Navigation and Exploration of Latent Spaces in Diffusion Models
+# NeLs: Navigation and Exploration of Latent Spaces in Diffusion Models
+
+The objective of this thesis is to systematically explore and analyze the structural and perceptual properties of latent spaces in generative diffusion models. The work investigates navigation strategies such as latent space interpolation and controlled movement along selected latent directions without modifying the underlying model architecture. Generated image sequences are examined with respect to visual stability, semantic coherence, and structural continuity. In addition, a prototypical exploration tool is developed as a ComfyUI extension to enable reproducible and parameter-controlled latent space navigation. A evaluation is conducted to assess perceptual interpretability and controllability. The thesis aims to contribute to a deeper understanding of latent space behavior in diffusion-based generative systems.

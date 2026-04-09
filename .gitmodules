@@ -1,0 +1,3 @@
+[submodule "manuscript"]
+	path = manuscript
+	url = https://github.com/davidg-h/thesis-template.git
