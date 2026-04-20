@@ -208,4 +208,8 @@ __marimo__/
 
 # Misc
 comfyUI_portable/
-
+governance/
+research/
+.hf_cache/
+*.md
+*.png

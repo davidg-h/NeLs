@@ -5,9 +5,9 @@
       "name": "Run ComfyUI Portable",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/ComfyUI_portable/ComfyUI_windows_portable/ComfyUI/main.py",
-      "cwd": "${workspaceFolder}/ComfyUI_portable/ComfyUI_windows_portable",
-      "python": "${workspaceFolder}/ComfyUI_portable/ComfyUI_windows_portable/python_embeded/python.exe",
+      "program": "${workspaceFolder}/comfyUI_portable/ComfyUI_windows_portable/ComfyUI/main.py",
+      "cwd": "${workspaceFolder}/comfyUI_portable/ComfyUI_windows_portable",
+      "python": "${workspaceFolder}/comfyUI_portable/ComfyUI_windows_portable/python_embeded/python.exe",
       "console": "integratedTerminal",
       "args": ["--windows-standalone-build"]
     }
