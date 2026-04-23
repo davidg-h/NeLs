@@ -7,76 +7,161 @@ Pipeline coverage:
 - Image generation and output export
 """
 
-import time
 import torch
 from pathlib import Path
 
 from helpers.methods.access import infer_latent_shape
 from helpers.methods.navigation import seed_walks
+from helpers.runtime.inference import (
+    append_quick_log_entry,
+    generate_prompt_baseline,
+    start_quick_log,
+    timed_generate_with_prompt,
+)
 from helpers.runtime.pipeline import (
-    default_torch_dtype_for_device,
     load_flux_pipeline,
     resolve_runtime_device,
 )
-from helpers.runtime.sampling import generate_with_prompt
-
-
-output_dir = Path(__file__).resolve().parent / "outputs" / "m3_seed_trajectory"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-device = resolve_runtime_device()
-dtype = default_torch_dtype_for_device(dtype=torch.float16 ,device=device)
-pipe = load_flux_pipeline(
-    torch_dtype=dtype,
-    device=device,
-    offload_mode="group",
-    group_use_stream=True,
-    group_low_cpu_mem_usage=False,
-    enable_text_encoder_group_offload=True,
-    text_encoder_group_offload_type="block_level",
-    text_encoder_num_blocks_per_group=1,
-    enable_vae_group_offload=True,
-    vae_group_offload_type="leaf_level",
-    vae_num_blocks_per_group=2,
-    enable_vae_slicing=True,
-    enable_vae_tiling=True,
-    enable_layerwise_casting=True,
-    layerwise_storage_dtype="float8_e4m3fn",
-    layerwise_compute_dtype=dtype,
-    enable_channels_last=True,
-    enable_xformers_attention=True,
-    enable_torch_compile=False,
+from helpers.runtime.dtype_handler.parsing import resolve_dtype_for_device
+from helpers.runtime.run_configs import (
+    load_run_config_from_env,
+    resolve_log_level,
+    resolve_pipeline_kwargs,
+    resolve_run_config_value,
+    should_print_progress,
+    should_write_quick_log,
 )
 
-latent_shape = infer_latent_shape(height=1024, width=1024)
-trajectory = seed_walks(
-    seed_a=5,
-    seed_b=105,
-    shape=latent_shape,
-    steps=3,
-    method="slerp",
-    dtype=dtype,
-    device="cpu",
-)
 
-for idx, latent in enumerate(trajectory):
-    alpha = idx / max(len(trajectory) - 1, 1)
-    
-    t0 = time.perf_counter()
-    with torch.inference_mode():
-        result = generate_with_prompt(
-            pipe=pipe,
-            prompt="a forest trail after rain, natural lighting",
-            seed=77,
-            latents=latent,
-            num_inference_steps=3,
-            guidance_scale=0.0,
+def main() -> None:
+    """Execute M3 seed trajectory pipeline."""
+
+    run_config = load_run_config_from_env()
+    log_level = resolve_log_level(run_config)
+    quick_log_enabled = should_write_quick_log(log_level)
+    print_progress = should_print_progress(log_level)
+
+    default_output_dir = (
+        Path(__file__).resolve().parent / "outputs" / "m3_seed_trajectory"
+    )
+    output_dir = Path(
+        resolve_run_config_value(run_config, "output_dir", default_output_dir)
+    ).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    device = resolve_runtime_device()
+    dtype = resolve_dtype_for_device(device=device)
+    pipe = load_flux_pipeline(
+        **resolve_pipeline_kwargs(
+            run_config,
+            device=device,
+            torch_dtype=dtype,
         )
-    t1 = time.perf_counter()
-    image = result.images[0]
-    
-    image_path = output_dir / f"m3_seedW_alpha_{alpha:.2f}_time_{t1-t0:.2f}.png"
-    image.save(image_path)
-    print(f"Saved: {image_path}")
+    )
 
-print(f"M3 seed trajectory validation complete. Outputs in: {output_dir}")
+    height = int(resolve_run_config_value(run_config, "height", 1024))
+    width = int(resolve_run_config_value(run_config, "width", 1024))
+    seed_a = int(resolve_run_config_value(run_config, "seed_a", 5))
+    seed_b = int(resolve_run_config_value(run_config, "seed_b", 105))
+    trajectory_steps = int(resolve_run_config_value(run_config, "trajectory_steps", 3))
+    trajectory_method = str(
+        resolve_run_config_value(run_config, "trajectory_method", "slerp")
+    )
+    prompt = str(
+        resolve_run_config_value(
+            run_config, "prompt", "a forest trail after rain, natural lighting"
+        )
+    )
+    seed = int(resolve_run_config_value(run_config, "seed", 77))
+    num_inference_steps = int(
+        resolve_run_config_value(run_config, "num_inference_steps", 3)
+    )
+    guidance_scale = float(resolve_run_config_value(run_config, "guidance_scale", 0.0))
+
+    latent_shape = infer_latent_shape(height=height, width=width)
+    trajectory = seed_walks(
+        seed_a=seed_a,
+        seed_b=seed_b,
+        shape=latent_shape,
+        steps=trajectory_steps,
+        method=trajectory_method,
+        dtype=dtype,
+        device="cpu",
+    )
+
+    quick_log_path = output_dir / "quick_log.md"
+    if quick_log_enabled:
+        start_quick_log(
+            quick_log_path,
+            run_name="m3_seed_trajectory",
+            config={
+                "seed": seed,
+                "seed_a": seed_a,
+                "seed_b": seed_b,
+                "prompt": prompt,
+                "height": height,
+                "width": width,
+                "trajectory_method": trajectory_method,
+                "num_inference_steps": num_inference_steps,
+                "guidance_scale": guidance_scale,
+                "steps": len(trajectory),
+                "log_level": log_level,
+            },
+        )
+
+    baseline_image, baseline_elapsed, _ = generate_prompt_baseline(
+        pipe=pipe,
+        prompt=prompt,
+        seed=seed,
+        device=device,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
+    )
+    baseline_path = output_dir / "m3_baseline.png"
+    baseline_image.save(baseline_path)
+
+    if quick_log_enabled:
+        append_quick_log_entry(
+            quick_log_path,
+            image_path=baseline_path,
+            label="baseline",
+            elapsed_seconds=baseline_elapsed,
+            params={"seed": seed},
+        )
+    if print_progress:
+        print(f"Saved: {baseline_path}")
+
+    for idx, latent in enumerate(trajectory):
+        alpha = idx / max(len(trajectory) - 1, 1)
+
+        result, elapsed = timed_generate_with_prompt(
+            pipe=pipe,
+            prompt=prompt,
+            seed=seed,
+            device=device,
+            latents=latent,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        )
+        image = result.images[0]
+
+        image_path = output_dir / f"m3_seedW_alpha_{alpha:.2f}.png"
+        image.save(image_path)
+
+        if quick_log_enabled:
+            append_quick_log_entry(
+                quick_log_path,
+                image_path=image_path,
+                label="seed_walk",
+                elapsed_seconds=elapsed,
+                params={"seed": seed, "alpha": round(alpha, 2), "index": idx},
+            )
+        if print_progress:
+            print(f"Saved: {image_path}")
+
+    if print_progress:
+        print(f"M3 seed trajectory validation complete. Outputs in: {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

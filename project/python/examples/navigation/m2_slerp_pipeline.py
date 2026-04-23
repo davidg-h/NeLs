@@ -8,73 +8,155 @@ Pipeline coverage:
 - Image generation and output export
 """
 
-import time
 from pathlib import Path
-
-import torch
 
 from helpers.methods.access import infer_latent_shape
 from helpers.methods.navigation import slerp_latents
+from helpers.runtime.inference import (
+    append_quick_log_entry,
+    generate_prompt_baseline,
+    start_quick_log,
+    timed_generate_with_prompt,
+)
 from helpers.runtime.pipeline import (
-    default_torch_dtype_for_device,
     load_flux_pipeline,
     resolve_runtime_device,
 )
-from helpers.runtime.sampling import generate_with_prompt
-from helpers.runtime.utility import seed_latent
-
-
-output_dir = Path(__file__).resolve().parent / "outputs" / "m2_slerp"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-device = resolve_runtime_device()
-dtype = default_torch_dtype_for_device(torch.float16, device)
-pipe = load_flux_pipeline(
-    torch_dtype=dtype,
-    device=device,
-    offload_mode="group",
-    group_use_stream=True,
-    group_low_cpu_mem_usage=False,
-    enable_text_encoder_group_offload=True,
-    text_encoder_group_offload_type="block_level",
-    text_encoder_num_blocks_per_group=1,
-    enable_vae_group_offload=True,
-    vae_group_offload_type="leaf_level",
-    vae_num_blocks_per_group=2,
-    enable_vae_slicing=True,
-    enable_vae_tiling=True,
-    enable_layerwise_casting=True,
-    layerwise_storage_dtype="float8_e4m3fn",
-    layerwise_compute_dtype=dtype,
-    enable_channels_last=True,
-    enable_xformers_attention=True,
-    enable_torch_compile=False,
+from helpers.runtime.dtype_handler.parsing import resolve_dtype_for_device
+from helpers.runtime.run_configs import (
+    load_run_config_from_env,
+    resolve_log_level,
+    resolve_pipeline_kwargs,
+    resolve_run_config_value,
+    should_print_progress,
+    should_write_quick_log,
 )
+from helpers.runtime.utils import seed_latent
 
-latent_shape = infer_latent_shape(height=1024, width=1024)
-start = seed_latent(seed=3, shape=latent_shape, dtype=dtype)
-end = seed_latent(seed=91, shape=latent_shape, dtype=dtype)
 
-# alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
-alphas = [0.0, 1.0]
-for alpha in alphas:
-    blended = slerp_latents(start, end, alpha)
+def main() -> None:
+    """Execute M2 SLERP pipeline."""
 
-    t0 = time.perf_counter()
-    with torch.inference_mode():
-        result = generate_with_prompt(
-            pipe=pipe,
-            prompt="a high-detail mountain valley at sunrise",
-            seed=222,
-            latents=blended,
-            num_inference_steps=3,
-            guidance_scale=0.0,
+    run_config = load_run_config_from_env()
+    log_level = resolve_log_level(run_config)
+    quick_log_enabled = should_write_quick_log(log_level)
+    print_progress = should_print_progress(log_level)
+
+    default_output_dir = Path(__file__).resolve().parent / "outputs" / "m2_slerp"
+    output_dir = Path(
+        resolve_run_config_value(run_config, "output_dir", default_output_dir)
+    ).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    device = resolve_runtime_device()
+    dtype = resolve_dtype_for_device(device=device)
+    pipe = load_flux_pipeline(
+        **resolve_pipeline_kwargs(
+            run_config,
+            device=device,
+            torch_dtype=dtype,
         )
-    t1 = time.perf_counter()
-    image = result.images[0]
+    )
 
-    image_path = output_dir / f"m2_slerp_alpha_{alpha:.2f}_time_{t1-t0:.2f}.png"
-    image.save(image_path)
-    print(f"Saved: {image_path}")
+    height = int(resolve_run_config_value(run_config, "height", 1024))
+    width = int(resolve_run_config_value(run_config, "width", 1024))
+    start_seed = int(resolve_run_config_value(run_config, "start_seed", 3))
+    end_seed = int(resolve_run_config_value(run_config, "end_seed", 91))
+    prompt = str(
+        resolve_run_config_value(
+            run_config, "prompt", "a high-detail mountain valley at sunrise"
+        )
+    )
+    seed = int(resolve_run_config_value(run_config, "seed", 222))
+    num_inference_steps = int(
+        resolve_run_config_value(run_config, "num_inference_steps", 3)
+    )
+    guidance_scale = float(resolve_run_config_value(run_config, "guidance_scale", 0.0))
+    alphas = [
+        float(value)
+        for value in resolve_run_config_value(run_config, "alphas", [0.0, 1.0])
+    ]
 
-print(f"M2 SLERP validation complete. Outputs in: {output_dir}")
+    # prep latents for slerp
+    latent_shape = infer_latent_shape(height=height, width=width)
+    start = seed_latent(seed=start_seed, shape=latent_shape, dtype=dtype)
+    end = seed_latent(seed=end_seed, shape=latent_shape, dtype=dtype)
+
+    quick_log_path = output_dir / "quick_log.md"
+    if quick_log_enabled:
+        start_quick_log(
+            quick_log_path,
+            run_name="m2_slerp",
+            config={
+                "seed": seed,
+                "start_seed": start_seed,
+                "end_seed": end_seed,
+                "prompt": prompt,
+                "height": height,
+                "width": width,
+                "num_inference_steps": num_inference_steps,
+                "guidance_scale": guidance_scale,
+                "alphas": alphas,
+                "log_level": log_level,
+            },
+        )
+
+    baseline_image, baseline_elapsed, _ = generate_prompt_baseline(
+        pipe=pipe,
+        prompt=prompt,
+        seed=seed,
+        device=device,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
+    )
+    baseline_path = output_dir / "m2_baseline.png"
+    baseline_image.save(baseline_path)
+
+    if quick_log_enabled:
+        append_quick_log_entry(
+            quick_log_path,
+            image_path=baseline_path,
+            label="baseline",
+            elapsed_seconds=baseline_elapsed,
+            params={"seed": seed},
+        )
+    if print_progress:
+        print(f"Saved: {baseline_path}")
+
+    for alpha in alphas:
+        blended = slerp_latents(start, end, alpha)
+
+        result, elapsed = timed_generate_with_prompt(
+            pipe=pipe,
+            prompt=prompt,
+            device=device,
+            seed=seed,
+            latents=blended,
+            use_inference_mode=True,
+            synchronize_cuda=True,
+            # gen kwargs
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+        )
+        image = result.images[0]
+
+        image_path = output_dir / f"m2_slerp_alpha_{alpha:.2f}.png"
+        image.save(image_path)
+
+        if quick_log_enabled:
+            append_quick_log_entry(
+                quick_log_path,
+                image_path=image_path,
+                label="slerp",
+                elapsed_seconds=elapsed,
+                params={"seed": seed, "alpha": round(alpha, 2)},
+            )
+        if print_progress:
+            print(f"Saved: {image_path}")
+
+    if print_progress:
+        print(f"M2 SLERP validation complete. Outputs in: {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

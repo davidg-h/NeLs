@@ -8,28 +8,30 @@ Pipeline coverage:
 - Image output export
 """
 
-import time
 import gc
 import torch
 from pathlib import Path
 
 from helpers.methods.navigation import blend_prompt_pair
+from helpers.runtime.inference import (
+    append_quick_log_entry,
+    generate_prompt_baseline,
+    start_quick_log,
+    timed_generate_with_embeddings,
+)
 from helpers.runtime.pipeline import (
-    default_torch_dtype_for_device,
     load_flux_pipeline,
     resolve_runtime_device,
 )
-from helpers.runtime.sampling import generate_with_embeddings
-
-
-output_dir = Path(__file__).resolve().parent / "outputs" / "m6_embedding_interp"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-# VRAM-safe defaults for iterative alpha sweeps on constrained GPUs.
-GEN_HEIGHT = 768
-GEN_WIDTH = 768
-GEN_STEPS = 3
-MAX_SEQ_LEN = 192
+from helpers.runtime.dtype_handler.parsing import resolve_dtype_for_device
+from helpers.runtime.run_configs import (
+    load_run_config_from_env,
+    resolve_log_level,
+    resolve_pipeline_kwargs,
+    resolve_run_config_value,
+    should_print_progress,
+    should_write_quick_log,
+)
 
 
 def _flush_cuda_between_runs() -> None:
@@ -47,72 +49,180 @@ def _flush_cuda_between_runs() -> None:
     except Exception:
         pass
 
-device = resolve_runtime_device()
-dtype = default_torch_dtype_for_device(torch.float16, device)
-pipe = load_flux_pipeline(
-    torch_dtype=dtype,
-    device=device,
-    offload_mode="group",
-    group_use_stream=True,
-    group_low_cpu_mem_usage=True,
-    enable_text_encoder_group_offload=True,
-    text_encoder_group_offload_type="block_level",
-    text_encoder_num_blocks_per_group=1,
-    enable_vae_group_offload=True,
-    vae_group_offload_type="leaf_level",
-    vae_num_blocks_per_group=2,
-    enable_vae_slicing=True,
-    enable_vae_tiling=True,
-    enable_layerwise_casting=True,
-    layerwise_storage_dtype="float8_e4m3fn",
-    layerwise_compute_dtype=dtype,
-    enable_channels_last=True,
-    enable_xformers_attention=True,
-    enable_torch_compile=False,
-)
 
-prompt_a = "a cozy wooden cabin in snowy mountains"
-prompt_b = "a futuristic glass cabin on a tropical beach"
-alphas = [0.0, 0.5, 1.0]
+def main() -> None:
+    """Execute M6 embedding interpolation pipeline."""
 
+    run_config = load_run_config_from_env()
+    log_level = resolve_log_level(run_config)
+    quick_log_enabled = should_write_quick_log(log_level)
+    print_progress = should_print_progress(log_level)
 
-for alpha in alphas:
-    blended = None
-    result = None
-    image = None
-    try:
-        blended = blend_prompt_pair(
-            pipe=pipe,
-            prompt_a=prompt_a,
-            prompt_b=prompt_b,
-            alpha=alpha,
-            max_sequence_length=MAX_SEQ_LEN,
+    default_output_dir = (
+        Path(__file__).resolve().parent / "outputs" / "m6_embedding_interp"
+    )
+    output_dir = Path(
+        resolve_run_config_value(run_config, "output_dir", default_output_dir)
+    ).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # VRAM-safe defaults for iterative alpha sweeps on constrained GPUs.
+    GEN_HEIGHT = int(resolve_run_config_value(run_config, "height", 768))
+    GEN_WIDTH = int(resolve_run_config_value(run_config, "width", 768))
+    GEN_STEPS = int(resolve_run_config_value(run_config, "num_inference_steps", 3))
+    MAX_SEQ_LEN = int(resolve_run_config_value(run_config, "max_sequence_length", 192))
+
+    device = resolve_runtime_device()
+    dtype = resolve_dtype_for_device(device=device)
+    pipe = load_flux_pipeline(
+        **resolve_pipeline_kwargs(
+            run_config,
             device=device,
+            torch_dtype=dtype,
+        )
+    )
+
+    prompt_a = str(
+        resolve_run_config_value(
+            run_config, "prompt_a", "a cozy wooden cabin in snowy mountains"
+        )
+    )
+    prompt_b = str(
+        resolve_run_config_value(
+            run_config, "prompt_b", "a futuristic glass cabin on a tropical beach"
+        )
+    )
+    seed = int(resolve_run_config_value(run_config, "seed", 808))
+    guidance_scale = float(resolve_run_config_value(run_config, "guidance_scale", 0.0))
+    alphas = [
+        float(value)
+        for value in resolve_run_config_value(run_config, "alphas", [0.0, 0.5, 1.0])
+    ]
+
+    quick_log_path = output_dir / "quick_log.md"
+    if quick_log_enabled:
+        start_quick_log(
+            quick_log_path,
+            run_name="m6_embedding_interp",
+            config={
+                "seed": seed,
+                "prompt_a": prompt_a,
+                "prompt_b": prompt_b,
+                "alphas": alphas,
+                "height": GEN_HEIGHT,
+                "width": GEN_WIDTH,
+                "num_inference_steps": GEN_STEPS,
+                "max_sequence_length": MAX_SEQ_LEN,
+                "log_level": log_level,
+                "guidance_scale": guidance_scale,
+            },
         )
 
-        t0 = time.perf_counter()
-        with torch.inference_mode():
-            result = generate_with_embeddings(
+    baseline_a, baseline_a_elapsed, _ = generate_prompt_baseline(
+        pipe=pipe,
+        prompt=prompt_a,
+        seed=seed,
+        device=device,
+        height=GEN_HEIGHT,
+        width=GEN_WIDTH,
+        num_inference_steps=GEN_STEPS,
+        guidance_scale=guidance_scale,
+    )
+    baseline_a_path = output_dir / "m6_baseline_prompt_a.png"
+    baseline_a.save(baseline_a_path)
+
+    if quick_log_enabled:
+        append_quick_log_entry(
+            quick_log_path,
+            image_path=baseline_a_path,
+            label="baseline_prompt_a",
+            elapsed_seconds=baseline_a_elapsed,
+            params={"seed": seed, "guidance_scale": guidance_scale},
+        )
+    if print_progress:
+        print(f"Saved: {baseline_a_path}")
+
+    baseline_b, baseline_b_elapsed, _ = generate_prompt_baseline(
+        pipe=pipe,
+        prompt=prompt_b,
+        seed=seed,
+        device=device,
+        height=GEN_HEIGHT,
+        width=GEN_WIDTH,
+        num_inference_steps=GEN_STEPS,
+        guidance_scale=guidance_scale,
+    )
+    baseline_b_path = output_dir / "m6_baseline_prompt_b.png"
+    baseline_b.save(baseline_b_path)
+
+    if quick_log_enabled:
+        append_quick_log_entry(
+            quick_log_path,
+            image_path=baseline_b_path,
+            label="baseline_prompt_b",
+            elapsed_seconds=baseline_b_elapsed,
+            params={"seed": seed},
+        )
+    if print_progress:
+        print(f"Saved: {baseline_b_path}")
+
+    for alpha in alphas:
+        blended = None
+        result = None
+        image = None
+        try:
+            blended = blend_prompt_pair(
+                pipe=pipe,
+                prompt_a=prompt_a,
+                prompt_b=prompt_b,
+                alpha=alpha,
+                max_sequence_length=MAX_SEQ_LEN,
+                device=device,
+            )
+
+            result, elapsed = timed_generate_with_embeddings(
                 pipe=pipe,
                 embeddings=blended,
-                seed=808,
+                seed=seed,
+                device=device,
                 height=GEN_HEIGHT,
                 width=GEN_WIDTH,
                 num_inference_steps=GEN_STEPS,
-                guidance_scale=0.0,
+                guidance_scale=guidance_scale,
             )
-        t1 = time.perf_counter()
-        print(f"Alpha {alpha:.2f} generation completed in {t1 - t0:.2f} seconds.")
-        image = result.images[0]
+            image = result.images[0]
 
-        image_path = output_dir / f"m6_embed_alpha_{alpha:.2f}_{t1 - t0:.2f}.png"
-        image.save(image_path)
-        print(f'alpha={alpha:.2f} in {(t1 - t0):.2f}s -> {image_path} | prompt_embeds_shape={tuple(blended.prompt_embeds.shape)}')
-    finally:
-        del image
-        del result
-        del blended
-        gc.collect()
-        _flush_cuda_between_runs()
+            image_path = output_dir / f"m6_embed_alpha_{alpha:.2f}.png"
+            image.save(image_path)
 
-print(f"M6 embedding interpolation validation complete. Outputs in: {output_dir}")
+            if quick_log_enabled:
+                append_quick_log_entry(
+                    quick_log_path,
+                    image_path=image_path,
+                    label="embedding_interp",
+                    elapsed_seconds=elapsed,
+                    params={"seed": seed, "alpha": round(alpha, 2)},
+                )
+            if print_progress:
+                print(
+                    f"alpha={alpha:.2f} in {elapsed:.2f}s -> {image_path} "
+                    f"| prompt_embeds_shape={tuple(blended.prompt_embeds.shape)}"
+                )
+        finally:
+            if image is not None:
+                del image
+            if result is not None:
+                del result
+            if blended is not None:
+                del blended
+            gc.collect()
+            _flush_cuda_between_runs()
+
+    if print_progress:
+        print(
+            f"M6 embedding interpolation validation complete. Outputs in: {output_dir}"
+        )
+
+
+if __name__ == "__main__":
+    main()

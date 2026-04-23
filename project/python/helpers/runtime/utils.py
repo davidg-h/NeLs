@@ -10,6 +10,7 @@ from typing import Any
 
 import torch
 from diffusers import DiffusionPipeline
+from datetime import datetime, timezone
 
 
 def print_runtime_paths() -> None:
@@ -53,6 +54,11 @@ def print_cuda_memory(label: str = "CUDA") -> None:
         f"reserved={reserved:.2f} GB, "
         f"peak_allocated={max_allocated:.2f} GB"
     )
+
+
+def timestamp_utc() -> str:
+    """Return a UTC timestamp string with second precision."""
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def flush_pipeline(pipeline: DiffusionPipeline | None = None) -> None:
@@ -160,4 +166,5 @@ __all__ = [
     "print_cuda_memory",
     "print_runtime_paths",
     "seed_latent",
+    "timestamp_utc",
 ]

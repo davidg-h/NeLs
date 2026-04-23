@@ -1,11 +1,15 @@
 """Pipeline-loading helpers used by notebooks and small experiments."""
 
 from __future__ import annotations
-import inspect
 import os
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 import torch
-from diffusers import DiffusionPipeline, Flux2KleinPipeline
+from diffusers import Flux2KleinPipeline
+from helpers.runtime.dtype_handler.parsing import (
+    resolve_dtype_for_device,
+    get_torch_dtype,
+)
+from helpers.runtime.dtype_handler.fp8 import resolve_layerwise_storage_dtype
 
 try:
     from diffusers.hooks import apply_group_offloading
@@ -14,264 +18,6 @@ except Exception:
 
 OffloadMode = Literal["none", "cpu", "group"]
 
-
-def _parse_torch_dtype(dtype: torch.dtype | str) -> torch.dtype:
-    """Parse torch dtype values passed as dtype objects or common strings."""
-    if isinstance(dtype, torch.dtype):
-        return dtype
-
-    key = dtype.strip().lower()
-    mapping: dict[str, torch.dtype | None] = {
-        "float16": torch.float16,
-        "fp16": torch.float16,
-        "half": torch.float16,
-        "float32": torch.float32,
-        "fp32": torch.float32,
-        "float": torch.float32,
-        "bfloat16": torch.bfloat16,
-        "bf16": torch.bfloat16,
-        "float8_e4m3fn": getattr(torch, "float8_e4m3fn", None),
-        "fp8_e4m3fn": getattr(torch, "float8_e4m3fn", None),
-        "float8_e5m2": getattr(torch, "float8_e5m2", None),
-        "fp8_e5m2": getattr(torch, "float8_e5m2", None),
-    }
-    if key not in mapping:
-        raise ValueError(f"Unsupported dtype string: {dtype!r}")
-
-    parsed = mapping[key]
-    if parsed is None:
-        raise ValueError(
-            f"dtype {dtype!r} is not available in this PyTorch build"
-        )
-    return parsed
-
-
-def _filter_supported_kwargs(
-    fn: Callable[..., Any],
-    candidate_kwargs: dict[str, Any],
-) -> dict[str, Any]:
-    """Return kwargs accepted by fn to stay compatible across diffusers versions."""
-    try:
-        signature = inspect.signature(fn)
-    except Exception:
-        return candidate_kwargs
-
-    return {
-        key: value
-        for key, value in candidate_kwargs.items()
-        if key in signature.parameters
-    }
-
-
-def _maybe_apply_module_group_offload(
-    module: Any,
-    module_name: str,
-    *,
-    onload_device: str,
-    offload_type: str,
-    num_blocks_per_group: int,
-    use_stream: bool,
-    low_cpu_mem_usage: bool,
-) -> None:
-    """Apply module-level group offload with compatibility-safe fallbacks."""
-    if module is None:
-        print(f"Skipping group offload for {module_name}: module not found")
-        return
-
-    if apply_group_offloading is None:
-        print(
-            f"Skipping group offload for {module_name}: "
-            "diffusers.hooks.apply_group_offloading unavailable"
-        )
-        return
-
-    if not onload_device.startswith("cuda"):
-        print(
-            f"Skipping group offload for {module_name}: "
-            f"onload_device={onload_device!r} is not CUDA"
-        )
-        return
-
-    candidate_kwargs: dict[str, Any] = {
-        "onload_device": torch.device(onload_device),
-        "offload_device": torch.device("cpu"),
-        "offload_type": offload_type,
-        "use_stream": use_stream,
-        "low_cpu_mem_usage": low_cpu_mem_usage,
-    }
-    if offload_type == "block_level":
-        candidate_kwargs["num_blocks_per_group"] = max(1, int(num_blocks_per_group))
-
-    try:
-        supported_kwargs = _filter_supported_kwargs(
-            apply_group_offloading,
-            candidate_kwargs,
-        )
-        apply_group_offloading(module, **supported_kwargs)
-        print(
-            f"Enabled group offloading for {module_name} "
-            f"(offload_type={offload_type})"
-        )
-    except Exception as exc:
-        print(f"Skipping group offload for {module_name}: {exc}")
-
-
-def _maybe_enable_vae_memory_optimizations(
-    pipe: Flux2KleinPipeline,
-    *,
-    enable_vae_slicing: bool,
-    enable_vae_tiling: bool,
-) -> None:
-    """Enable VAE memory helpers via pipeline wrappers or direct VAE methods."""
-    vae = getattr(pipe, "vae", None)
-
-    if enable_vae_slicing:
-        if hasattr(pipe, "enable_vae_slicing"):
-            try:
-                pipe.enable_vae_slicing()
-                print("Enabled VAE slicing via pipe.enable_vae_slicing()")
-            except Exception as exc:
-                print(f"Skipping VAE slicing: {exc}")
-        elif vae is not None and hasattr(vae, "enable_slicing"):
-            try:
-                vae.enable_slicing()
-                print("Enabled VAE slicing via vae.enable_slicing()")
-            except Exception as exc:
-                print(f"Skipping VAE slicing via vae.enable_slicing(): {exc}")
-        else:
-            print(
-                "Skipping VAE slicing: pipeline has no enable_vae_slicing() "
-                "and vae has no enable_slicing()"
-            )
-
-    if enable_vae_tiling:
-        if hasattr(pipe, "enable_vae_tiling"):
-            try:
-                pipe.enable_vae_tiling()
-                print("Enabled VAE tiling via pipe.enable_vae_tiling()")
-            except Exception as exc:
-                print(f"Skipping VAE tiling: {exc}")
-        elif vae is not None and hasattr(vae, "enable_tiling"):
-            try:
-                vae.enable_tiling()
-                print("Enabled VAE tiling via vae.enable_tiling()")
-            except Exception as exc:
-                print(f"Skipping VAE tiling via vae.enable_tiling(): {exc}")
-        else:
-            print(
-                "Skipping VAE tiling: pipeline has no enable_vae_tiling() "
-                "and vae has no enable_tiling()"
-            )
-
-
-def _maybe_enable_channels_last(pipe: Flux2KleinPipeline) -> None:
-    """Try channels-last on image-like modules and continue on failure."""
-    enabled_any = False
-    for module_name in ("unet", "vae"):
-        module = getattr(pipe, module_name, None)
-        if module is None:
-            continue
-
-        try:
-            module.to(memory_format=torch.channels_last)
-            enabled_any = True
-            print(f"Enabled channels-last memory format on {module_name}")
-        except Exception as exc:
-            print(f"Skipping channels-last on {module_name}: {exc}")
-
-    if not enabled_any:
-        print("Skipping channels-last: no compatible module found")
-
-
-def _maybe_enable_xformers_attention(pipe: Flux2KleinPipeline) -> None:
-    """Enable memory-efficient attention if supported by the pipeline."""
-    if not hasattr(pipe, "enable_xformers_memory_efficient_attention"):
-        print("Skipping xFormers attention: pipeline has no support method")
-        return
-
-    try:
-        pipe.enable_xformers_memory_efficient_attention()
-        print("Enabled xFormers memory-efficient attention")
-    except Exception as exc:
-        print(f"Skipping xFormers attention: {exc}")
-
-
-def _maybe_enable_layerwise_casting(
-    pipe: Flux2KleinPipeline,
-    *,
-    storage_dtype: torch.dtype,
-    compute_dtype: torch.dtype,
-) -> None:
-    """Enable transformer layerwise weight casting if supported."""
-    transformer = getattr(pipe, "transformer", None)
-    if transformer is None:
-        print("Skipping layerwise casting: pipeline has no transformer")
-        return
-
-    if not hasattr(transformer, "enable_layerwise_casting"):
-        print("Skipping layerwise casting: transformer has no support method")
-        return
-
-    try:
-        transformer.enable_layerwise_casting(
-            storage_dtype=storage_dtype,
-            compute_dtype=compute_dtype,
-        )
-        print(
-            "Enabled layerwise casting on transformer "
-            f"(storage={storage_dtype}, compute={compute_dtype})"
-        )
-    except Exception as exc:
-        print(f"Skipping layerwise casting: {exc}")
-
-
-def resolve_model_id(model_id: str | None = None) -> str:
-    """Resolve model id from explicit argument or MODEL_ID env variable."""
-    if model_id:
-        return model_id
-
-    env_model_id = os.getenv("MODEL_ID")
-    if env_model_id:
-        return env_model_id
-    raise ValueError("Model ID must be provided via argument or MODEL_ID")
-
-
-def resolve_runtime_device(device: torch.device | str | None = None) -> str:
-    """Resolve target device from explicit argument or DEVICE environment variable."""
-    raw_device = device if device is not None else os.getenv("DEVICE")
-    if raw_device is None:
-        raw_device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    resolved = str(raw_device)
-    if resolved.startswith("cuda") and not torch.cuda.is_available():
-        return "cpu"
-    return resolved
-
-
-def default_torch_dtype_for_device(
-    dtype: torch.dtype | str | None = None,
-    device: torch.device | str | None = None,
-) -> torch.dtype:
-    """
-    Resolve an appropriate dtype.
-
-    - If dtype is provided, parse and return it.
-    - If running on CUDA, default to fp16.
-    - Otherwise default to fp32.
-    """
-    if dtype is not None:
-        return _parse_torch_dtype(dtype)
-
-    resolved_device = resolve_runtime_device(device)
-    return torch.float16 if resolved_device.startswith("cuda") else torch.float32
-
-
-def configure_hf_home(hf_home: str | None = None) -> str | None:
-    """Set HF cache root from explicit argument or HF_HOME env variable."""
-    resolved_hf_home = hf_home if hf_home is not None else os.getenv("HF_HOME")
-    if resolved_hf_home:
-        os.environ["HF_HOME"] = resolved_hf_home
-    return resolved_hf_home
 
 def _apply_group_offload(
     pipe: Flux2KleinPipeline,
@@ -362,6 +108,197 @@ def _try_compile_flux_components(
 
     return pipe
 
+
+def _maybe_apply_module_group_offload(
+    module: Any,
+    module_name: str,
+    *,
+    onload_device: str,
+    offload_type: str,
+    num_blocks_per_group: int,
+    use_stream: bool,
+    low_cpu_mem_usage: bool,
+) -> None:
+    """Apply module-level group offload with compatibility-safe fallbacks."""
+    if module is None:
+        print(f"Skipping group offload for {module_name}: module not found")
+        return
+
+    if apply_group_offloading is None:
+        print(
+            f"Skipping group offload for {module_name}: "
+            "diffusers.hooks.apply_group_offloading unavailable"
+        )
+        return
+
+    if not onload_device.startswith("cuda"):
+        print(
+            f"Skipping group offload for {module_name}: "
+            f"onload_device={onload_device!r} is not CUDA"
+        )
+        return
+
+    kwargs: dict[str, Any] = {
+        "onload_device": torch.device(onload_device),
+        "offload_device": torch.device("cpu"),
+        "offload_type": offload_type,
+        "use_stream": use_stream,
+        "low_cpu_mem_usage": low_cpu_mem_usage,
+    }
+    if offload_type == "block_level":
+        kwargs["num_blocks_per_group"] = max(1, int(num_blocks_per_group))
+
+    try:
+        apply_group_offloading(module, **kwargs)
+        print(
+            f"Enabled group offloading for {module_name} (offload_type={offload_type})"
+        )
+    except Exception as exc:
+        print(f"Skipping group offload for {module_name}: {exc}")
+
+
+def _maybe_enable_vae_memory_optimizations(
+    pipe: Flux2KleinPipeline,
+    *,
+    enable_vae_slicing: bool,
+    enable_vae_tiling: bool,
+) -> None:
+    """Enable VAE memory helpers via pipeline wrappers or direct VAE methods."""
+    vae = getattr(pipe, "vae", None)
+
+    if enable_vae_slicing:
+        if hasattr(pipe, "enable_vae_slicing"):
+            try:
+                pipe.enable_vae_slicing()
+                print("Enabled VAE slicing via pipe.enable_vae_slicing()")
+            except Exception as exc:
+                print(f"Skipping VAE slicing: {exc}")
+        elif vae is not None and hasattr(vae, "enable_slicing"):
+            try:
+                vae.enable_slicing()
+                print("Enabled VAE slicing via vae.enable_slicing()")
+            except Exception as exc:
+                print(f"Skipping VAE slicing via vae.enable_slicing(): {exc}")
+        else:
+            print(
+                "Skipping VAE slicing: pipeline has no enable_vae_slicing() "
+                "and vae has no enable_slicing()"
+            )
+
+    if enable_vae_tiling:
+        if hasattr(pipe, "enable_vae_tiling"):
+            try:
+                pipe.enable_vae_tiling()
+                print("Enabled VAE tiling via pipe.enable_vae_tiling()")
+            except Exception as exc:
+                print(f"Skipping VAE tiling: {exc}")
+        elif vae is not None and hasattr(vae, "enable_tiling"):
+            try:
+                vae.enable_tiling()
+                print("Enabled VAE tiling via vae.enable_tiling()")
+            except Exception as exc:
+                print(f"Skipping VAE tiling via vae.enable_tiling(): {exc}")
+        else:
+            print(
+                "Skipping VAE tiling: pipeline has no enable_vae_tiling() "
+                "and vae has no enable_tiling()"
+            )
+
+
+def _maybe_enable_channels_last(pipe: Flux2KleinPipeline) -> None:
+    """Try channels-last on image-like modules and continue on failure."""
+    enabled_any = False
+    for module_name in ("unet", "vae"):
+        module = getattr(pipe, module_name, None)
+        if module is None:
+            continue
+
+        try:
+            module.to(memory_format=torch.channels_last)
+            enabled_any = True
+            print(f"Enabled channels-last memory format on {module_name}")
+        except Exception as exc:
+            print(f"Skipping channels-last on {module_name}: {exc}")
+
+    if not enabled_any:
+        print("Skipping channels-last: no compatible module found")
+
+
+def _maybe_enable_xformers_attention(pipe: Flux2KleinPipeline) -> None:
+    """Enable memory-efficient attention if supported by the pipeline."""
+    if not hasattr(pipe, "enable_xformers_memory_efficient_attention"):
+        print("Skipping xFormers attention: pipeline has no support method")
+        return
+
+    try:
+        pipe.enable_xformers_memory_efficient_attention()
+        print("Enabled xFormers memory-efficient attention")
+    except Exception as exc:
+        print(f"Skipping xFormers attention: {exc}")
+
+
+def _maybe_enable_layerwise_casting(
+    pipe: Flux2KleinPipeline,
+    *,
+    storage_dtype: torch.dtype,
+    compute_dtype: torch.dtype,
+) -> bool:
+    """Enable transformer layerwise weight casting if supported."""
+    transformer = getattr(pipe, "transformer", None)
+    if transformer is None:
+        print("Skipping layerwise casting: pipeline has no transformer")
+        return False
+
+    if not hasattr(transformer, "enable_layerwise_casting"):
+        print("Skipping layerwise casting: transformer has no support method")
+        return False
+
+    try:
+        transformer.enable_layerwise_casting(
+            storage_dtype=storage_dtype,
+            compute_dtype=compute_dtype,
+        )
+        print(
+            "Enabled layerwise casting on transformer "
+            f"(storage={storage_dtype}, compute={compute_dtype})"
+        )
+        return True
+    except Exception as exc:
+        print(f"Skipping layerwise casting: {exc}")
+        return False
+
+
+def resolve_model_id(model_id: str | None = None) -> str:
+    """Resolve model id from explicit argument or MODEL_ID env variable."""
+    if model_id:
+        return model_id
+
+    env_model_id = os.getenv("MODEL_ID")
+    if env_model_id:
+        return env_model_id
+    raise ValueError("Model ID must be provided via argument or MODEL_ID")
+
+
+def resolve_runtime_device(device: torch.device | str | None = None) -> str:
+    """Resolve target device from explicit argument or DEVICE environment variable."""
+    raw_device = device if device is not None else os.getenv("DEVICE")
+    if raw_device is None:
+        raw_device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    resolved = str(raw_device)
+    if resolved.startswith("cuda") and not torch.cuda.is_available():
+        return "cpu"
+    return resolved
+
+
+def configure_hf_home(hf_home: str | None = None) -> str | None:
+    """Set HF cache root from explicit argument or HF_HOME env variable."""
+    resolved_hf_home = hf_home if hf_home is not None else os.getenv("HF_HOME")
+    if resolved_hf_home:
+        os.environ["HF_HOME"] = resolved_hf_home
+    return resolved_hf_home
+
+
 def load_flux_pipeline(
     model_id: str | None = None,
     torch_dtype: torch.dtype | str | None = None,
@@ -380,8 +317,9 @@ def load_flux_pipeline(
     enable_vae_slicing: bool = True,
     enable_vae_tiling: bool = True,
     enable_layerwise_casting: bool = False,
-    layerwise_storage_dtype: torch.dtype | str = "float8_e4m3fn",
-    layerwise_compute_dtype: torch.dtype | str | None = None,
+    layerwise_storage_dtype: torch.dtype | str | None = None,
+    layerwise_fallback_storage_dtype: torch.dtype | str = "float16",
+    layerwise_compute_dtype: torch.dtype | str = "float16",
     enable_channels_last: bool = False,
     enable_xformers_attention: bool = False,
     enable_torch_compile: bool = False,
@@ -436,7 +374,12 @@ def load_flux_pipeline(
         enable_layerwise_casting:
             Enable transformer layerwise weight casting when supported.
         layerwise_storage_dtype:
-            Storage dtype for layerwise casting, e.g. "float8_e4m3fn".
+            Storage dtype for layerwise casting. If None, auto-select supported
+            FP8 type when available and fall back to ``layerwise_fallback_storage_dtype``.
+            If a specific FP8 dtype is provided, it is attempted first and then
+            falls back on failure.
+        layerwise_fallback_storage_dtype:
+            Fallback storage dtype used when FP8 storage is unavailable.
         layerwise_compute_dtype:
             Compute dtype for layerwise casting. Defaults to resolved torch_dtype.
         enable_channels_last:
@@ -457,9 +400,9 @@ def load_flux_pipeline(
     """
     configure_hf_home()
 
-    resolved_device = resolve_runtime_device(device)
     resolved_model_id = resolve_model_id(model_id)
-    resolved_dtype = default_torch_dtype_for_device(torch_dtype, resolved_device)
+    resolved_device = resolve_runtime_device(device)
+    resolved_dtype = resolve_dtype_for_device(torch_dtype, resolved_device)
 
     pipe = Flux2KleinPipeline.from_pretrained(
         resolved_model_id,
@@ -470,21 +413,41 @@ def load_flux_pipeline(
         try:
             pipe.set_progress_bar_config(disable=True)
         except Exception as exc:
-            print(f"Error occurred while disabling progress bar: {exc}. Skipping progress bar configuration.")
+            print(
+                f"Error occurred while disabling progress bar: {exc}. Skipping progress bar configuration."
+            )
 
     if enable_layerwise_casting:
         try:
-            storage_dtype = _parse_torch_dtype(layerwise_storage_dtype)
-            compute_dtype = (
-                _parse_torch_dtype(layerwise_compute_dtype)
-                if layerwise_compute_dtype is not None
-                else resolved_dtype
+            fallback_storage_dtype = get_torch_dtype(layerwise_fallback_storage_dtype)
+            storage_dtype = resolve_layerwise_storage_dtype(
+                layerwise_storage_dtype,
+                device=resolved_device,
+                fallback_dtype=fallback_storage_dtype,
+                verbose=True,
             )
-            _maybe_enable_layerwise_casting(
-                pipe,
-                storage_dtype=storage_dtype,
-                compute_dtype=compute_dtype,
-            )
+
+            compute_dtype = get_torch_dtype(layerwise_compute_dtype)
+
+            if storage_dtype != compute_dtype:
+                layerwise_enabled = _maybe_enable_layerwise_casting(
+                    pipe,
+                    storage_dtype=storage_dtype,
+                    compute_dtype=compute_dtype,
+                )
+
+                if not layerwise_enabled and storage_dtype != fallback_storage_dtype:
+                    print(
+                        "Retrying layerwise casting with fallback storage dtype "
+                        f"{fallback_storage_dtype}"
+                    )
+                    _maybe_enable_layerwise_casting(
+                        pipe,
+                        storage_dtype=fallback_storage_dtype,
+                        compute_dtype=compute_dtype,
+                    )
+                else:
+                    print("Layerwise casting not enabled; skipping fallback attempt")
         except Exception as exc:
             print(f"Skipping layerwise casting: {exc}")
 
@@ -538,7 +501,9 @@ def load_flux_pipeline(
             print(
                 "Loaded pipeline with transformer group offload enabled "
                 f"(use_stream={group_use_stream}, "
-                f"low_cpu_mem_usage={group_low_cpu_mem_usage})"
+                f"low_cpu_mem_usage={group_low_cpu_mem_usage}, "
+                f"enable_text_encoder_group_offload={enable_text_encoder_group_offload}, "
+                f"enable_vae_group_offload={enable_vae_group_offload})"
             )
 
     else:
