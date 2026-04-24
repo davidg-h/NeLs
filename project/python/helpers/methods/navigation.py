@@ -132,7 +132,10 @@ def blend_prompt_embeddings(
 ) -> PromptEmbeddingBundle:
     """Linearly blend two prompt-conditioning bundles.
 
-    ``alpha=0`` returns ``start`` and ``alpha=1`` returns ``end``.
+    ``alpha=0`` yields ``start.prompt_embeds`` and ``alpha=1`` yields
+    ``end.prompt_embeds``. Pooled embeddings are blended only when present
+    in both bundles. Token id metadata is copied from ``start`` if available,
+    otherwise from ``end``.
     """
     _validate_alpha(alpha)
 

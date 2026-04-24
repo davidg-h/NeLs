@@ -304,6 +304,7 @@ def generate_with_embeddings(
         device,
         [
             "prompt_embeds",
+            "pooled_prompt_embeds",
             "negative_prompt_embeds",
             "text_ids",
         ],
