@@ -9,7 +9,18 @@
       "cwd": "${workspaceFolder}/comfyUI_portable/ComfyUI_windows_portable",
       "python": "${workspaceFolder}/comfyUI_portable/ComfyUI_windows_portable/python_embeded/python.exe",
       "console": "integratedTerminal",
-      "args": ["--windows-standalone-build"]
+      "args": ["--windows-standalone-build", "--disable-auto-launch"],
+      "serverReadyAction": {
+        "pattern": "To see the GUI go to:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Open ComfyUI in VS Code Browser"
+      }
+    },
+    {
+      "name": "Open ComfyUI in VS Code Browser",
+      "type": "editor-browser",
+      "request": "launch",
+      "url": "http://localhost:8188"
     }
   ]
 }
