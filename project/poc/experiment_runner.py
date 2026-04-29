@@ -51,7 +51,7 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _project_python_root() -> Path:
+def _project_root() -> Path:
     return Path(__file__).resolve().parent
 
 
@@ -169,7 +169,7 @@ def _resolve_method_script(method: str) -> Path:
         raise ValueError(
             f"Unsupported method {method!r}. Expected one of {sorted(METHOD_TO_SCRIPT)}"
         ) from exc
-    return _project_python_root() / relative_script
+    return _project_root() / relative_script
 
 
 def _read_quick_log(path: Path) -> list[dict[str, Any]]:

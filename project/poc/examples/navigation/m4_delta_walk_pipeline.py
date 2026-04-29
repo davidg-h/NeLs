@@ -9,7 +9,6 @@ Pipeline coverage:
 """
 
 from pathlib import Path
-import torch
 
 from helpers.methods.access import (
     decode_latents_to_image,

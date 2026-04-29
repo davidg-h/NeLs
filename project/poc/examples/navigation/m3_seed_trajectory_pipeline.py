@@ -7,7 +7,6 @@ Pipeline coverage:
 - Image generation and output export
 """
 
-import torch
 from pathlib import Path
 
 from helpers.methods.access import infer_latent_shape
