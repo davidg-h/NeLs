@@ -51,7 +51,7 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _project_root() -> Path:
+def _poc_root() -> Path:
     return Path(__file__).resolve().parent
 
 
@@ -104,8 +104,7 @@ def _resolve_mode(args: argparse.Namespace) -> str:
 
 def _validate_config(config: dict[str, Any], config_path: Path) -> None:
     missing = [
-        key for key in ("output_root", "torch_dtype", "methods")
-        if key not in config
+        key for key in ("output_root", "torch_dtype", "methods") if key not in config
     ]
     if missing:
         raise ValueError(
@@ -141,14 +140,10 @@ def _resolve_runtime_settings(config: dict[str, Any]) -> dict[str, Any]:
     resolved = dict(config)
 
     resolved["model_id"] = str(
-        config.get("model_id")
-        or os.getenv("MODEL_ID")
-        or DEFAULT_MODEL_ID
+        config.get("model_id") or os.getenv("MODEL_ID") or DEFAULT_MODEL_ID
     )
     resolved["device"] = str(
-        config.get("device")
-        or os.getenv("DEVICE")
-        or DEFAULT_DEVICE
+        config.get("device") or os.getenv("DEVICE") or DEFAULT_DEVICE
     )
 
     return resolved
@@ -169,7 +164,7 @@ def _resolve_method_script(method: str) -> Path:
         raise ValueError(
             f"Unsupported method {method!r}. Expected one of {sorted(METHOD_TO_SCRIPT)}"
         ) from exc
-    return _project_root() / relative_script
+    return _poc_root() / relative_script
 
 
 def _read_quick_log(path: Path) -> list[dict[str, Any]]:
@@ -465,7 +460,7 @@ def _execute_method(
     start_perf = time.perf_counter()
     process = subprocess.run(
         [sys.executable, str(script_path)],
-        cwd=str(_project_python_root()),
+        cwd=str(_poc_root()),
         env=env,
         capture_output=True,
         text=True,
