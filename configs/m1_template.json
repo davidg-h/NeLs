@@ -1,0 +1,42 @@
+{
+  "output_root": "experiments/runs",
+  "torch_dtype": "float16",
+  "log_level": "full",
+  "pipeline": {
+    "offload_mode": "group",
+    "group_offload_type": "leaf_level",
+    "group_use_stream": true,
+    "group_low_cpu_mem_usage": false,
+    "enable_text_encoder_group_offload": true,
+    "text_encoder_group_offload_type": "block_level",
+    "text_encoder_num_blocks_per_group": 1,
+    "enable_vae_group_offload": true,
+    "vae_group_offload_type": "leaf_level",
+    "vae_num_blocks_per_group": 2,
+    "enable_vae_slicing": true,
+    "enable_vae_tiling": true,
+    "enable_layerwise_casting": true,
+    "layerwise_storage_dtype": null,
+    "layerwise_fallback_storage_dtype": "float16",
+    "layerwise_compute_dtype": "float16",
+    "enable_channels_last": true,
+    "enable_xformers_attention": true,
+    "enable_torch_compile": false,
+    "compile_mode": "max-autotune",
+    "compile_fullgraph": false,
+    "disable_progress_bar": true
+  },
+  "methods": {
+    "M1": {
+      "prompt": "a high-detail mountain valley at sunrise",
+      "seed": 123,
+      "start_seed": 11,
+      "end_seed": 77,
+      "alphas": [0.0, 0.33, 0.66, 1.0],
+      "height": 1024,
+      "width": 1024,
+      "num_inference_steps": 4,
+      "guidance_scale": 0.0
+    }
+  }
+}
