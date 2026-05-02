@@ -7,7 +7,7 @@ The experiment runner is the repository's official non-interactive entrypoint fo
 Primary entrypoint:
 
 ```bash
-python project/poc/experiment_runner.py
+python prototypes/poc/experiment_runner.py
 ```
 
 All CLI aliases call the same runner implementation.
@@ -24,13 +24,13 @@ Both modes require a JSON config file.
 ### Single Run
 
 ```bash
-python project/poc/experiment_runner.py --sr M1 --config project/configs/m1_template.json
+python prototypes/poc/experiment_runner.py --sr M1 --config prototypes/configs/m1_template.json
 ```
 
 ### Multi Run
 
 ```bash
-python project/poc/experiment_runner.py --mr M1 M2 M3 --config project/configs/multi_run_template.json
+python prototypes/poc/experiment_runner.py --mr M1 M2 M3 --config prototypes/configs/multi_run_template.json
 ```
 
 ## Config Schema
@@ -115,13 +115,13 @@ Examples:
 
 Ready-to-use templates live in:
 
-- `project/configs/m1_template.json`
-- `project/configs/m2_template.json`
-- `project/configs/m3_template.json`
-- `project/configs/m4_template.json`
-- `project/configs/m5_template.json`
-- `project/configs/m6_template.json`
-- `project/configs/multi_run_template.json`
+- `prototypes/configs/m1_template.json`
+- `prototypes/configs/m2_template.json`
+- `prototypes/configs/m3_template.json`
+- `prototypes/configs/m4_template.json`
+- `prototypes/configs/m5_template.json`
+- `prototypes/configs/m6_template.json`
+- `prototypes/configs/multi_run_template.json`
 
 These templates are directly usable or very close to usable.
 
@@ -168,19 +168,19 @@ experiments/runs/
 ### Single Run, M1
 
 ```bash
-python project/poc/experiment_runner.py --sr M1 --config project/configs/m1_template.json
+python prototypes/poc/experiment_runner.py --sr M1 --config prototypes/configs/m1_template.json
 ```
 
 ### Multi Run, M1-M6
 
 ```bash
-python project/poc/experiment_runner.py --mr M1 M2 M3 M4 M5 M6 --config project/configs/multi_run_template.json
+python prototypes/poc/experiment_runner.py --mr M1 M2 M3 M4 M5 M6 --config prototypes/configs/multi_run_template.json
 ```
 
 ### Multi Run with a Smaller Batch
 
 ```bash
-python project/python/experiment_runner.py --mr M1 M4 M6 --config project/configs/multi_run_template.json
+python prototypes/poc/experiment_runner.py --mr M1 M4 M6 --config prototypes/configs/multi_run_template.json
 ```
 
 ## Direct Script Execution
@@ -190,7 +190,7 @@ The runner does not change how standalone scripts behave.
 You can still run a script directly:
 
 ```bash
-python project/poc/examples/navigation/m1_lerp_pipeline.py
+python prototypes/poc/examples/navigation/m1_lerp_pipeline.py
 ```
 
 Direct script execution still uses the script's own defaults unless `NELS_RUN_CONFIG` is set manually.
@@ -211,7 +211,7 @@ If the config file omits a value, the example script still falls back to its own
 ### Missing Config
 
 ```bash
-python project/poc/experiment_runner.py --sr M1
+python prototypes/poc/experiment_runner.py --sr M1
 ```
 
 This errors because `--config` is required.
@@ -236,12 +236,12 @@ If `model_id` is omitted in config, the runner resolves it from `MODEL_ID` in en
 Use paths relative to the repository root in the config, for example:
 
 - `experiments/runs`
-- `project/configs/m1_template.json`
+- `prototypes/configs/m1_template.json`
 
 ## Extending The Runner
 
 To add a new method later:
 
-1. Add the script path to `METHOD_TO_SCRIPT` in [project/poc/experiment_runner.py](../project/poc/experiment_runner.py)
+1. Add the script path to `METHOD_TO_SCRIPT` in [prototypes/poc/experiment_runner.py](../prototypes/poc/experiment_runner.py)
 2. Add a new method block to the relevant config template(s)
 3. Keep the method parameters in the config block aligned with the script's `resolve_run_config_value` keys
