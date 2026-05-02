@@ -1,0 +1,43 @@
+{
+  "output_root": "experiments/runs",
+  "torch_dtype": "bfloat16",
+  "log_level": "full",
+  "pipeline": {
+    "offload_mode": "none",
+    "group_offload_type": "leaf_level",
+    "group_use_stream": false,
+    "group_low_cpu_mem_usage": false,
+    "enable_text_encoder_group_offload": false,
+    "text_encoder_group_offload_type": "block_level",
+    "text_encoder_num_blocks_per_group": 1,
+    "enable_vae_group_offload": false,
+    "vae_group_offload_type": "leaf_level",
+    "vae_num_blocks_per_group": 2,
+    "enable_vae_slicing": false,
+    "enable_vae_tiling": false,
+    "enable_layerwise_casting": false,
+    "layerwise_storage_dtype": null,
+    "layerwise_fallback_storage_dtype": "bfloat16",
+    "layerwise_compute_dtype": "bfloat16",
+    "enable_channels_last": true,
+    "enable_xformers_attention": true,
+    "enable_torch_compile": false,
+    "compile_mode": "max-autotune",
+    "compile_fullgraph": false,
+    "disable_progress_bar": false
+  },
+  "methods": {
+    "M3": {
+      "prompt": "a forest trail after rain, natural lighting",
+      "seed": 77,
+      "seed_a": 5,
+      "seed_b": 105,
+      "trajectory_steps": 5,
+      "trajectory_method": "slerp",
+      "height": 1024,
+      "width": 1024,
+      "num_inference_steps": 3,
+      "guidance_scale": 0.0
+    }
+  }
+}
