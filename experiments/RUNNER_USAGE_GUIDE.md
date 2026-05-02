@@ -24,13 +24,13 @@ Both modes require a JSON config file.
 ### Single Run
 
 ```bash
-python prototypes/poc/experiment_runner.py --sr M1 --config prototypes/configs/m1_template.json
+python prototypes/poc/experiment_runner.py --sr M1 --config prototypes/configs/full_gpu_profile/m1_full_gpu.json
 ```
 
 ### Multi Run
 
 ```bash
-python prototypes/poc/experiment_runner.py --mr M1 M2 M3 --config prototypes/configs/multi_run_template.json
+python prototypes/poc/experiment_runner.py --mr M1 M2 M3 --config prototypes/configs/full_gpu_profile/multi_run_full_gpu.json
 ```
 
 ## Config Schema
@@ -111,17 +111,17 @@ Examples:
 - `M5`: `prompt`, `seed`, `window_start`, `window_end`, `edit_scale`, `num_inference_steps`, `guidance_scale`
 - `M6`: `prompt_a`, `prompt_b`, `seed`, `alphas`, `height`, `width`, `num_inference_steps`, `max_sequence_length`, `guidance_scale`
 
-## Templates
+## Profiles
 
 Ready-to-use templates live in:
 
-- `prototypes/configs/m1_template.json`
-- `prototypes/configs/m2_template.json`
-- `prototypes/configs/m3_template.json`
-- `prototypes/configs/m4_template.json`
-- `prototypes/configs/m5_template.json`
-- `prototypes/configs/m6_template.json`
-- `prototypes/configs/multi_run_template.json`
+- `prototypes/configs/templates/m1_template.json`
+- `prototypes/configs/templates/m2_template.json`
+- `prototypes/configs/templates/m3_template.json`
+- `prototypes/configs/templates/m4_template.json`
+- `prototypes/configs/templates/m5_template.json`
+- `prototypes/configs/templates/m6_template.json`
+- `prototypes/configs/templates/multi_run_template.json`
 
 These templates are directly usable or very close to usable.
 
@@ -236,7 +236,7 @@ If `model_id` is omitted in config, the runner resolves it from `MODEL_ID` in en
 Use paths relative to the repository root in the config, for example:
 
 - `experiments/runs`
-- `prototypes/configs/m1_template.json`
+- `prototypes/configs/templates/m1_template.json`
 
 ## Extending The Runner
 
