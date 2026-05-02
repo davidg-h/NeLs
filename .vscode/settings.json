@@ -1,5 +1,5 @@
 {
   "python.envFile": "${workspaceFolder}/.env",
   "python.terminal.useEnvFile": true,
-  "python.analysis.extraPaths": ["./project/poc"]
+  "python.analysis.extraPaths": ["./prototypes/poc"]
 }
