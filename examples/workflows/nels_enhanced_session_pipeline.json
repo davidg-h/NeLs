@@ -1,0 +1,261 @@
+{
+  "id": "nels-enhanced-session-pipeline",
+  "revision": 2,
+  "last_node_id": 6,
+  "last_link_id": 4,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "nels_GraphPanelLauncher",
+      "pos": [
+        -731.5365839176324,
+        57.96734726697712
+      ],
+      "size": [
+        260,
+        82
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "nels_GraphPanelLauncher"
+      },
+      "widgets_values": [
+        null
+      ]
+    },
+    {
+      "id": 2,
+      "type": "nels_Session",
+      "pos": [
+        -299.99301752511565,
+        279.9981104391266
+      ],
+      "size": [
+        340,
+        160
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "embedding_set",
+          "type": "NELS_EMBEDDING_SET",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "session_bundle",
+          "type": "NELS_SESSION_BUNDLE",
+          "slot_index": 0,
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "run_config_json",
+          "type": "STRING",
+          "slot_index": 1,
+          "links": []
+        },
+        {
+          "name": "selection_json",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_Session"
+      },
+      "widgets_values": [
+        "default"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "nels_GraphOperation",
+      "pos": [
+        120.02066997488419,
+        279.9981104391266
+      ],
+      "size": [
+        320,
+        120
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "session_bundle",
+          "type": "NELS_SESSION_BUNDLE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "session_bundle",
+          "type": "NELS_SESSION_BUNDLE",
+          "slot_index": 0,
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "trajectory",
+          "type": "NELS_TRAJECTORY",
+          "slot_index": 1,
+          "links": []
+        },
+        {
+          "name": "operation_result_json",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_GraphOperation"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 4,
+      "type": "nels_Metrics",
+      "pos": [
+        519.9994361064755,
+        279.9981104391266
+      ],
+      "size": [
+        320,
+        120
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "session_bundle",
+          "type": "NELS_SESSION_BUNDLE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "session_bundle",
+          "type": "NELS_SESSION_BUNDLE",
+          "slot_index": 0,
+          "links": []
+        },
+        {
+          "name": "metrics",
+          "type": "NELS_METRICS",
+          "slot_index": 1,
+          "links": []
+        },
+        {
+          "name": "metrics_json",
+          "type": "STRING",
+          "slot_index": 2,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_Metrics"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "nels_DataSource",
+      "pos": [
+        -732.135497360625,
+        280.3275347669778
+      ],
+      "size": [
+        270,
+        395.6666564941406
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "embedding_set",
+          "type": "NELS_EMBEDDING_SET",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "source_meta_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_DataSource"
+      },
+      "widgets_values": [
+        32,
+        64,
+        42,
+        "randomize",
+        "sample",
+        "minimal",
+        4,
+        "2d_umap",
+        "none",
+        4
+      ]
+    }
+  ],
+  "links": [
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "NELS_SESSION_BUNDLE"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "NELS_SESSION_BUNDLE"
+    ],
+    [
+      4,
+      6,
+      0,
+      2,
+      0,
+      "NELS_EMBEDDING_SET"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "workflow_name": "NELS enhanced session pipeline",
+    "nels_note": "Open NELS Graph panel. Use Sessions, then Refresh. Queue Data Source -> Session -> Operation -> Metrics.",
+    "ds": {
+      "scale": 0.5565294821493173,
+      "offset": [
+        1535.9862960163255,
+        44.11634372423366
+      ]
+    },
+    "frontendVersion": "1.41.21"
+  },
+  "version": 0.4
+}
