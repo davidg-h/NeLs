@@ -1,0 +1,9 @@
+# Node
+node_modules/
+
+# Build output — generated from src/, not source-controlled
+js/nels_graph_panel.js
+
+# Vite / TS build caches
+.vite/
+*.tsbuildinfo
