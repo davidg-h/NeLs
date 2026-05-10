@@ -207,7 +207,7 @@ class NelsDataSource:
                 "label_prefix": ("STRING", {"default": "sample"}),
                 "metadata_mode": (["minimal", "prompt_like", "clustered"],),
                 "cluster_count": ("INT", {"default": 4, "min": 1, "max": 64, "step": 1}),
-                "projection_mode": (["2d_umap", "3d_umap", "2d_pca_debug", "3d_pca_debug"],),
+                "projection_mode": (["2d_umap"],),
                 "edge_mode": (
                     ["none", "knn_cosine", "knn_euclidean", "threshold_cosine", "fully_connected"],
                 ),

@@ -24,7 +24,7 @@ DEFAULT_UI_STATE: dict[str, Any] = {
     "projection_mode": "2d_umap",
     "edge_mode": "knn_cosine",
     "metric_mode": "step_distance",
-    "viewport": {"x": 0.0, "y": 0.0, "zoom": 1.0},
+    "viewport": {"x": 0.0, "y": 0.0, "ratio": 1.0},
 }
 
 
@@ -71,7 +71,7 @@ def normalize_ui_state(
         revision = 0
     normalized["state_revision"] = revision + 1 if increment_revision else revision
     if not isinstance(normalized.get("viewport"), dict):
-        normalized["viewport"] = {"x": 0.0, "y": 0.0, "zoom": 1.0}
+        normalized["viewport"] = {"x": 0.0, "y": 0.0, "ratio": 1.0}
     return normalized
 
 
