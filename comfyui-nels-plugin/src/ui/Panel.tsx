@@ -94,9 +94,9 @@ export function Panel() {
           )}
         </section>
         <aside class="nels-panel-side">
-          <SessionCard />
           <OperationCard />
           <ResultCard />
+          <SessionCard />
         </aside>
       </div>
       <div class={`nels-panel-logs-view${isGraph ? " hidden" : ""}`}>

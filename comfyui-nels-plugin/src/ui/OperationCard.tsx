@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { operationConfig, setOperationConfig, setOperationResult } from "../state/operation.js";
 import { clearSelection } from "../state/selection.js";
-import { schedulePushState } from "../state/session.js";
+import { activeSession, schedulePushState } from "../state/session.js";
 import { fitCamera } from "../graph/renderer2d.js";
 import { graphData } from "../state/graph.js";
 
@@ -13,6 +13,26 @@ function onChange<K extends keyof ReturnType<typeof operationConfig.peek>>(
     setOperationConfig({ [key]: cast((e.target as HTMLInputElement | HTMLSelectElement).value) });
     schedulePushState();
   };
+}
+
+function onNeighborCountChange(e: Event): void {
+  const input = e.target as HTMLInputElement;
+  const raw = Number(input.value);
+  const knnK = activeSession.value?.source_config?.knn_k;
+
+  if (knnK !== undefined && raw > knnK) {
+    const ok = window.confirm(
+      `Neighbor count ${raw} exceeds the dataset's precomputed k=${knnK}.\n\n` +
+      `Values above ${knnK} require live brute-force search and will be slower.\n\n` +
+      `Continue?`,
+    );
+    if (!ok) {
+      input.value = String(operationConfig.peek().neighbor_count);
+      return;
+    }
+  }
+  setOperationConfig({ neighbor_count: raw });
+  schedulePushState();
 }
 
 export function OperationCard() {
@@ -61,7 +81,7 @@ export function OperationCard() {
             max={128}
             step={1}
             value={cfg.neighbor_count}
-            onChange={onChange("neighbor_count", Number)}
+            onChange={onNeighborCountChange}
           />
         </label>
         <label>

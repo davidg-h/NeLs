@@ -181,44 +181,53 @@ def nearest_neighbor_result(
     state_revision: int | None = None,
     metric: str = "cosine",
 ) -> dict[str, Any]:
-    """Rank nearest neighbors for the first selected point."""
+    """Rank nearest neighbors for all selected points (one query per selected point)."""
     validate_embedding_set(embedding_set)
-    points = selected_points(embedding_set, selection)
-    if not points:
-        raise NelsNavigationError("nearest_neighbor requires one selected point")
+    query_points = selected_points(embedding_set, selection)
+    if not query_points:
+        raise NelsNavigationError("nearest_neighbor requires at least one selected point")
 
-    query = points[0]
     candidates = embedding_set["points"]
-    ranked = nearest_neighbors(
-        query["tensor"],
-        [point["tensor"] for point in candidates],
-        limit=max(1, int(neighbor_count) + 1),
-        metric=metric,
-    )
-    neighbors = []
-    for index, score in ranked:
-        candidate = candidates[index]
-        if candidate["id"] == query["id"]:
-            continue
-        neighbors.append(
-            {
-                "id": candidate["id"],
-                "label": candidate["label"],
-                "score": float(score),
-                "metric": metric,
-                "metadata": candidate.get("metadata", {}),
-            }
+    selected_id_set = {str(p["id"]) for p in query_points}
+    # Fetch extra candidates per query to account for selected points being skipped
+    limit = max(1, int(neighbor_count) + len(query_points))
+
+    all_neighbors: list[dict[str, Any]] = []
+    for query in query_points:
+        query_id = str(query["id"])
+        ranked = nearest_neighbors(
+            query["tensor"],
+            [point["tensor"] for point in candidates],
+            limit=limit,
+            metric=metric,
         )
-        if len(neighbors) >= int(neighbor_count):
-            break
+        count = 0
+        for index, score in ranked:
+            candidate = candidates[index]
+            cid = str(candidate["id"])
+            if cid in selected_id_set:
+                continue
+            all_neighbors.append(
+                {
+                    "id": candidate["id"],
+                    "label": candidate["label"],
+                    "score": float(score),
+                    "metric": metric,
+                    "metadata": candidate.get("metadata", {}),
+                    "query_id": query_id,
+                }
+            )
+            count += 1
+            if count >= int(neighbor_count):
+                break
 
     return {
         "version": 1,
         "operation": "nearest_neighbor",
         "request_id": request_id or uuid.uuid4().hex,
         "state_revision": int(state_revision or 0),
-        "source_point_ids": [query["id"]],
-        "neighbors": neighbors,
+        "source_point_ids": [str(p["id"]) for p in query_points],
+        "neighbors": all_neighbors,
     }
 
 
