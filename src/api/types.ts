@@ -27,6 +27,7 @@ export interface NelsSourceConfig {
   neighbor_count?: number;
   source_config_hash?: string;
   dataset_id?: string;
+  knn_k?: number;
 }
 
 export interface NelsGraphSnapshot {
@@ -53,6 +54,7 @@ export interface NelsNeighbor {
   point_id?: string;
   id?: string;
   distance: number;
+  query_id?: string;
 }
 
 export interface NelsOperationResult {

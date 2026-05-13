@@ -14,7 +14,12 @@ from ..core.projection_ops import (
     normalize_projected_coordinates,
     project_both_modes,
 )
-from ..core.session_contracts import assemble_snapshot, json_dumps, merge_dual_points, zip_point_coords
+from ..core.session_contracts import (
+    assemble_snapshot,
+    json_dumps,
+    merge_dual_points,
+    zip_point_coords,
+)
 from ..scripts.dataset_core import load_dataset, select_sample_indices
 from ..server.session_store import get_store, source_config_hash
 
@@ -23,12 +28,13 @@ _DEFAULT_DATASETS = _PLUGIN_ROOT / "datasets"
 
 
 def _remap_knn_to_local(
-    knn_indices: Any,      # np.ndarray (N_full, k)
-    knn_distances: Any,    # np.ndarray (N_full, k)
+    knn_indices: Any,  # np.ndarray (N_full, k)
+    knn_distances: Any,  # np.ndarray (N_full, k)
     selected_indices: list[int],
 ) -> tuple[Any, Any]:
     """Remap global kNN row/col indices to local indices for a selected subset."""
     import numpy as _np
+
     global_to_local = {int(g): l for l, g in enumerate(selected_indices)}
     n = len(selected_indices)
     stored_k = knn_indices.shape[1]
@@ -59,7 +65,9 @@ def _make_precomputed_knn(
     knn_dst = dataset.get(f"knn_{metric}_distances")
     if knn_idx is None or knn_dst is None:
         return None
-    k = int(dataset.get("metadata", {}).get("knn_params", {}).get("k", knn_idx.shape[1]))
+    k = int(
+        dataset.get("metadata", {}).get("knn_params", {}).get("k", knn_idx.shape[1])
+    )
     if indices is not None:
         knn_idx, knn_dst = _remap_knn_to_local(knn_idx, knn_dst, indices)
     return {"indices": knn_idx, "distances": knn_dst, "metric": metric, "k": k}
@@ -68,9 +76,11 @@ def _make_precomputed_knn(
 def _resolve_dataset_path(dataset_path: str) -> Path:
     """Resolve dataset_path to an absolute Path, raising a clear error if empty."""
     if not dataset_path or not dataset_path.strip():
-        available = sorted(
-            d.name for d in _DEFAULT_DATASETS.iterdir() if d.is_dir()
-        ) if _DEFAULT_DATASETS.is_dir() else []
+        available = (
+            sorted(d.name for d in _DEFAULT_DATASETS.iterdir() if d.is_dir())
+            if _DEFAULT_DATASETS.is_dir()
+            else []
+        )
         hint = (
             "\n".join(f"  {n}" for n in available)
             if available
@@ -190,6 +200,12 @@ def build_loader_snapshot(
         warnings = dual["warnings"]
         projection_method = "umap_recomputed"
 
+    # Expose the datasets precomputed kNN k so the UI can warn on overflow.
+    if dataset:
+        knn_k = dataset.get("metadata", {}).get("knn_params", {}).get("k")
+        if knn_k is not None:
+            config = {**config, "knn_k": int(knn_k)}
+
     return assemble_snapshot(
         snapshot_points,
         edges,
@@ -221,7 +237,9 @@ def load_and_build(
 
     total = len(dataset["samples"])
     indices = select_sample_indices(
-        total, count, load_mode,
+        total,
+        count,
+        load_mode,
         window_start=window_start,
         random_seed=random_seed,
     )

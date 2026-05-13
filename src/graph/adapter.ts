@@ -80,15 +80,16 @@ export function addOverlayEdgesImpl(
 
   if (!operationResult || operationResult.operation !== "nearest_neighbor") return;
 
-  const sourceId = firstPointId(
+  const fallbackSourceId = firstPointId(
     operationResult.source_point_id ?? operationResult.source_point_ids,
   );
-  if (!sourceId || !sigmaGraph.hasNode(sourceId)) return;
 
   for (const neighbor of operationResult.neighbors ?? []) {
     const targetId = firstPointId(neighbor.point_id ?? neighbor.id);
-    if (!targetId || !sigmaGraph.hasNode(targetId)) continue;
-    const ek = sigmaGraph.addEdge(sourceId, targetId, {
+    // Use the per-neighbor query_id (multi-point NN) or fall back to first source
+    const srcId = neighbor.query_id ? String(neighbor.query_id) : fallbackSourceId;
+    if (!srcId || !sigmaGraph.hasNode(srcId) || !targetId || !sigmaGraph.hasNode(targetId)) continue;
+    const ek = sigmaGraph.addEdge(srcId, targetId, {
       type: "curved",
       curvature: 0.2,
       color: "rgba(250,204,21,0.78)",

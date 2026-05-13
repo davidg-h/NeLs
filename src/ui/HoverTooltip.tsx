@@ -32,6 +32,7 @@ export function HoverTooltip({ containerRef }: { containerRef: { current: HTMLEl
     ...(origSize ? [["size", `${origSize[0]}×${origSize[1]}`] as [string, unknown]] : []),
     ["x", Number(point.coords?.[0] ?? 0).toFixed(3)],
     ["y", Number(point.coords?.[1] ?? 0).toFixed(3)],
+    ...(point.coords?.length === 3 ? [["z", Number(point.coords[2]).toFixed(3)] as [string, unknown]] : []),
   ];
 
   return (

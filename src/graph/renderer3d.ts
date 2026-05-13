@@ -31,6 +31,9 @@ let basePositions: Float32Array = new Float32Array(0);
 // Pre-converted base colors as r,g,b 0-1 triples
 let baseRGB: Float32Array = new Float32Array(0);
 let zBounds = { min: -1, max: 1 };
+// [si, ti] index pairs for each edge — used to recolor edges and animate positions
+let edgeEndpoints: Array<[number, number]> = [];
+let overlayEndpoints: Array<[number, number]> = [];
 
 const pulses = new Map<string, number>();
 const effectDisposals: (() => void)[] = [];
@@ -148,6 +151,8 @@ export function destroyRenderer(): void {
   nodeIds = [];
   basePositions = new Float32Array(0);
   baseRGB = new Float32Array(0);
+  edgeEndpoints = [];
+  overlayEndpoints = [];
   pulses.clear();
 }
 
@@ -274,7 +279,7 @@ function rebuildScene(gd: typeof graphData.value): void {
   geo.setAttribute("color", colAttr);
 
   const mat = new THREE.PointsMaterial({
-    size: 0.055,
+    size: 0.11,
     sizeAttenuation: true,
     vertexColors: true,
     map: circleTexture,
@@ -286,11 +291,15 @@ function rebuildScene(gd: typeof graphData.value): void {
 
   // KNN edges
   const edgePos: number[] = [];
+  const edgeCol: number[] = [];
+  edgeEndpoints = [];
+  overlayEndpoints = [];
   const idxMap = new Map(nodeIds.map((id, i) => [id, i]));
   for (const edge of gd.edges) {
     const si = idxMap.get(String(edge.source));
     const ti = idxMap.get(String(edge.target));
     if (si === undefined || ti === undefined) continue;
+    edgeEndpoints.push([si, ti]);
     edgePos.push(
       basePositions[si * 3],
       basePositions[si * 3 + 1],
@@ -299,17 +308,20 @@ function rebuildScene(gd: typeof graphData.value): void {
       basePositions[ti * 3 + 1],
       basePositions[ti * 3 + 2],
     );
+    // Default color
+    edgeCol.push(0.22, 0.29, 0.38, 0.22, 0.29, 0.38);
   }
   if (edgePos.length) {
     const egeo = new THREE.BufferGeometry();
-    egeo.setAttribute("position", new THREE.Float32BufferAttribute(edgePos, 3));
+    const ePosAttr = new THREE.Float32BufferAttribute(edgePos, 3);
+    ePosAttr.setUsage(THREE.DynamicDrawUsage);
+    egeo.setAttribute("position", ePosAttr);
+    const eColAttr = new THREE.Float32BufferAttribute(edgeCol, 3);
+    eColAttr.setUsage(THREE.DynamicDrawUsage);
+    egeo.setAttribute("color", eColAttr);
     edgeLines = new THREE.LineSegments(
       egeo,
-      new THREE.LineBasicMaterial({
-        color: 0x1e4060,
-        transparent: true,
-        opacity: 0.35,
-      }),
+      new THREE.LineBasicMaterial({ vertexColors: true }),
     );
     scene.add(edgeLines);
   }
@@ -321,23 +333,29 @@ function rebuildScene(gd: typeof graphData.value): void {
 function rebuildOverlayLines(): void {
   if (!scene) return;
   disposeAndRemoveLines("overlay");
+  overlayEndpoints = [];
 
   const result = operationResult.value;
   if (!result || result.operation !== "nearest_neighbor") return;
 
   const idxMap = new Map(nodeIds.map((id, i) => [id, i]));
-  const sourceIds =
-    result.source_point_ids ??
+  const fallbackSourceIds: string[] =
+    result.source_point_ids?.map(String) ??
     (result.source_point_id ? [String(result.source_point_id)] : []);
   const positions: number[] = [];
 
   for (const neighbor of result.neighbors ?? []) {
     const pid = String(neighbor.point_id ?? neighbor.id ?? "");
     if (!pid) continue;
-    for (const sid of sourceIds) {
-      const si = idxMap.get(String(sid));
+    // Per-neighbor query_id (multi-point NN) or fall back to all source IDs
+    const querySids = neighbor.query_id
+      ? [String(neighbor.query_id)]
+      : fallbackSourceIds;
+    for (const sid of querySids) {
+      const si = idxMap.get(sid);
       const ti = idxMap.get(pid);
       if (si === undefined || ti === undefined) continue;
+      overlayEndpoints.push([si, ti]);
       positions.push(
         basePositions[si * 3],
         basePositions[si * 3 + 1],
@@ -351,7 +369,9 @@ function rebuildOverlayLines(): void {
 
   if (!positions.length) return;
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  const oPosAttr = new THREE.Float32BufferAttribute(positions, 3);
+  oPosAttr.setUsage(THREE.DynamicDrawUsage);
+  geo.setAttribute("position", oPosAttr);
   overlayLines = new THREE.LineSegments(
     geo,
     new THREE.LineBasicMaterial({
@@ -419,40 +439,115 @@ function updatePointCloud(t: number, animate: boolean): void {
     "color",
   ) as THREE.BufferAttribute;
 
+  // Animated world positions per node — reused for edge endpoint updates
+  const wx = new Float32Array(nodeIds.length);
+  const wy = new Float32Array(nodeIds.length);
+  const wz = new Float32Array(nodeIds.length);
+
   for (let i = 0; i < nodeIds.length; i++) {
     const id = nodeIds[i];
     const bx = basePositions[i * 3];
     const by = basePositions[i * 3 + 1];
     const bz = basePositions[i * 3 + 2];
 
+    let ax = bx,
+      ay = by,
+      az = bz;
     if (animate) {
       const h = hashString(id);
       const px = (h & 0xffff) * ((Math.PI * 2) / 0xffff);
       const py = (h >>> 16) * ((Math.PI * 2) / 0xffff);
       const pz =
         ((Math.imul(h, 0x9e3779b9) >>> 0) & 0xffff) * ((Math.PI * 2) / 0xffff);
-      const dx =
-        Math.sin(t * 0.6 + px) * 0.012 + Math.sin(t * 0.35 + px + 1.2) * 0.008;
-      const dy =
-        Math.cos(t * 0.45 + py) * 0.01 + Math.cos(t * 0.25 + py + 2.1) * 0.006;
-      const dz =
-        Math.sin(t * 0.5 + pz) * 0.009 + Math.sin(t * 0.3 + pz + 0.8) * 0.005;
-      posAttr.setXYZ(i, bx + dx, by + dy, bz + dz);
-    } else {
-      posAttr.setXYZ(i, bx, by, bz);
+      ax +=
+        Math.sin(t * 0.6 + px) * 0.035 + Math.sin(t * 0.35 + px + 1.2) * 0.02;
+      ay +=
+        Math.cos(t * 0.45 + py) * 0.03 + Math.cos(t * 0.25 + py + 2.1) * 0.015;
+      az +=
+        Math.sin(t * 0.5 + pz) * 0.015 + Math.sin(t * 0.3 + pz + 0.8) * 0.01;
     }
+    wx[i] = ax;
+    wy[i] = ay;
+    wz[i] = az;
+    posAttr.setXYZ(i, ax, ay, az);
 
-    const [r, g, b] = nodeColor(i, id);
+    const [r, g, b] = nodeColor(i, id, t);
     colAttr.setXYZ(i, r, g, b);
   }
 
   posAttr.needsUpdate = true;
   colAttr.needsUpdate = true;
+
+  // Move edge endpoints to follow their nodes animated position
+  if (edgeLines && edgeEndpoints.length) {
+    const ePosAttr = edgeLines.geometry.getAttribute(
+      "position",
+    ) as THREE.BufferAttribute;
+    for (let e = 0; e < edgeEndpoints.length; e++) {
+      const [si, ti] = edgeEndpoints[e];
+      ePosAttr.setXYZ(e * 2, wx[si], wy[si], wz[si]);
+      ePosAttr.setXYZ(e * 2 + 1, wx[ti], wy[ti], wz[ti]);
+    }
+    ePosAttr.needsUpdate = true;
+  }
+
+  // Move overlay (nearest-neighbor) edges the same way
+  if (overlayLines && overlayEndpoints.length) {
+    const oPosAttr = overlayLines.geometry.getAttribute(
+      "position",
+    ) as THREE.BufferAttribute;
+    for (let e = 0; e < overlayEndpoints.length; e++) {
+      const [si, ti] = overlayEndpoints[e];
+      oPosAttr.setXYZ(e * 2, wx[si], wy[si], wz[si]);
+      oPosAttr.setXYZ(e * 2 + 1, wx[ti], wy[ti], wz[ti]);
+    }
+    oPosAttr.needsUpdate = true;
+  }
+
+  updateEdgeColors();
+}
+
+function updateEdgeColors(): void {
+  if (!edgeLines || !edgeEndpoints.length) return;
+  const colAttr = edgeLines.geometry.getAttribute(
+    "color",
+  ) as THREE.BufferAttribute;
+  const hasCtx = rs.selectedIds.size > 0 || rs.emphasizedIds.size > 0;
+
+  for (let e = 0; e < edgeEndpoints.length; e++) {
+    const [si, ti] = edgeEndpoints[e];
+    const sId = nodeIds[si];
+    const tId = nodeIds[ti];
+    let r: number, g: number, b: number;
+    if (!hasCtx) {
+      r = 0.22;
+      g = 0.29;
+      b = 0.38;
+    } else {
+      const active =
+        rs.selectedIds.has(sId) ||
+        rs.selectedIds.has(tId) ||
+        rs.emphasizedIds.has(sId) ||
+        rs.emphasizedIds.has(tId);
+      if (active) {
+        r = 0.37;
+        g = 0.62;
+        b = 0.74;
+      } else {
+        r = 0.05;
+        g = 0.07;
+        b = 0.09;
+      }
+    }
+    colAttr.setXYZ(e * 2, r, g, b);
+    colAttr.setXYZ(e * 2 + 1, r, g, b);
+  }
+  colAttr.needsUpdate = true;
 }
 
 // --- Color ---
 
-function nodeColor(i: number, id: string): [number, number, number] {
+function nodeColor(i: number, id: string, t: number): [number, number, number] {
   const selected = rs.selectedIds.has(id);
   const hover = rs.hoverNodeId === id;
   const hasCtx =
@@ -474,12 +569,21 @@ function nodeColor(i: number, id: string): [number, number, number] {
   if (emphasized) return [0.49, 0.827, 0.988]; // #7dd3fc
   if (dim) {
     return [
-      baseRGB[i * 3] * 0.2,
-      baseRGB[i * 3 + 1] * 0.2,
-      baseRGB[i * 3 + 2] * 0.2,
+      baseRGB[i * 3] * 0.25,
+      baseRGB[i * 3 + 1] * 0.25,
+      baseRGB[i * 3 + 2] * 0.25,
     ];
   }
-  return [baseRGB[i * 3], baseRGB[i * 3 + 1], baseRGB[i * 3 + 2]];
+
+  // Ambient shimmer: per-node phase mixes base color slightly toward white,
+  const h = hashString(id);
+  const sp = ((h ^ (h >>> 17)) & 0xffff) * ((Math.PI * 2) / 0xffff);
+  const shimmer = 0.5 + 0.5 * Math.sin(t * 0.72 + sp);
+  const f = 0.02 + shimmer * 0.04;
+  const r = baseRGB[i * 3],
+    g = baseRGB[i * 3 + 1],
+    b = baseRGB[i * 3 + 2];
+  return [r + (1 - r) * f, g + (1 - g) * f, b + (1 - b) * f];
 }
 
 // --- Interaction ---
