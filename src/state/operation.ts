@@ -6,6 +6,7 @@ export interface OperationConfig {
   metric_mode: string;
   neighbor_count: number;
   alpha_schedule: string;
+  edge_mode: string;
 }
 
 export const operationConfig = signal<OperationConfig>({
@@ -13,6 +14,7 @@ export const operationConfig = signal<OperationConfig>({
   metric_mode: "step_distance",
   neighbor_count: 4,
   alpha_schedule: "0,0.25,0.5,0.75,1",
+  edge_mode: "knn_cosine",
 });
 
 export const operationResult = signal<NelsOperationResult | null>(null);

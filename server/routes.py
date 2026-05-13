@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 try:
     from aiohttp import web
-except Exception:  # pragma: no cover
+except Exception:
     web = None
 
 from .session_store import get_store
@@ -57,42 +58,69 @@ def register_routes() -> None:
         session_id = request.match_info.get("session_id", "default")
         payload = await _json_body(request)
         state = store.update_ui_state(session_id, payload)
-        return web.json_response({"ui_state": state, "session": store.get_session(session_id)})
+        return web.json_response(
+            {"ui_state": state, "session": store.get_session(session_id)}
+        )
 
     @routes.post("/nels/api/session/{session_id}/source-preview")
     async def post_source_preview(request):
-        from ..nodes.data_source import preview_sample_source
-
         session_id = request.match_info.get("session_id", "default")
         payload = await _json_body(request)
         current = store.get_session(session_id)
-        source = (
-            current.get("source_config")
-            or ((current.get("source_snapshot") or {}).get("source_config") or {})
+        source = current.get("source_config") or (
+            (current.get("source_snapshot") or {}).get("source_config") or {}
         )
-        embedding_set, snapshot = preview_sample_source(
-            session_id=session_id,
-            sample_count=int(payload.get("sample_count", source.get("sample_count", 32))),
-            embedding_dim=int(payload.get("embedding_dim", source.get("embedding_dim", 64))),
-            seed=int(payload.get("seed", source.get("seed", 42))),
-            label_prefix=str(payload.get("label_prefix", source.get("label_prefix", "sample"))),
-            metadata_mode=str(payload.get("metadata_mode", source.get("metadata_mode", "clustered"))),
-            cluster_count=int(payload.get("cluster_count", source.get("cluster_count", 4))),
-            projection_mode=str(payload.get("projection_mode", source.get("projection_mode", "2d_umap"))),
-            edge_mode=str(payload.get("edge_mode", source.get("edge_mode", "knn_cosine"))),
-            neighbor_count=int(payload.get("neighbor_count", source.get("neighbor_count", 4))),
+
+        def on_progress(phase: str) -> None:
+            store.publish_event(
+                session_id,
+                {
+                    "event_type": "computing_projection",
+                    "node_name": "NELS Preview",
+                    "message": phase,
+                    "status": "running",
+                },
+            )
+
+        loop = asyncio.get_running_loop()
+
+        from ..nodes.dataset_loader import preview_dataset_source
+
+        kwargs = {
+            "session_id": session_id,
+            "dataset_path": str(
+                payload.get("dataset_path", source.get("dataset_path", ""))
+            ),
+            "load_mode": str(
+                payload.get("load_mode", source.get("load_mode", "first_n"))
+            ),
+            "count": int(payload.get("count", source.get("count", 1000))),
+            "window_start": int(
+                payload.get("window_start", source.get("window_start", 0))
+            ),
+            "random_seed": int(
+                payload.get("random_seed", source.get("random_seed", 42))
+            ),
+            "edge_mode": str(
+                payload.get("edge_mode", source.get("edge_mode", "knn_cosine"))
+            ),
+            "neighbor_count": int(
+                payload.get("neighbor_count", source.get("neighbor_count", 4))
+            ),
+        }
+        embedding_set, snapshot = await loop.run_in_executor(
+            None, lambda: preview_dataset_source(**kwargs, on_progress=on_progress)
         )
-        store.sync_source_config(
-            session_id,
-            snapshot["source_config"],
-        )
+        node_name = "NELS Dataset Loader Preview"
+
+        store.sync_source_config(session_id, snapshot.get("source_config", source))
         store.publish_source_snapshot(
             session_id,
             snapshot,
             state_revision=store.get_revision(session_id),
-            node_name="NELS Data Source Preview",
+            node_name=node_name,
             message=(
-                "NELS Data Source preview loaded graph data with "
+                f"{node_name} loaded graph data with "
                 f"{len(snapshot.get('points', []))} points"
             ),
         )

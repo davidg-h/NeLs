@@ -3,11 +3,13 @@ import type { NelsGraphSnapshot, NelsPoint, GraphData } from "../api/types.js";
 
 export const snapshot = signal<NelsGraphSnapshot | null>(null);
 export const graphData = signal<GraphData>(emptyGraph());
+export const viewMode = signal<"2d" | "3d">("2d");
 
 // Tracks coordinate layout across snapshot updates to prevent UMAP coords from
 // being replaced by operation-result snapshots that omit coordinates.
 let coordinateCacheKey = "";
-let coordinateCache = new Map<string, [number, number]>();
+let coordCache2d = new Map<string, [number, number]>();
+let coordCache3d = new Map<string, [number, number, number]>();
 
 export function setSnapshot(
   snap: NelsGraphSnapshot | null,
@@ -19,8 +21,22 @@ export function setSnapshot(
   return !!(options.fitAlways || (options.fit && snap));
 }
 
+export function setViewMode(mode: "2d" | "3d"): void {
+  viewMode.value = mode;
+  graphData.value = buildGraph(snapshot.value);
+}
+
 export function buildGraph(snap: NelsGraphSnapshot | null): GraphData {
-  const points = Array.isArray(snap?.points) ? snap!.points : [];
+  const rawPoints = Array.isArray(snap?.points) ? snap!.points : [];
+  const mode = viewMode.value;
+
+  // Pick the correct coordinate set for the active view mode.
+  const points: NelsPoint[] = rawPoints.map((p) => {
+    if (mode === "3d" && p.coords_3d) return { ...p, coords: p.coords_3d };
+    if (mode === "2d" && p.coords_2d) return { ...p, coords: p.coords_2d };
+    return p;
+  });
+
   const edges = Array.isArray(snap?.edges) ? snap!.edges : [];
   const byId = new Map<string, NelsPoint>(points.map((p) => [String(p.id), p]));
   const adjacency = new Map<string, Set<string>>();
@@ -66,27 +82,55 @@ function stabilizeSnapshot(
 ): NelsGraphSnapshot | null {
   if (!snap) return null;
   const key = JSON.stringify(coordinateConfig(snap));
-  const pointIds = new Set((snap.points ?? []).map((p) => String(p.id)));
+  const points = snap.points ?? [];
+  const pointIds = new Set(points.map((p) => String(p.id)));
   const sameKey = key === coordinateCacheKey;
-  const cacheMatches = sameKey && [...pointIds].every((id) => coordinateCache.has(id));
+  const cacheMatches =
+    sameKey && [...pointIds].every((id) => coordCache2d.has(id) || coordCache3d.has(id));
   const accept = options.acceptCoordinates !== false;
   const force = options.forceCoordinates === true || !sameKey;
 
   if (accept && (force || !cacheMatches)) {
     coordinateCacheKey = key;
-    coordinateCache = new Map(
-      (snap.points ?? []).map((p) => [String(p.id), p.coords ?? [0, 0]]),
+    coordCache2d = new Map(
+      points
+        .filter((p) => p.coords_2d)
+        .map((p) => [String(p.id), p.coords_2d!]),
     );
+    coordCache3d = new Map(
+      points
+        .filter((p) => p.coords_3d)
+        .map((p) => [String(p.id), p.coords_3d!]),
+    );
+    // Fallback: seed caches from single coords field for backward-compat snapshots.
+    if (!coordCache2d.size) {
+      coordCache2d = new Map(
+        points
+          .filter((p) => p.coords?.length === 2)
+          .map((p) => [String(p.id), p.coords as [number, number]]),
+      );
+    }
+    if (!coordCache3d.size) {
+      coordCache3d = new Map(
+        points
+          .filter((p) => p.coords?.length === 3)
+          .map((p) => [String(p.id), p.coords as [number, number, number]]),
+      );
+    }
     return snap;
   }
 
   if (cacheMatches) {
     return {
       ...snap,
-      points: (snap.points ?? []).map((p) => ({
-        ...p,
-        coords: coordinateCache.get(String(p.id)) ?? p.coords,
-      })),
+      points: points.map((p) => {
+        const id = String(p.id);
+        return {
+          ...p,
+          ...(coordCache2d.has(id) ? { coords_2d: coordCache2d.get(id)! } : {}),
+          ...(coordCache3d.has(id) ? { coords_3d: coordCache3d.get(id)! } : {}),
+        };
+      }),
     };
   }
 
@@ -96,13 +140,11 @@ function stabilizeSnapshot(
 export function coordinateConfig(snap: NelsGraphSnapshot | null): Record<string, unknown> {
   const src = snap?.source_config ?? {};
   return {
-    sample_count: src.sample_count,
-    embedding_dim: src.embedding_dim,
-    seed: src.seed,
-    label_prefix: src.label_prefix,
-    metadata_mode: src.metadata_mode,
-    cluster_count: src.cluster_count,
-    projection_mode: src.projection_mode,
+    dataset_path: src.dataset_path,
+    load_mode: src.load_mode,
+    count: src.count,
+    window_start: src.window_start,
+    random_seed: src.random_seed,
   };
 }
 

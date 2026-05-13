@@ -7,9 +7,11 @@ import {
   loadSession,
 } from "../state/session.js";
 import { status, view, setView, animationEnabled } from "../state/events.js";
+import { viewMode, setViewMode } from "../state/graph.js";
 
 export function Header() {
   const isGraph = view.value === "graph";
+  const is3d = viewMode.value === "3d";
 
   function onSessionChange(e: Event): void {
     activeSessionId.value = (e.target as HTMLSelectElement).value;
@@ -34,19 +36,29 @@ export function Header() {
             ))
           )}
         </select>
-        <div class="nels-panel-toggle" role="tablist" aria-label="Panel view">
-          <button
-            class={isGraph ? "active" : ""}
-            onClick={() => setView("graph")}
-          >
-            Graph
-          </button>
-          <button
-            class={isGraph ? "" : "active"}
-            onClick={() => setView("logs")}
-          >
-            Logs
-          </button>
+        <div
+          class="nels-switch"
+          role="switch"
+          aria-checked={!isGraph}
+          onClick={() => setView(isGraph ? "logs" : "graph")}
+        >
+          <span class={`nels-switch-label${isGraph ? " active" : ""}`}>Graph</span>
+          <div class={`nels-switch-track${isGraph ? "" : " on"}`}>
+            <div class="nels-switch-thumb" />
+          </div>
+          <span class={`nels-switch-label${isGraph ? "" : " active"}`}>Logs</span>
+        </div>
+        <div
+          class="nels-switch"
+          role="switch"
+          aria-checked={is3d}
+          onClick={() => setViewMode(is3d ? "2d" : "3d")}
+        >
+          <span class={`nels-switch-label${is3d ? "" : " active"}`}>2D</span>
+          <div class={`nels-switch-track${is3d ? " on" : ""}`}>
+            <div class="nels-switch-thumb" />
+          </div>
+          <span class={`nels-switch-label${is3d ? " active" : ""}`}>3D</span>
         </div>
         <button
           title={

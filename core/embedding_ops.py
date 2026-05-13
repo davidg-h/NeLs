@@ -1,9 +1,5 @@
 """
 Shared embedding-set data contracts and tensor helpers for enhanced NELS nodes.
-
-The runtime contract is intentionally dict-based so ComfyUI can pass values
-between nodes without custom Python classes. Tensor values stay in memory in
-runtime payloads; JSON snapshots contain only tensor summaries/references.
 """
 
 from __future__ import annotations
@@ -110,7 +106,9 @@ def validate_embedding_point(
     point["id"] = point_id
     point["label"] = label
     if not isinstance(point.get("metadata", {}), dict):
-        raise NelsEmbeddingError(f"Embedding point {point_id!r} metadata must be a dict")
+        raise NelsEmbeddingError(
+            f"Embedding point {point_id!r} metadata must be a dict"
+        )
     point.setdefault("metadata", {})
 
     tensor = point.get("tensor")
@@ -308,7 +306,9 @@ def normalize_tensor(value: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
     return vector / norm.clamp_min(eps)
 
 
-def cosine_similarity(left: torch.Tensor, right: torch.Tensor, eps: float = 1e-12) -> float:
+def cosine_similarity(
+    left: torch.Tensor, right: torch.Tensor, eps: float = 1e-12
+) -> float:
     """Cosine similarity between two tensors after flattening."""
     left_vector = normalize_tensor(left, eps=eps)
     right_vector = normalize_tensor(right, eps=eps)
@@ -372,7 +372,9 @@ def nearest_neighbors(
 
     precision = max(0, int(tie_precision))
     if metric == "cosine":
-        return sorted(ranked, key=lambda item: (-round(item[1], precision), item[0]))[:limit]
+        return sorted(ranked, key=lambda item: (-round(item[1], precision), item[0]))[
+            :limit
+        ]
     return sorted(ranked, key=lambda item: (round(item[1], precision), item[0]))[:limit]
 
 
@@ -383,34 +385,79 @@ def build_weighted_edges(
     metric: str = "cosine",
     include_self: bool = False,
 ) -> list[dict[str, Any]]:
-    """Build KNN-style weighted edges from high-dimensional tensors."""
+    """Build KNN-style weighted edges. Uses sklearn when available, falls back to pairwise scan."""
     validate_embedding_set(embedding_set)
     points = embedding_set["points"]
-    tensors = [point["tensor"] for point in points]
-    edges: list[dict[str, Any]] = []
+    n = len(points)
+    if n < 2:
+        return []
+    k = int(neighbor_count)
 
+    try:
+        import numpy as _np
+        from sklearn.neighbors import NearestNeighbors as _NNN
+
+        matrix = _np.stack([p["tensor"].numpy() for p in points])
+        actual_k = min(k + (1 if not include_self else 0) + 1, n)
+        nn = _NNN(n_neighbors=actual_k, metric=metric, algorithm="auto", n_jobs=-1)
+        nn.fit(matrix)
+        distances, indices = nn.kneighbors(matrix)
+
+        edges: list[dict[str, Any]] = []
+        seen: set[tuple[int, int]] = set()
+        for i, point in enumerate(points):
+            emitted = 0
+            for dist, j in zip(distances[i], indices[i]):
+                j = int(j)
+                if j == i and not include_self:
+                    continue
+                key = (min(i, j), max(i, j))
+                if key in seen:
+                    continue
+                seen.add(key)
+                weight = (
+                    max(0.0, 1.0 - float(dist)) if metric == "cosine" else float(dist)
+                )
+                edges.append(
+                    {
+                        "source": point["id"],
+                        "target": points[j]["id"],
+                        "weight": weight,
+                        "metric": metric,
+                    }
+                )
+                emitted += 1
+                if emitted >= k:
+                    break
+        return edges
+
+    except ImportError:
+        pass
+
+    # Fallback: original O(N²) scan
+    tensors = [point["tensor"] for point in points]
+    edges = []
     for source_index, source in enumerate(points):
         ranked = nearest_neighbors(
             tensors[source_index],
             tensors,
-            limit=min(len(tensors), max(int(neighbor_count) + 1, 1)),
+            limit=min(n, max(k + 1, 1)),
             metric=metric,
         )
         emitted = 0
         for target_index, score in ranked:
             if target_index == source_index and not include_self:
                 continue
-            target = points[target_index]
             edges.append(
                 {
                     "source": source["id"],
-                    "target": target["id"],
+                    "target": points[target_index]["id"],
                     "weight": float(score),
                     "metric": metric,
                 }
             )
             emitted += 1
-            if emitted >= int(neighbor_count):
+            if emitted >= k:
                 break
     return edges
 

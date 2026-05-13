@@ -1,2 +1,18 @@
+# Core — always required
+--extra-index-url https://download.pytorch.org/whl/cu126
+numpy
+safetensors
 umap-learn
+scikit-learn
+
+# Prompt encoding (--type prompt)
+transformers
+
+# Image encoding (--type image)
+diffusers[torch]
+Pillow
+torch  # usually already present in a ComfyUI environment
+
+# HuggingFace dataset loading
+datasets
 

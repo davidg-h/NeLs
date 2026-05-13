@@ -1,7 +1,11 @@
 """Node registry for the NELS enhanced architecture."""
 
-from .data_source import NODE_CLASS_MAPPINGS as data_source_nodes
-from .data_source import NODE_DISPLAY_NAME_MAPPINGS as data_source_names
+from .dataset_appender import NODE_CLASS_MAPPINGS as appender_nodes
+from .dataset_appender import NODE_DISPLAY_NAME_MAPPINGS as appender_names
+from .dataset_encoder import NODE_CLASS_MAPPINGS as encoder_nodes
+from .dataset_encoder import NODE_DISPLAY_NAME_MAPPINGS as encoder_names
+from .dataset_loader import NODE_CLASS_MAPPINGS as loader_nodes
+from .dataset_loader import NODE_DISPLAY_NAME_MAPPINGS as loader_names
 from .graph_operation import NODE_CLASS_MAPPINGS as operation_nodes
 from .graph_operation import NODE_DISPLAY_NAME_MAPPINGS as operation_names
 from .graph_panel_launcher import NODE_CLASS_MAPPINGS as launcher_nodes
@@ -16,7 +20,9 @@ NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
 for mapping in [
-    data_source_nodes,
+    loader_nodes,
+    encoder_nodes,
+    appender_nodes,
     session_nodes,
     launcher_nodes,
     operation_nodes,
@@ -25,7 +31,9 @@ for mapping in [
     NODE_CLASS_MAPPINGS.update(mapping)
 
 for mapping in [
-    data_source_names,
+    loader_names,
+    encoder_names,
+    appender_names,
     session_names,
     launcher_names,
     operation_names,

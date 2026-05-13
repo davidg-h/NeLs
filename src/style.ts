@@ -14,9 +14,13 @@ export function injectStyle(): void {
     .nels-panel button { cursor: pointer; }
     .nels-panel button:hover { background: #162030; }
     .nels-panel select { min-width: 180px; }
-    .nels-panel-toggle { display: flex; border: 1px solid #1e2d40; border-radius: 4px; overflow: hidden; }
-    .nels-panel-toggle button { border: 0; border-radius: 0; min-width: 58px; }
-    .nels-panel-toggle button.active { background: #3b82f6; color: #ffffff; }
+    .nels-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+    .nels-switch-track { position: relative; width: 38px; height: 20px; background: #0d1520; border: 1px solid #1e2d40; border-radius: 999px; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; }
+    .nels-switch-track.on { background: #3b82f6; border-color: #3b82f6; }
+    .nels-switch-thumb { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+    .nels-switch-track.on .nels-switch-thumb { transform: translateX(18px); }
+    .nels-switch-label { font-size: 11px; color: #8b98a8; transition: color 0.15s; }
+    .nels-switch-label.active { color: #e6edf3; }
     .nels-panel-body { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(420px, 1fr) minmax(320px, 400px); overflow: hidden; }
     .nels-panel-body.hidden, .nels-panel-logs-view.hidden { display: none; }
     .nels-panel-main { position: relative; min-height: 0; border-right: 1px solid #1a2232; background: #05090f; background-image: linear-gradient(rgba(30,60,100,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(30,60,100,0.35) 1px, transparent 1px); background-size: 40px 40px; }
@@ -52,6 +56,13 @@ export function injectStyle(): void {
     .nels-panel-log-node { color: #7dd3fc; }
     .nels-panel-log-type { color: #c084fc; }
     .nels-panel-log-status-failed { color: #fb7185; }
+    .nels-center-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .nels-spinner { width: 36px; height: 36px; border: 3px solid #1a2232; border-top-color: #3b82f6; border-radius: 50%; animation: nels-spin 0.9s linear infinite; }
+    .nels-spinner-label { color: #93a4b8; font-size: 11px; letter-spacing: 0.03em; }
+    @keyframes nels-spin { to { transform: rotate(360deg); } }
+    .nels-loading-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 10; overflow: hidden; background: #0d1520; }
+    .nels-loading-bar::after { content: ''; display: block; width: 40%; height: 100%; background: #3b82f6; animation: nels-load 1.4s ease-in-out infinite; }
+    @keyframes nels-load { 0% { margin-left: -40%; } 100% { margin-left: 140%; } }
     @media (max-width: 900px) {
       .nels-panel-body { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) 320px; }
       .nels-panel-side { min-height: 0; }
