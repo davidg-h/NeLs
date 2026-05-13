@@ -28,18 +28,17 @@ class NelsMetrics:
         if not trajectory and mode != "similarity_matrix":
             mode = "similarity_matrix"
         store = get_store()
-        store.publish_event(
-            bundle["session_id"],
-            {
-                "event_type": "metrics_started",
-                "session_id": bundle["session_id"],
-                "run_id": bundle["run_id"],
-                "state_revision": bundle["state_revision"],
-                "node_name": "NELS Metrics",
-                "message": f"NELS Metrics started {mode}",
-                "status": "running",
-                "payload": {"metric_mode": mode},
-            },
+        sid = bundle["session_id"]
+        run_id = bundle["run_id"]
+        rev = bundle["state_revision"]
+
+        store.publish_node_event(
+            sid, "metrics_started",
+            node_name="NELS Metrics",
+            message=f"NELS Metrics started {mode}",
+            status="running",
+            run_id=run_id, state_revision=rev,
+            payload={"metric_mode": mode},
         )
         try:
             metrics = compute_metrics(
@@ -50,59 +49,39 @@ class NelsMetrics:
             )
         except Exception as exc:
             failed_payload = {"metric_mode": mode, "error": str(exc)}
-            store.publish_event(
-                bundle["session_id"],
-                {
-                    "event_type": "metrics_failed",
-                    "session_id": bundle["session_id"],
-                    "run_id": bundle["run_id"],
-                    "state_revision": bundle["state_revision"],
-                    "node_name": "NELS Metrics",
-                    "message": f"NELS Metrics failed {mode}: {exc}",
-                    "status": "failed",
-                    "payload": failed_payload,
-                },
+            store.publish_node_event(
+                sid, "metrics_failed",
+                node_name="NELS Metrics",
+                message=f"NELS Metrics failed {mode}: {exc}",
+                status="failed",
+                run_id=run_id, state_revision=rev,
+                payload=failed_payload,
             )
-            store.publish_event(
-                bundle["session_id"],
-                {
-                    "event_type": "run_failed",
-                    "session_id": bundle["session_id"],
-                    "run_id": bundle["run_id"],
-                    "state_revision": bundle["state_revision"],
-                    "node_name": "NELS Metrics",
-                    "message": "NELS pipeline run failed",
-                    "status": "failed",
-                    "payload": failed_payload,
-                },
+            store.publish_node_event(
+                sid, "run_failed",
+                node_name="NELS Metrics",
+                message="NELS pipeline run failed",
+                status="failed",
+                run_id=run_id, state_revision=rev,
+                payload=failed_payload,
             )
             raise
         bundle["metrics"] = metrics
-        store.publish_event(
-            bundle["session_id"],
-            {
-                "event_type": "metrics_result",
-                "session_id": bundle["session_id"],
-                "run_id": bundle["run_id"],
-                "state_revision": bundle["state_revision"],
-                "node_name": "NELS Metrics",
-                "message": f"NELS Metrics computed {metrics.get('metric_mode', mode)}",
-                "status": "completed",
-                "payload": metrics,
-            },
+        store.publish_node_event(
+            sid, "metrics_result",
+            node_name="NELS Metrics",
+            message=f"NELS Metrics computed {metrics.get('metric_mode', mode)}",
+            status="completed",
+            run_id=run_id, state_revision=rev,
+            payload=metrics,
         )
-        store.publish_event(
-            bundle["session_id"],
-            {
-                "event_type": "run_completed",
-                "session_id": bundle["session_id"],
-                "run_id": bundle["run_id"],
-                "state_revision": bundle["state_revision"],
-                "node_name": "NELS Metrics",
-                "message": "NELS pipeline run completed",
-                "status": "completed",
-                "payload": {"metric_mode": mode},
-            },
+        store.publish_node_event(
+            sid, "run_completed",
+            node_name="NELS Metrics",
+            message="NELS pipeline run completed",
+            status="completed",
+            run_id=run_id, state_revision=rev,
+            payload={"metric_mode": mode},
         )
         return (bundle, metrics, metrics_to_json(metrics))
 

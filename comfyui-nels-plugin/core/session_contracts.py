@@ -146,6 +146,65 @@ def validate_session_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
     return bundle
 
 
+def merge_dual_points(
+    points_2d: list[dict[str, Any]],
+    points_3d: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge project_both_modes output into snapshot point dicts with coords_2d/coords_3d."""
+    return [
+        {**p2d, "coords": p2d["coords"], "coords_2d": p2d["coords"], "coords_3d": p3d["coords"]}
+        for p2d, p3d in zip(points_2d, points_3d)
+    ]
+
+
+def zip_point_coords(
+    points: list[dict[str, Any]],
+    coords_2d: list,
+    coords_3d: list,
+) -> list[dict[str, Any]]:
+    """Build snapshot point dicts from an embedding_set point list + separate coord arrays."""
+    return [
+        {
+            "id": p["id"],
+            "label": p["label"],
+            "metadata": p.get("metadata", {}),
+            "coords": c2,
+            "coords_2d": c2,
+            "coords_3d": c3,
+        }
+        for p, c2, c3 in zip(points, coords_2d, coords_3d)
+    ]
+
+
+def assemble_snapshot(
+    points: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    *,
+    session_id: str,
+    config: dict[str, Any],
+    config_hash: str,
+    source_meta: dict[str, Any],
+    state_revision: int,
+    projection_method: str = "umap",
+    warnings: list[str] | None = None,
+) -> dict[str, Any]:
+    """Build the standard graph snapshot dict shared by all source nodes."""
+    return {
+        "version": 1,
+        "session_id": str(session_id or "default"),
+        "state_revision": state_revision,
+        "source": source_meta,
+        "source_config": config,
+        "source_config_hash": config_hash,
+        "points": points,
+        "edges": edges,
+        "projection_mode": "both",
+        "projection_method": projection_method,
+        "dimensions": 2,
+        "warnings": warnings or [],
+    }
+
+
 def json_dumps(value: Any) -> str:
     return json.dumps(value, indent=2, sort_keys=True, default=str)
 
@@ -154,12 +213,16 @@ __all__ = [
     "DEFAULT_UI_STATE",
     "SESSION_BUNDLE_TYPE",
     "SESSION_BUNDLE_VERSION",
+    "assemble_snapshot",
     "default_ui_state",
     "json_dumps",
     "make_operation_request",
     "make_selection",
     "make_session_bundle",
+    "merge_dual_points",
     "new_run_id",
     "normalize_ui_state",
+    "now_ms",
     "validate_session_bundle",
+    "zip_point_coords",
 ]

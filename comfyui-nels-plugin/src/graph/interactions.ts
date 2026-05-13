@@ -34,5 +34,9 @@ export function bindSigmaEvents(): void {
     sigma.refresh();
   });
 
-  sigma.getCamera().on("updated", () => schedulePushState());
+  let camTimer: ReturnType<typeof setTimeout> | null = null;
+  sigma.getCamera().on("updated", () => {
+    if (camTimer) clearTimeout(camTimer);
+    camTimer = setTimeout(() => { camTimer = null; schedulePushState(); }, 600);
+  });
 }

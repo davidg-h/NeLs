@@ -3,6 +3,7 @@ import { operationConfig, setOperationConfig, setOperationResult } from "../stat
 import { clearSelection } from "../state/selection.js";
 import { schedulePushState } from "../state/session.js";
 import { fitCamera } from "../graph/renderer2d.js";
+import { graphData } from "../state/graph.js";
 
 function onChange<K extends keyof ReturnType<typeof operationConfig.peek>>(
   key: K,
@@ -16,6 +17,7 @@ function onChange<K extends keyof ReturnType<typeof operationConfig.peek>>(
 
 export function OperationCard() {
   const cfg = operationConfig.value;
+  const pointCount = graphData.value.points.length;
 
   return (
     <details class="nels-panel-card" open>
@@ -39,6 +41,16 @@ export function OperationCard() {
             <option value="distance_to_start">distance to start</option>
             <option value="distance_to_target">distance to target</option>
             <option value="norm_drift">norm drift</option>
+          </select>
+        </label>
+        <label>
+          <span>edge mode</span>
+          <select value={cfg.edge_mode} onChange={onChange("edge_mode", String)}>
+            <option value="none">none</option>
+            <option value="knn_cosine">kNN cosine</option>
+            <option value="knn_euclidean">kNN euclidean</option>
+            <option value="threshold_cosine">threshold cosine</option>
+            {pointCount <= 300 && <option value="fully_connected">fully connected</option>}
           </select>
         </label>
         <label>

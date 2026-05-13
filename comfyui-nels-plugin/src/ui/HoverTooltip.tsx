@@ -23,10 +23,13 @@ export function HoverTooltip({ containerRef }: { containerRef: { current: HTMLEl
   if (!point) return null;
 
   const meta = point.metadata ?? {};
+  const origSize = meta.original_size as number[] | undefined;
   const rows: [string, unknown][] = [
     ["id", point.id],
+    ...(meta.text ? [["text", String(meta.text).slice(0, 120)] as [string, unknown]] : []),
     ["label", point.label ?? "-"],
-    ["cluster", meta.cluster ?? "-"],
+    ...(meta.cluster != null ? [["cluster", meta.cluster] as [string, unknown]] : []),
+    ...(origSize ? [["size", `${origSize[0]}×${origSize[1]}`] as [string, unknown]] : []),
     ["x", Number(point.coords?.[0] ?? 0).toFixed(3)],
     ["y", Number(point.coords?.[1] ?? 0).toFixed(3)],
   ];

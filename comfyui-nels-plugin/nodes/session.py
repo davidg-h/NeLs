@@ -33,26 +33,32 @@ class NelsSession:
             label=session_label,
             session_node_id=unique_id,
         )
-        source_config = embedding_set.get("metadata", {})
-        store.sync_source_config(
-            session_id,
-            {
-                key: value
-                for key, value in {
-                    "sample_count": source_config.get("sample_count"),
-                    "embedding_dim": source_config.get("embedding_dim"),
-                    "seed": source_config.get("seed"),
-                    "label_prefix": source_config.get("label_prefix"),
-                    "metadata_mode": source_config.get("metadata_mode"),
-                    "cluster_count": source_config.get("cluster_count"),
-                    "projection_mode": source_config.get("projection_mode"),
-                    "edge_mode": source_config.get("edge_mode"),
-                    "neighbor_count": source_config.get("neighbor_count"),
-                    "source_config_hash": source_config.get("source_config_hash"),
-                }.items()
-                if value is not None
-            },
-        )
+        injected_config = embedding_set.get("_source_config")
+        if injected_config:
+            # Dataset loader (or any future source) injects its full config directly.
+            store.sync_source_config(session_id, injected_config)
+        else:
+            # Legacy sample-source path.
+            source_meta = embedding_set.get("metadata", {})
+            store.sync_source_config(
+                session_id,
+                {
+                    key: value
+                    for key, value in {
+                        "sample_count": source_meta.get("sample_count"),
+                        "embedding_dim": source_meta.get("embedding_dim"),
+                        "seed": source_meta.get("seed"),
+                        "label_prefix": source_meta.get("label_prefix"),
+                        "metadata_mode": source_meta.get("metadata_mode"),
+                        "cluster_count": source_meta.get("cluster_count"),
+                        "projection_mode": source_meta.get("projection_mode"),
+                        "edge_mode": source_meta.get("edge_mode"),
+                        "neighbor_count": source_meta.get("neighbor_count"),
+                        "source_config_hash": source_meta.get("source_config_hash"),
+                    }.items()
+                    if value is not None
+                },
+            )
         ui_state = store.get_ui_state(session_id)
         snapshot = store.get_session(session_id).get("graph_snapshot") or {}
         bundle = make_session_bundle(

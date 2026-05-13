@@ -1,15 +1,9 @@
-"""
-Projection helpers for enhanced NELS graph exploration.
-
-UMAP is the primary projection path for the finished graph workflow. PCA stays
-available as a lightweight debug/fallback projection that requires no extra
-dependency.
-"""
+"""Projection helpers for the NELS graph pipeline."""
 
 from __future__ import annotations
 
 import warnings
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import torch
 
@@ -17,8 +11,6 @@ from .embedding_ops import (
     NelsEmbeddingError,
     build_weighted_edges,
     collect_point_tensors,
-    cosine_similarity,
-    euclidean_distance,
     flatten_tensor,
     validate_embedding_set,
 )
@@ -29,123 +21,8 @@ except Exception:  # pragma: no cover - depends on local runtime environment.
     umap = None
 
 
-PROJECTION_MODES = (
-    "2d_umap",
-    "3d_umap",
-    "2d_pca_debug",
-    "3d_pca_debug",
-)
-
-
 class NelsProjectionError(ValueError):
     """Raised when projection cannot be computed with the requested mode."""
-
-
-def project_embedding_set(
-    embedding_set: dict[str, Any],
-    *,
-    projection_mode: str = "2d_umap",
-    seed: int = 0,
-    normalize: bool = True,
-    edge_mode: str = "knn_cosine",
-    neighbor_count: int = 3,
-    similarity_threshold: float = 0.5,
-) -> dict[str, Any]:
-    """Project a `NELS_EMBEDDING_SET` into frontend-ready graph data."""
-    validate_embedding_set(embedding_set)
-    points = embedding_set["points"]
-    tensors = collect_point_tensors(embedding_set)
-    result = project_tensors(
-        tensors,
-        projection_mode=projection_mode,
-        seed=seed,
-        normalize=normalize,
-    )
-    edges = build_edges_for_mode(
-        embedding_set,
-        edge_mode=edge_mode,
-        neighbor_count=neighbor_count,
-        similarity_threshold=similarity_threshold,
-    )
-
-    projected_points = []
-    for point, coords in zip(points, result["coordinates"]):
-        projected_points.append(
-            {
-                "id": point["id"],
-                "label": point["label"],
-                "coords": coords,
-                "metadata": point.get("metadata", {}),
-            }
-        )
-
-    return {
-        "projection_mode": projection_mode,
-        "projection_method": result["projection_method"],
-        "dimensions": result["dimensions"],
-        "normalized": result["normalized"],
-        "warnings": result["warnings"],
-        "points": projected_points,
-        "edges": edges,
-    }
-
-
-def project_tensors(
-    tensors: Iterable[torch.Tensor],
-    *,
-    projection_mode: str = "2d_umap",
-    seed: int = 0,
-    normalize: bool = True,
-) -> dict[str, Any]:
-    """Project tensors into 2D or 3D coordinates."""
-    dimensions, method = parse_projection_mode(projection_mode)
-    matrix = stack_flattened_tensors(tensors)
-    warnings: list[str] = []
-
-    if matrix.shape[0] == 0:
-        coords = torch.zeros((0, dimensions), dtype=torch.float32)
-        actual_method = "empty"
-    elif matrix.shape[0] == 1:
-        coords = torch.zeros((1, dimensions), dtype=torch.float32)
-        actual_method = "single_point"
-    elif method == "umap":
-        try:
-            coords = umap_project(matrix, dimensions=dimensions, seed=seed)
-            actual_method = "umap"
-        except NelsProjectionError as exc:
-            coords = pca_project(matrix, dimensions=dimensions)
-            actual_method = "pca_fallback"
-            warnings.append(str(exc))
-    elif method == "pca":
-        coords = pca_project(matrix, dimensions=dimensions)
-        actual_method = "pca"
-    else:  # pragma: no cover - parse_projection_mode guards this.
-        raise NelsProjectionError(f"Unsupported projection method: {method}")
-
-    if normalize and coords.numel() > 0:
-        coords = normalize_projected_coordinates(coords)
-
-    return {
-        "coordinates": coords.tolist(),
-        "projection_method": actual_method,
-        "dimensions": dimensions,
-        "normalized": bool(normalize),
-        "warnings": warnings,
-    }
-
-
-def parse_projection_mode(projection_mode: str) -> tuple[int, str]:
-    """Return `(dimensions, method)` for a supported projection mode."""
-    mode = str(projection_mode or "").strip().lower()
-    if mode not in PROJECTION_MODES:
-        raise NelsProjectionError(
-            f"Unsupported projection_mode {projection_mode!r}; expected one of "
-            f"{', '.join(PROJECTION_MODES)}"
-        )
-
-    dimensions = 3 if mode.startswith("3d_") else 2
-    method = "umap" if mode.endswith("_umap") else "pca"
-    return dimensions, method
 
 
 def stack_flattened_tensors(tensors: Iterable[torch.Tensor]) -> torch.Tensor:
@@ -198,32 +75,6 @@ def umap_project(
     return torch.as_tensor(projected, dtype=torch.float32)
 
 
-def pca_project(matrix: torch.Tensor, *, dimensions: int = 2) -> torch.Tensor:
-    """Project with deterministic PCA using torch SVD."""
-    if dimensions not in (2, 3):
-        raise NelsProjectionError("PCA projection supports only 2D or 3D")
-    if matrix.ndim != 2:
-        raise NelsProjectionError("PCA input matrix must be 2D")
-    if matrix.shape[0] == 0:
-        return torch.zeros((0, dimensions), dtype=torch.float32)
-    if matrix.shape[0] == 1:
-        return torch.zeros((1, dimensions), dtype=torch.float32)
-
-    centered = matrix.float() - matrix.float().mean(dim=0, keepdim=True)
-    try:
-        _, _, vh = torch.linalg.svd(centered, full_matrices=False)
-    except RuntimeError as exc:  # pragma: no cover - defensive fallback.
-        raise NelsProjectionError(f"PCA projection failed: {exc}") from exc
-
-    available = min(dimensions, vh.shape[0])
-    basis = vh[:available].T
-    coords = centered @ basis
-    if available < dimensions:
-        padding = torch.zeros((coords.shape[0], dimensions - available))
-        coords = torch.cat([coords, padding], dim=1)
-    return coords[:, :dimensions].contiguous()
-
-
 def normalize_projected_coordinates(
     coordinates: torch.Tensor,
     *,
@@ -243,37 +94,89 @@ def normalize_projected_coordinates(
     return coords
 
 
+def _edges_from_precomputed_knn(
+    points: list[dict[str, Any]],
+    indices: Any,  # np.ndarray (N, k), -1 means no neighbor
+    distances: Any,  # np.ndarray (N, k)
+    metric: str = "cosine",
+) -> list[dict[str, Any]]:
+    """Build edge list from a precomputed kNN index array (local indices)."""
+    import numpy as _np
+
+    edges: list[dict[str, Any]] = []
+    seen: set[tuple[int, int]] = set()
+    n = len(points)
+    for i, point in enumerate(points):
+        for pos in range(indices.shape[1]):
+            j = int(indices[i, pos])
+            if j < 0 or j >= n or j == i:
+                continue
+            key = (min(i, j), max(i, j))
+            if key in seen:
+                continue
+            seen.add(key)
+            dist = float(distances[i, pos])
+            weight = max(0.0, 1.0 - dist) if metric == "cosine" else float(dist)
+            edges.append(
+                {
+                    "source": point["id"],
+                    "target": points[j]["id"],
+                    "weight": weight,
+                    "metric": metric,
+                }
+            )
+    return edges
+
+
 def build_edges_for_mode(
     embedding_set: dict[str, Any],
     *,
     edge_mode: str = "knn_cosine",
     neighbor_count: int = 3,
     similarity_threshold: float = 0.5,
+    precomputed_knn: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build frontend graph edges from high-dimensional relationships."""
     mode = str(edge_mode or "").strip().lower()
     if mode == "none":
         return []
-    if mode == "knn_cosine":
+
+    if mode in ("knn_cosine", "knn_euclidean"):
+        metric = "cosine" if mode == "knn_cosine" else "euclidean"
+        if precomputed_knn is not None:
+            pknn_metric = precomputed_knn.get("metric", "cosine")
+            pknn_idx = precomputed_knn.get("indices")
+            pknn_dst = precomputed_knn.get("distances")
+            stored_k = int(pknn_idx.shape[1]) if pknn_idx is not None else 0
+            if (
+                pknn_metric == metric
+                and pknn_idx is not None
+                and neighbor_count <= stored_k
+            ):
+                return _edges_from_precomputed_knn(
+                    embedding_set["points"],
+                    pknn_idx[:, :neighbor_count],
+                    pknn_dst[:, :neighbor_count],
+                    metric=metric,
+                )
         return build_weighted_edges(
             embedding_set,
             neighbor_count=neighbor_count,
-            metric="cosine",
+            metric=metric,
             include_self=False,
         )
-    if mode == "knn_euclidean":
-        return build_weighted_edges(
-            embedding_set,
-            neighbor_count=neighbor_count,
-            metric="euclidean",
-            include_self=False,
-        )
+
     if mode == "threshold_cosine":
         return build_threshold_cosine_edges(
             embedding_set,
             similarity_threshold=similarity_threshold,
         )
     if mode == "fully_connected":
+        n = len(embedding_set["points"])
+        if n > 300:
+            raise NelsProjectionError(
+                f"fully_connected is disabled for N={n} > 300. Use kNN modes for large datasets."
+            )
         return build_fully_connected_edges(embedding_set, metric="cosine")
     raise NelsProjectionError(
         f"Unsupported edge_mode {edge_mode!r}; expected none, knn_cosine, "
@@ -287,23 +190,28 @@ def build_threshold_cosine_edges(
     similarity_threshold: float = 0.5,
 ) -> list[dict[str, Any]]:
     """Build undirected edges where cosine similarity clears a threshold."""
+    import numpy as _np
+
     validate_embedding_set(embedding_set)
     points = embedding_set["points"]
-    edges: list[dict[str, Any]] = []
-    for source_index, source in enumerate(points):
-        for target_index in range(source_index + 1, len(points)):
-            target = points[target_index]
-            score = cosine_similarity(source["tensor"], target["tensor"])
-            if score >= float(similarity_threshold):
-                edges.append(
-                    {
-                        "source": source["id"],
-                        "target": target["id"],
-                        "weight": float(score),
-                        "metric": "cosine",
-                    }
-                )
-    return edges
+    n = len(points)
+    if n < 2:
+        return []
+
+    matrix = torch.stack([p["tensor"] for p in points])
+    normalized = torch.nn.functional.normalize(matrix.float(), dim=1)
+    sim = (normalized @ normalized.T).numpy()
+
+    rows, cols = _np.where(_np.triu(sim >= float(similarity_threshold), k=1))
+    return [
+        {
+            "source": points[int(r)]["id"],
+            "target": points[int(c)]["id"],
+            "weight": float(sim[r, c]),
+            "metric": "cosine",
+        }
+        for r, c in zip(rows, cols)
+    ]
 
 
 def build_fully_connected_edges(
@@ -311,41 +219,119 @@ def build_fully_connected_edges(
     *,
     metric: str = "cosine",
 ) -> list[dict[str, Any]]:
-    """Build undirected all-to-all edges for small/debug graph views."""
+    """Build undirected all-to-all edges for small/debug graph views (N≤300 only)."""
+    import numpy as _np
+
     validate_embedding_set(embedding_set)
     points = embedding_set["points"]
-    edges: list[dict[str, Any]] = []
-    for source_index, source in enumerate(points):
-        for target_index in range(source_index + 1, len(points)):
-            target = points[target_index]
-            if metric == "cosine":
-                weight = cosine_similarity(source["tensor"], target["tensor"])
-            elif metric == "euclidean":
-                weight = euclidean_distance(source["tensor"], target["tensor"])
-            else:
-                raise NelsProjectionError(f"Unsupported fully_connected metric: {metric}")
-            edges.append(
-                {
-                    "source": source["id"],
-                    "target": target["id"],
-                    "weight": float(weight),
-                    "metric": metric,
-                }
-            )
-    return edges
+    n = len(points)
+    if n < 2:
+        return []
+
+    matrix = torch.stack([p["tensor"] for p in points]).float()
+    if metric == "cosine":
+        normalized = torch.nn.functional.normalize(matrix, dim=1)
+        weight_matrix = (normalized @ normalized.T).numpy()
+    elif metric == "euclidean":
+        weight_matrix = torch.cdist(matrix, matrix, p=2).numpy()
+    else:
+        raise NelsProjectionError(f"Unsupported fully_connected metric: {metric}")
+
+    rows, cols = _np.triu_indices(n, k=1)
+    return [
+        {
+            "source": points[int(r)]["id"],
+            "target": points[int(c)]["id"],
+            "weight": float(weight_matrix[r, c]),
+            "metric": metric,
+        }
+        for r, c in zip(rows, cols)
+    ]
+
+
+def _project_umap(
+    matrix: torch.Tensor,
+    *,
+    dimensions: int,
+    seed: int,
+    normalize: bool,
+) -> list[list[float]]:
+    if matrix.shape[0] == 0:
+        return []
+    if matrix.shape[0] == 1:
+        return [[0.0] * dimensions]
+    coords = umap_project(matrix, dimensions=dimensions, seed=seed)
+    if normalize and coords.numel() > 0:
+        coords = normalize_projected_coordinates(coords)
+    return coords.tolist()
+
+
+def project_both_modes(
+    embedding_set: dict[str, Any],
+    *,
+    seed: int = 0,
+    normalize: bool = True,
+    edge_mode: str = "knn_cosine",
+    neighbor_count: int = 3,
+    similarity_threshold: float = 0.5,
+    on_progress: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    """Project embeddings into both 2D and 3D simultaneously, sharing edge computation."""
+    validate_embedding_set(embedding_set)
+    points = embedding_set["points"]
+    tensors = collect_point_tensors(embedding_set)
+    matrix = stack_flattened_tensors(tensors)
+
+    if on_progress:
+        on_progress("Computing 2D UMAP...")
+    coords_2d = _project_umap(matrix, dimensions=2, seed=seed, normalize=normalize)
+
+    if on_progress:
+        on_progress("Computing 3D UMAP...")
+    coords_3d = _project_umap(matrix, dimensions=3, seed=seed, normalize=normalize)
+
+    if on_progress:
+        on_progress("Building graph edges...")
+    edges = build_edges_for_mode(
+        embedding_set,
+        edge_mode=edge_mode,
+        neighbor_count=neighbor_count,
+        similarity_threshold=similarity_threshold,
+    )
+
+    projected_2d = [
+        {
+            "id": p["id"],
+            "label": p["label"],
+            "coords": c,
+            "metadata": p.get("metadata", {}),
+        }
+        for p, c in zip(points, coords_2d)
+    ]
+    projected_3d = [
+        {
+            "id": p["id"],
+            "label": p["label"],
+            "coords": c,
+            "metadata": p.get("metadata", {}),
+        }
+        for p, c in zip(points, coords_3d)
+    ]
+
+    return {
+        "points_2d": projected_2d,
+        "points_3d": projected_3d,
+        "edges": edges,
+        "warnings": [],
+    }
 
 
 __all__ = [
-    "PROJECTION_MODES",
     "NelsProjectionError",
     "build_edges_for_mode",
     "build_fully_connected_edges",
     "build_threshold_cosine_edges",
     "normalize_projected_coordinates",
-    "parse_projection_mode",
-    "pca_project",
-    "project_embedding_set",
-    "project_tensors",
+    "project_both_modes",
     "stack_flattened_tensors",
-    "umap_project",
 ]

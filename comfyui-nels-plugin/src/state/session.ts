@@ -25,6 +25,8 @@ import {
   snapshot as snapshotSignal,
   graphData,
   setSnapshot,
+  setViewMode,
+  viewMode,
   acceptRuntimeSnapshot,
 } from "./graph.js";
 import {
@@ -36,10 +38,18 @@ import {
 
 // Renderer functions imported lazily to avoid circular module initialization
 type RendererModule = typeof import("../graph/renderer2d.js");
-let renderer: RendererModule | null = null;
+let cached2d: RendererModule | null = null;
+let cached3d: RendererModule | null = null;
 function getRenderer(): Promise<RendererModule> {
-  if (renderer) return Promise.resolve(renderer);
-  return import("../graph/renderer2d.js").then((m) => { renderer = m; return m; });
+  if (viewMode.value === "3d") {
+    if (cached3d) return Promise.resolve(cached3d);
+    return import("../graph/renderer3d.js").then((m) => {
+      cached3d = m as unknown as RendererModule;
+      return cached3d;
+    });
+  }
+  if (cached2d) return Promise.resolve(cached2d);
+  return import("../graph/renderer2d.js").then((m) => { cached2d = m; return m; });
 }
 
 export const sessions = signal<NelsSession[]>([]);
@@ -157,14 +167,13 @@ async function pushState(): Promise<void> {
     metric_mode: cfg.metric_mode,
     neighbor_count: Math.max(1, cfg.neighbor_count),
     alpha_schedule: cfg.alpha_schedule,
-    projection_mode: sess?.ui_state?.projection_mode ?? snap?.projection_mode ?? "2d_umap",
-    edge_mode: sess?.ui_state?.edge_mode ?? snap?.edge_mode ?? "knn_cosine",
+    projection_mode: viewMode.value === "3d" ? "3d_umap" : "2d_umap",
+    edge_mode: operationConfig.value.edge_mode,
     viewport: cam,
   };
   try {
     const data = await pushUiState(activeSessionId.value, payload);
     if (data.session) upsertSession(data.session);
-    syncDataNodeWidgets(payload.neighbor_count);
     setStatus(`state revision ${data.ui_state?.state_revision ?? "-"}`);
   } catch (err) {
     setStatus(`state sync error: ${(err as Error).message}`);
@@ -219,6 +228,11 @@ export function onSessionEvent(event: NelsEvent): void {
     void getRenderer().then((r) => r.sigmaRefresh());
   }
 
+  if (event.event_type === "computing_projection") {
+    setStatus(event.message ?? "computing projections...");
+    return;
+  }
+
   setStatus(`event ${event.event_type ?? "event"} #${lastSequence}`);
 }
 
@@ -252,7 +266,11 @@ function applyUiStateFields(
     metric_mode: String(uiState.metric_mode ?? operationConfig.value.metric_mode),
     neighbor_count: Number(uiState.neighbor_count ?? operationConfig.value.neighbor_count),
     alpha_schedule: String(uiState.alpha_schedule ?? operationConfig.value.alpha_schedule),
+    edge_mode: String(uiState.edge_mode ?? operationConfig.value.edge_mode),
   });
+
+  const projMode = String(uiState.projection_mode ?? "2d_umap");
+  setViewMode(projMode.startsWith("3d") ? "3d" : "2d");
 
   if (!options.skipViewport) {
     const vp = uiState.viewport as { x: number; y: number; ratio: number } | undefined;
@@ -283,16 +301,27 @@ function collectSessionNodes(): CanvasSessionPayload[] {
 
 function sourceConfigForSession(sessionNode: ComfyWidgetNode): NelsSourceConfig {
   const src = linkedSourceNode(sessionNode);
+  const nodeClass = src && (
+    (src as Record<string, unknown>).comfyClass as string | undefined
+    ?? src.type
+    ?? src.properties?.["Node name for S&R"] as string | undefined
+  );
+
+  if (nodeClass === "nels_DatasetLoader") {
+    return {
+      dataset_path: String(nodeWidgetValue(src, "dataset_path", "") ?? ""),
+      load_mode: String(nodeWidgetValue(src, "load_mode", "first_n") ?? "first_n"),
+      count: Number(nodeWidgetValue(src, "count", 1000) ?? 1000),
+      window_start: Number(nodeWidgetValue(src, "window_start", 0) ?? 0),
+      random_seed: Number(nodeWidgetValue(src, "random_seed", 42) ?? 42),
+      edge_mode: operationConfig.value.edge_mode,
+      neighbor_count: Math.max(1, operationConfig.value.neighbor_count),
+    };
+  }
+
   return {
-    sample_count: Number(nodeWidgetValue(src, "sample_count", 32) ?? 32),
-    embedding_dim: Number(nodeWidgetValue(src, "embedding_dim", 64) ?? 64),
-    seed: Number(nodeWidgetValue(src, "seed", 42) ?? 42),
-    label_prefix: String(nodeWidgetValue(src, "label_prefix", "sample") ?? "sample"),
-    metadata_mode: String(nodeWidgetValue(src, "metadata_mode", "clustered") ?? "clustered"),
-    cluster_count: Number(nodeWidgetValue(src, "cluster_count", 4) ?? 4),
-    projection_mode: String(nodeWidgetValue(src, "projection_mode", "2d_umap") ?? "2d_umap"),
-    edge_mode: String(nodeWidgetValue(src, "edge_mode", "knn_cosine") ?? "knn_cosine"),
-    neighbor_count: Number(nodeWidgetValue(src, "neighbor_count", 4) ?? 4),
+    edge_mode: operationConfig.value.edge_mode,
+    neighbor_count: Math.max(1, operationConfig.value.neighbor_count),
   };
 }
 
@@ -321,16 +350,3 @@ function nodeWidgetValue(
   return node?.widgets?.find((w) => w.name === name)?.value ?? fallback;
 }
 
-function syncDataNodeWidgets(neighborCount: number): void {
-  const sessionNodeId = activeSession.value?.session_node_id;
-  if (!sessionNodeId) return;
-  const nodes = (app.graph?._nodes ?? []) as ComfyWidgetNode[];
-  const sessionNode = nodes.find((n) => String(n.id) === String(sessionNodeId)) ?? null;
-  const sourceNode = linkedSourceNode(sessionNode);
-  if (!sourceNode) return;
-  const widget = sourceNode.widgets?.find((w) => w.name === "neighbor_count");
-  if (widget) {
-    widget.value = neighborCount;
-    if (typeof widget.callback === "function") widget.callback(neighborCount);
-  }
-}

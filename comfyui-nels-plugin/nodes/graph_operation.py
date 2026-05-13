@@ -30,23 +30,18 @@ class NelsGraphOperation:
         selection = bundle["selection"]
         request = bundle["operation_request"]
         operation = str(request.get("operation") or "inspect").lower()
-        session_id = bundle["session_id"]
+        sid = bundle["session_id"]
         run_id = bundle["run_id"]
-        state_revision = bundle["state_revision"]
+        rev = bundle["state_revision"]
         store = get_store()
 
-        store.publish_event(
-            session_id,
-            {
-                "event_type": "operation_started",
-                "session_id": session_id,
-                "run_id": run_id,
-                "state_revision": state_revision,
-                "node_name": "NELS Graph Operation",
-                "message": f"NELS Graph Operation started {operation}",
-                "status": "running",
-                "payload": request,
-            },
+        store.publish_node_event(
+            sid, "operation_started",
+            node_name="NELS Graph Operation",
+            message=f"NELS Graph Operation started {operation}",
+            status="running",
+            run_id=run_id, state_revision=rev,
+            payload=request,
         )
 
         trajectory = None
@@ -58,7 +53,7 @@ class NelsGraphOperation:
                     method=operation,
                     alpha_schedule=request.get("alpha_schedule", "0,1"),
                     request_id=run_id,
-                    state_revision=state_revision,
+                    state_revision=rev,
                 )
                 result = trajectory_result_summary(trajectory)
             elif operation == "delta_walk":
@@ -67,7 +62,7 @@ class NelsGraphOperation:
                     selection,
                     alpha_schedule=request.get("alpha_schedule", "0,1"),
                     request_id=run_id,
-                    state_revision=state_revision,
+                    state_revision=rev,
                 )
                 result = trajectory_result_summary(trajectory)
             elif operation in ("nearest_neighbor", "nearest", "neighbors"):
@@ -76,33 +71,24 @@ class NelsGraphOperation:
                     selection,
                     neighbor_count=int(request.get("neighbor_count") or 4),
                     request_id=run_id,
-                    state_revision=state_revision,
+                    state_revision=rev,
                 )
             else:
                 result = {
                     "version": 1,
                     "operation": "inspect",
                     "request_id": run_id,
-                    "state_revision": state_revision,
+                    "state_revision": rev,
                     "selection": selection,
                 }
         except Exception as exc:
-            store.publish_event(
-                session_id,
-                {
-                    "event_type": "operation_failed",
-                    "session_id": session_id,
-                    "run_id": run_id,
-                    "state_revision": state_revision,
-                    "node_name": "NELS Graph Operation",
-                    "message": f"NELS Graph Operation failed {operation}: {exc}",
-                    "status": "failed",
-                    "payload": {
-                        "operation": operation,
-                        "error": str(exc),
-                        "request": request,
-                    },
-                },
+            store.publish_node_event(
+                sid, "operation_failed",
+                node_name="NELS Graph Operation",
+                message=f"NELS Graph Operation failed {operation}: {exc}",
+                status="failed",
+                run_id=run_id, state_revision=rev,
+                payload={"operation": operation, "error": str(exc), "request": request},
             )
             raise
 
@@ -114,21 +100,16 @@ class NelsGraphOperation:
             result_count = len(selection.get("selected_point_ids", []))
         bundle["operation_result"] = result
         bundle["trajectory"] = trajectory
-        store.publish_event(
-            session_id,
-            {
-                "event_type": "operation_result",
-                "session_id": session_id,
-                "run_id": run_id,
-                "state_revision": state_revision,
-                "node_name": "NELS Graph Operation",
-                "message": (
-                    f"NELS Graph Operation completed {result.get('operation', operation)} "
-                    f"with {result_count} result item(s)"
-                ),
-                "status": "completed",
-                "payload": result,
-            },
+        store.publish_node_event(
+            sid, "operation_result",
+            node_name="NELS Graph Operation",
+            message=(
+                f"NELS Graph Operation completed {result.get('operation', operation)} "
+                f"with {result_count} result item(s)"
+            ),
+            status="completed",
+            run_id=run_id, state_revision=rev,
+            payload=result,
         )
         return (bundle, trajectory or {}, json_dumps(result))
 

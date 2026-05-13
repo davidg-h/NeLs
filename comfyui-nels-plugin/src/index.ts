@@ -38,20 +38,14 @@ app.registerExtension({
     nodeType: { prototype: Record<string, unknown> },
     nodeData: { name: string },
   ) {
-    if (nodeData.name !== LAUNCHER_NODE) return;
-    const onNodeCreated = nodeType.prototype.onNodeCreated as
-      | (() => void)
-      | undefined;
-    nodeType.prototype.onNodeCreated = function (this: {
-      addWidget: Function;
-      size: number[];
-    }) {
-      onNodeCreated?.apply(this, []);
-      this.addWidget("button", "Open NELS Graph Panel", "open", () =>
-        openNelsGraphPanel(),
-      );
-      this.size = [260, 82];
-    };
+    if (nodeData.name === LAUNCHER_NODE) {
+      const onNodeCreated = nodeType.prototype.onNodeCreated as (() => void) | undefined;
+      nodeType.prototype.onNodeCreated = function (this: { addWidget: Function; size: number[] }) {
+        onNodeCreated?.apply(this, []);
+        this.addWidget("button", "Open NELS Graph Panel", "open", () => openNelsGraphPanel());
+        this.size = [260, 82];
+      };
+    }
   },
 
   bottomPanelTabs: [

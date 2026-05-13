@@ -2,7 +2,9 @@
 
 export interface NelsPoint {
   id: string | number;
-  coords: [number, number];
+  coords: [number, number] | [number, number, number];
+  coords_2d?: [number, number];
+  coords_3d?: [number, number, number];
   label?: string;
   metadata?: {
     cluster?: number | string; // may arrive as string e.g. "class_0" — always parseInt before use
@@ -16,15 +18,14 @@ export interface NelsEdge {
 }
 
 export interface NelsSourceConfig {
-  sample_count: number;
-  embedding_dim: number;
-  seed: number;
-  label_prefix: string;
-  metadata_mode: string;
-  cluster_count: number;
-  projection_mode: string;
-  edge_mode: string;
-  neighbor_count: number;
+  dataset_path?: string;
+  load_mode?: string;
+  count?: number;
+  window_start?: number;
+  random_seed?: number;
+  edge_mode?: string;
+  neighbor_count?: number;
+  source_config_hash?: string;
   dataset_id?: string;
 }
 

@@ -201,6 +201,32 @@ class NelsSessionStore:
         self._broadcast(stored)
         return stored
 
+    def publish_node_event(
+        self,
+        session_id: str,
+        event_type: str,
+        *,
+        node_name: str,
+        message: str,
+        status: str,
+        run_id: str | None = None,
+        state_revision: int | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self.publish_event(
+            session_id,
+            {
+                "event_type": event_type,
+                "session_id": session_id,
+                "run_id": run_id,
+                "state_revision": state_revision,
+                "node_name": node_name,
+                "message": message,
+                "status": status,
+                "payload": payload or {},
+            },
+        )
+
     def publish_source_snapshot(
         self,
         session_id: str,
