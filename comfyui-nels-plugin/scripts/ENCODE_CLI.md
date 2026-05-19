@@ -60,16 +60,17 @@ The CLI needs to find ComfyUI's Python packages. It checks in this order:
 
 ---
 
-## Output format
+## Output format (v3)
 
 Every dataset is a folder:
+
+**Image latent:**
 
 ```
 my_dataset/
 ├── dataset.json                  # metadata + cli_encoder block (model paths for future add)
 ├── samples.jsonl                 # one JSON record per sample
-├── pooled.npy                    # (N, D) float32 — pooled vectors
-├── tensors.safetensors           # per-sample vectors indexed by sample ID
+├── embeddings.npy                # (N, C*H*W) float32 — flatten (default) or (N, C) spatial_mean
 ├── umap_2d.npy                   # (N, 2) — 2D UMAP projection
 ├── umap_3d.npy                   # (N, 3) — 3D UMAP projection
 ├── umap_model_2d.pkl             # saved UMAP reducer (used by `add` to project new points)
@@ -77,12 +78,27 @@ my_dataset/
 ├── knn_cosine_indices.npy        # (N, k) — precomputed cosine kNN indices
 ├── knn_cosine_distances.npy      # (N, k) — precomputed cosine kNN distances
 ├── knn_euclidean_indices.npy     # (N, k) — precomputed euclidean kNN indices
-├── knn_euclidean_distances.npy   # (N, k) — precomputed euclidean kNN distances
-└── full_latents.safetensors      # (C, H, W) per image — only when --save-full-latents
+└── knn_euclidean_distances.npy   # (N, k) — precomputed euclidean kNN distances
+```
+
+**Prompt embedding:**
+
+```
+my_dataset/
+├── dataset.json
+├── samples.jsonl
+├── embeddings.npy                # (N, hidden_dim) float32 — pooled CLIP output, always present
+├── cond_tensors.safetensors      # {sample_id: [seq_len, hidden_dim]} — only with --save-full-cond
+├── umap_2d.npy / umap_3d.npy / umap_model_*.pkl
+├── knn_cosine_indices.npy / knn_cosine_distances.npy
+└── knn_euclidean_indices.npy / knn_euclidean_distances.npy
 ```
 
 Both kNN graphs (cosine and euclidean) are always stored. The graph panel picks the
 right one automatically based on the selected edge mode (`knn_cosine` or `knn_euclidean`).
+
+Old datasets (`pooled.npy`, `tensors.safetensors`, `full_latents.safetensors`) load fine —
+extra files are ignored and `pooled.npy` is read as a fallback if `embeddings.npy` is absent.
 
 ---
 
@@ -117,18 +133,24 @@ python encode_cli.py create --type <prompt|image> --input <source> --output <fol
 
 **Prompt options (`--type prompt`)**
 
-| Flag          | Default | Description                                                                             |
-| ------------- | ------- | --------------------------------------------------------------------------------------- |
-| `--clip-type` | `FLUX2` | ComfyUI CLIPType. Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
+| Flag               | Default | Description                                                                                                                                                 |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--clip-type`      | `FLUX2` | ComfyUI CLIPType. Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3.                                                                    |
+| `--save-full-cond` | off     | Save full token conditioning `[seq_len, hidden_dim]` per sample for use with `nels_PromptConditioningBatch` → KSampler. See T5 size warning below. |
+
+> **T5 size warning**: T5-XXL (Flux) cond tensors are ~4 GB per 1000 samples. Only use `--save-full-cond`
+> with CLIP-L (SD, ~230 MB/1k) or CLIP-G (SDXL, ~380 MB/1k) datasets where the size is manageable.
 
 **Image options (`--type image`)**
 
-| Flag                  | Default        | Description                                                                   |
-| --------------------- | -------------- | ----------------------------------------------------------------------------- |
-| `--image-pooling`     | `spatial_mean` | `spatial_mean`: compact `(C,)` vector. `flatten`: lossless `(C×H×W,)` vector. |
-| `--image-width`       | original       | Resize images to this width before encoding.                                  |
-| `--image-height`      | original       | Resize images to this height before encoding.                                 |
-| `--save-full-latents` | off            | Save raw `(C,H,W)` latent per image for latent-space operations.              |
+| Flag              | Default   | Description                                                                                                                             |
+| ----------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--image-pooling` | `flatten` | `flatten`: lossless `(C×H×W,)` vector — required for `nels_SequenceDecode`. `spatial_mean`: compact `(C,)` vector, cannot be decoded. |
+| `--image-width`   | original  | Resize images to this width before encoding. Required for `flatten` to ensure consistent latent shape.                                  |
+| `--image-height`  | original  | Resize images to this height before encoding.                                                                                           |
+
+> **`flatten` requires consistent image dimensions.** Set `--image-width` and `--image-height` so all images
+> produce the same latent shape. `spatial_mean` is size-agnostic but trajectory steps cannot be decoded to images.
 
 > **VAE scale factor** is derived automatically from the actual encoded dimensions
 > (e.g. Flux2-4b uses ×16, standard SD/SDXL VAE uses ×8).
@@ -181,8 +203,12 @@ python encode_cli.py add --dataset <folder> --type <prompt|image> --input <sourc
 | `--hf-column`    | Column name when `--input` is a HF dataset. Defaults to `Prompt` for prompts, `image` for images. |
 | `--hf-split`     | HF dataset split to load (default: `train`).                                                      |
 
-Image encoding settings (`image_pooling`, `processed_size`, `save_full_latents`) are read from
-the dataset's `encoding_params` automatically — no need to re-specify them.
+Image encoding settings (`image_pooling`, `processed_size`) are read from the dataset's
+`encoding_params` automatically — no need to re-specify them.
+
+For prompt datasets with `cond_tensors.safetensors` present, new samples are encoded with
+`save_full_cond=True` automatically and merged into the existing file. Only new items are
+re-encoded; existing samples are read from disk.
 
 UMAP: new points are projected into the existing space using the saved reducer models.
 If the models are missing, UMAP is refit on all merged vectors.
@@ -227,6 +253,19 @@ python encode_cli.py create \
   --output datasets/my_prompts
 ```
 
+### Prompt dataset — with full conditioning (SD/SDXL only)
+
+```bash
+python encode_cli.py create \
+  --type prompt \
+  --clip models/text_encoders/clip_l.safetensors \
+  --clip-type STABLE_DIFFUSION \
+  --input prompts.txt \
+  --save-full-cond \
+  --encode-limit 1000 \
+  --output datasets/sd_prompts_with_cond
+```
+
 ### Prompt dataset — HuggingFace source
 
 ```bash
@@ -244,7 +283,7 @@ python encode_cli.py create \
   --umap-min-dist 0.05
 ```
 
-### Image dataset — local folder, fixed size, with full latent storage
+### Image dataset — local folder, fixed size (flatten default)
 
 ```bash
 python encode_cli.py create \
@@ -252,7 +291,6 @@ python encode_cli.py create \
   --vae models/vae/flux2-vae.safetensors \
   --input /data/images/ \
   --image-width 512 --image-height 512 \
-  --save-full-latents \
   --encode-limit 1000 \
   --output datasets/my_images_512
 ```
@@ -270,16 +308,6 @@ python encode_cli.py create \
   --encode-limit 200 \
   --knn-k 15 \
   --output datasets/pokemon_images
-```
-
-### Image dataset — variable size (spatial_mean only, no full latents)
-
-```bash
-python encode_cli.py create \
-  --type image \
-  --vae models/vae/flux2-vae.safetensors \
-  --input /data/images/ \
-  --output datasets/my_images_variable
 ```
 
 ### Add more samples (auto-resolves model from cli_encoder)
@@ -341,9 +369,9 @@ The `add` subcommand uses them to project new points into the existing layout wi
 latent distance. The graph panel picks the right one based on the edge mode setting. You can
 skip kNN with `--no-knn` if you only need the UMAP layout and do not plan to use kNN edge modes.
 
-**Image size consistency**: When using `--save-full-latents` or `--image-pooling flatten`,
-set `--image-width` and `--image-height` so all images produce the same latent shape.
-`spatial_mean` is size-agnostic and does not require this.
+**Image size consistency**: When using `--image-pooling flatten` (the default), set `--image-width`
+and `--image-height` so all images produce the same latent shape. `spatial_mean` is size-agnostic
+but trajectory steps from those datasets cannot be decoded to images.
 
 **VAE scale factor**: Different VAE architectures use different spatial downscale ratios
 (standard SD/SDXL = ×8, Flux2-4b = ×16). The CLI derives this automatically from the

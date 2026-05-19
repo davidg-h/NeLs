@@ -1,4 +1,6 @@
 // Injects all NELS panel CSS once. Idempotent.
+// Bundled here instead of a static .css file so Vite produces a single JS artifact
+// --> static file would still require programmatic <link> injection with no caching benefit.
 export function injectStyle(): void {
   if (document.getElementById("nels-graph-panel-style")) return;
   const style = document.createElement("style");
@@ -63,6 +65,30 @@ export function injectStyle(): void {
     .nels-loading-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 10; overflow: hidden; background: #0d1520; }
     .nels-loading-bar::after { content: ''; display: block; width: 40%; height: 100%; background: #3b82f6; animation: nels-load 1.4s ease-in-out infinite; }
     @keyframes nels-load { 0% { margin-left: -40%; } 100% { margin-left: 140%; } }
+    .nels-sel-hint { padding: 4px 8px; font-size: 11px; color: #fbbf24; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); border-radius: 4px; }
+    .nels-trajectory-lane { border-top: 1px solid #1a2232; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+    .nels-trajectory-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: #93a4b8; }
+    .nels-toggle-overlay { height: 24px; padding: 0 8px; font-size: 11px; border: 1px solid #1e2d40; border-radius: 4px; background: #0d1520; color: #93a4b8; cursor: pointer; }
+    .nels-toggle-overlay.active { border-color: rgba(251,146,60,0.6); color: #fb923c; background: rgba(251,146,60,0.08); }
+    .nels-overlay-warning { font-size: 10px; color: #fb7185; background: rgba(251,113,133,0.08); border: 1px solid rgba(251,113,133,0.2); border-radius: 3px; padding: 3px 6px; }
+    .nels-trajectory-scroll { max-height: 180px; overflow-y: auto; scrollbar-gutter: stable; }
+    .nels-trajectory-table { width: 100%; border-collapse: collapse; font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; table-layout: fixed; }
+    .nels-trajectory-table th { color: #93a4b8; text-align: left; padding: 2px 6px; font-weight: 400; border-bottom: 1px solid #1a2232; overflow: hidden; }
+    .nels-trajectory-table th:nth-child(1), .nels-trajectory-table td:nth-child(1) { width: 24px; }
+    .nels-trajectory-table th:nth-child(2), .nels-trajectory-table td:nth-child(2) { width: 46px; }
+    .nels-trajectory-table th:nth-child(3), .nels-trajectory-table td:nth-child(3) { width: 64px; }
+    .nels-trajectory-table td { color: #d8dee9; padding: 3px 6px; border-bottom: 1px solid rgba(26,34,50,0.5); vertical-align: middle; overflow: hidden; }
+    .nels-trajectory-table tr:last-child td { border-bottom: 0; }
+    .nels-nearest-stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
+    .nels-nearest-sample { all: unset; cursor: pointer; font: inherit; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nels-nearest-sample:hover { text-decoration: underline; }
+    .nels-nearest-top { color: #7dd3fc; }
+    .nels-nearest-secondary { color: #64849a; font-size: 10px; }
+    .nels-nearest-dist { color: #93a4b8; }
+    .nels-metric-curve { padding: 8px 10px; border-top: 1px solid #1a2232; }
+    .nels-metric-curve-label { font-size: 10px; color: #93a4b8; margin-bottom: 4px; letter-spacing: 0.04em; text-transform: capitalize; }
+    .nels-metric-svg { width: 100%; height: 110px; display: block; border-radius: 3px; }
+    .nels-metric-xaxis-label { font-size: 9px; color: #64849a; text-align: center; margin-top: 3px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 0.04em; }
     @media (max-width: 900px) {
       .nels-panel-body { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) 320px; }
       .nels-panel-side { min-height: 0; }

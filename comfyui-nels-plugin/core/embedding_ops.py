@@ -5,7 +5,6 @@ Shared embedding-set data contracts and tensor helpers for enhanced NELS nodes.
 from __future__ import annotations
 
 import copy
-import json
 import math
 from typing import Any, Iterable
 
@@ -130,7 +129,7 @@ def validate_embedding_set(
     *,
     require_tensors: bool = True,
 ) -> dict[str, Any]:
-    """Validate and normalize a runtime `NELS_EMBEDDING_SET` payload in place."""
+    """Validate and normalize a runtime `NELS_EMBEDDING_SET` payload."""
     if not isinstance(embedding_set, dict):
         raise NelsEmbeddingError("NELS_EMBEDDING_SET must be a dict")
     if int(embedding_set.get("version", 0)) != EMBEDDING_SET_VERSION:
@@ -198,11 +197,6 @@ def embedding_set_snapshot(embedding_set: dict[str, Any]) -> dict[str, Any]:
     return snapshot
 
 
-def embedding_set_to_json(embedding_set: dict[str, Any]) -> str:
-    """Serialize an embedding set snapshot to stable JSON."""
-    return json.dumps(embedding_set_snapshot(embedding_set), indent=2, sort_keys=True)
-
-
 def get_embedding_point(
     embedding_set: dict[str, Any],
     point_id: str,
@@ -242,55 +236,6 @@ def add_embedding_point(
     return embedding_set
 
 
-def delete_embedding_point(
-    embedding_set: dict[str, Any],
-    point_id: str,
-    *,
-    missing_ok: bool = False,
-) -> dict[str, Any]:
-    """Delete a point from an embedding set by ID."""
-    validate_embedding_set(embedding_set)
-    points = embedding_set["points"]
-    original_count = len(points)
-    embedding_set["points"] = [point for point in points if point["id"] != point_id]
-    if len(embedding_set["points"]) == original_count and not missing_ok:
-        raise NelsEmbeddingError(f"Embedding point not found: {point_id}")
-    _refresh_embedding_set_summary(embedding_set)
-    return embedding_set
-
-
-def update_embedding_point(
-    embedding_set: dict[str, Any],
-    point_id: str,
-    *,
-    label: str | None = None,
-    tensor: torch.Tensor | None = None,
-    metadata: dict[str, Any] | None = None,
-    tensor_ref: str | None = None,
-) -> dict[str, Any]:
-    """Modify a point while preserving unspecified runtime fields."""
-    point = get_embedding_point(embedding_set, point_id)
-    if label is not None:
-        if not str(label).strip():
-            raise NelsEmbeddingError("label must not be empty")
-        point["label"] = str(label)
-    if metadata is not None:
-        if not isinstance(metadata, dict):
-            raise NelsEmbeddingError("metadata must be a dict")
-        point["metadata"] = copy.deepcopy(metadata)
-    if tensor is not None:
-        if not torch.is_tensor(tensor):
-            raise NelsEmbeddingError("tensor must be a torch.Tensor")
-        point["tensor"] = tensor
-        point.update(tensor_summary(tensor))
-    if tensor_ref is not None:
-        point["tensor_ref"] = str(tensor_ref)
-
-    validate_embedding_point(point)
-    _refresh_embedding_set_summary(embedding_set)
-    return embedding_set
-
-
 def collect_point_tensors(embedding_set: dict[str, Any]) -> list[torch.Tensor]:
     """Collect point tensors in point order."""
     validate_embedding_set(embedding_set)
@@ -324,27 +269,6 @@ def euclidean_distance(left: torch.Tensor, right: torch.Tensor) -> float:
             f"Shape mismatch: {tuple(left_vector.shape)} != {tuple(right_vector.shape)}"
         )
     return float(torch.linalg.vector_norm(left_vector - right_vector).item())
-
-
-def pairwise_distance_matrix(
-    tensors: Iterable[torch.Tensor],
-    *,
-    metric: str = "euclidean",
-) -> torch.Tensor:
-    """Compute a pairwise distance/similarity matrix for flattened tensors."""
-    vectors = [flatten_tensor(tensor) for tensor in tensors]
-    if not vectors:
-        return torch.zeros((0, 0), dtype=torch.float32)
-    matrix = torch.stack(vectors).float()
-    if metric == "euclidean":
-        return torch.cdist(matrix, matrix, p=2)
-    if metric == "cosine_distance":
-        normalized = torch.nn.functional.normalize(matrix, dim=1)
-        return 1.0 - (normalized @ normalized.T)
-    if metric == "cosine_similarity":
-        normalized = torch.nn.functional.normalize(matrix, dim=1)
-        return normalized @ normalized.T
-    raise NelsEmbeddingError(f"Unsupported pairwise metric: {metric}")
 
 
 def nearest_neighbors(
@@ -434,7 +358,7 @@ def build_weighted_edges(
     except ImportError:
         pass
 
-    # Fallback: original O(N²) scan
+    # Fallback
     tensors = [point["tensor"] for point in points]
     edges = []
     for source_index, source in enumerate(points):
@@ -514,18 +438,14 @@ __all__ = [
     "collect_point_tensors",
     "cosine_similarity",
     "create_embedding_set",
-    "delete_embedding_point",
     "embedding_set_snapshot",
-    "embedding_set_to_json",
     "euclidean_distance",
     "flatten_tensor",
     "get_embedding_point",
     "make_embedding_point",
     "nearest_neighbors",
     "normalize_tensor",
-    "pairwise_distance_matrix",
     "tensor_summary",
-    "update_embedding_point",
     "validate_embedding_point",
     "validate_embedding_set",
 ]

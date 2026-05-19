@@ -1,6 +1,5 @@
-import { h } from "preact";
 import { operationConfig, setOperationConfig, setOperationResult } from "../state/operation.js";
-import { clearSelection } from "../state/selection.js";
+import { clearSelection, selectedIds } from "../state/selection.js";
 import { activeSession, schedulePushState } from "../state/session.js";
 import { fitCamera } from "../graph/renderer2d.js";
 import { graphData } from "../state/graph.js";
@@ -35,9 +34,20 @@ function onNeighborCountChange(e: Event): void {
   schedulePushState();
 }
 
+function selectionHint(op: string, selCount: number): string | null {
+  if (op === "lerp" || op === "slerp") {
+    if (selCount !== 2) return `Select exactly 2 points (${selCount} selected)`;
+  } else if (op === "delta_walk") {
+    if (selCount < 1 || selCount > 2) return `Select 1 or 2 points (${selCount} selected)`;
+  }
+  return null;
+}
+
 export function OperationCard() {
   const cfg = operationConfig.value;
   const pointCount = graphData.value.points.length;
+  const selCount = selectedIds.value.size;
+  const hint = selectionHint(cfg.operation, selCount);
 
   return (
     <details class="nels-panel-card" open>
@@ -92,6 +102,20 @@ export function OperationCard() {
             onChange={onChange("alpha_schedule", String)}
           />
         </label>
+        {(cfg.operation === "lerp" || cfg.operation === "slerp" || cfg.operation === "delta_walk") && (
+          <label>
+            <span>nearest sample</span>
+            <input
+              type="checkbox"
+              checked={cfg.nearest_sample}
+              onChange={(e) => {
+                setOperationConfig({ nearest_sample: (e.target as HTMLInputElement).checked });
+                schedulePushState();
+              }}
+            />
+          </label>
+        )}
+        {hint && <div class="nels-sel-hint">{hint}</div>}
         <div class="nels-panel-row">
           <button onClick={() => { clearSelection(); setOperationResult(null); schedulePushState(); }}>Clear</button>
           <button onClick={() => { fitCamera(); schedulePushState(); }}>Fit</button>

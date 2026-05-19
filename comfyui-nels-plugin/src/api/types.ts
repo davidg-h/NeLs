@@ -57,6 +57,31 @@ export interface NelsNeighbor {
   query_id?: string;
 }
 
+export interface NearestSample {
+  id: string;
+  label: string;
+  distance: number;
+}
+
+export interface TrajectoryStep {
+  index: number;
+  id: string;
+  alpha: number;
+  norm?: number;
+  tensor_shape?: number[];
+  dtype?: string;
+  metadata?: Record<string, unknown>;
+  nearest_top_k?: NearestSample[];
+  metric_value?: number;
+}
+
+export interface TrajectoryOverlayPoint {
+  id: string;
+  alpha: number;
+  coords_2d?: [number, number];
+  coords_3d?: [number, number, number];
+}
+
 export interface NelsOperationResult {
   operation: string;
   request_id?: string;
@@ -66,6 +91,9 @@ export interface NelsOperationResult {
   neighbors?: NelsNeighbor[];
   points?: NelsPoint[];
   selection?: { selected_point_ids: string[] };
+  trajectory?: TrajectoryStep[];
+  trajectory_overlay?: TrajectoryOverlayPoint[];
+  trajectory_overlay_warning?: string;
 }
 
 export interface NelsMetricsResult {

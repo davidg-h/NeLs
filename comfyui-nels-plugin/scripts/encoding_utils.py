@@ -1,14 +1,15 @@
-"""Shared encoding pipeline for NELS — imported by both CLI and ComfyUI nodes.
+"""
+Shared encoding pipeline for NELS:
+imported by both CLI and ComfyUI nodes.
 
 This module holds the encoding pipeline only: "tensor in, numpy vectors out":
   - stack_token_dicts   : batch ComfyUI tokenizer output
-  - encode_prompts      : CLIP --> pooled float32 vectors
+  - encode_prompts      : CLIP --> pooled float32 vectors (+ optional full cond tensors)
   - encode_image_tensor : VAE tensor --> pooled float32 vectors
 
 Model objects (CLIP, VAE) are the same ComfyUI types in both contexts:
   - CLI loads them from .safetensors via comfy.sd
   - Nodes receive them as already-loaded ComfyUI graph inputs
-
 """
 
 from __future__ import annotations
@@ -52,16 +53,23 @@ def stack_token_dicts(all_tokens: list[dict]) -> dict:
     return batched
 
 
-def encode_prompts(clip: Any, prompts: list[str], batch_size: int = 32) -> np.ndarray:
+def encode_prompts(
+    clip: Any,
+    prompts: list[str],
+    batch_size: int = 32,
+    save_full_cond: bool = False,
+) -> tuple[np.ndarray, list[np.ndarray] | None]:
     """Encode prompts with a ComfyUI CLIP object.
 
-    Returns float32 array of shape (N, dim).
+    Returns (vectors [N, dim], cond_list_or_None).
+    cond_list is a list of [seq_len, hidden_dim] float32 arrays when save_full_cond=True.
     Works identically for CLI (model loaded from file) and node (ComfyUI graph input).
     """
     import comfy.model_management
 
     comfy.model_management.load_models_gpu([clip.patcher])
     all_vectors: list[np.ndarray] = []
+    all_cond: list[np.ndarray] | None = [] if save_full_cond else None
     n_batches = (len(prompts) + batch_size - 1) // batch_size
 
     for batch_idx, i in enumerate(range(0, len(prompts), batch_size), 1):
@@ -85,27 +93,31 @@ def encode_prompts(clip: Any, prompts: list[str], batch_size: int = 32) -> np.nd
                 c, pl = clip.encode_from_tokens(tok, return_pooled=True)
                 v = pl.squeeze(0) if pl is not None else c.squeeze(0).mean(dim=0)
                 all_vectors.append(v.cpu().float().numpy()[None])
+                if all_cond is not None:
+                    all_cond.append(c.squeeze(0).cpu().float().numpy())
             continue
 
         all_vectors.append(vecs)
+        if all_cond is not None:
+            for j in range(len(batch)):
+                all_cond.append(cond[j].cpu().float().numpy())
 
-    return np.concatenate(all_vectors, axis=0).astype(np.float32)
+    return np.concatenate(all_vectors, axis=0).astype(np.float32), all_cond
 
 
 def encode_image_tensor(
     vae: Any,
     images,  # (B, H, W, C) float32 in [0, 1]
     encode_limit: int = 0,
-    image_pooling: str = "spatial_mean",
-    save_full_latents: bool = False,
+    image_pooling: str = "flatten",
     image_width: int | None = None,
     image_height: int | None = None,
     batch_size: int = 8,
-) -> tuple[np.ndarray, list[int], np.ndarray | None]:
+) -> tuple[np.ndarray, list[int]]:
     """Encode an image tensor with a ComfyUI VAE.
 
     Encodes in batches to avoid GPU OOM on large inputs.
-    Returns (pooled_float32 [N, C], latent_shape [C,H,W], full_latents_or_None [N,C,H,W]).
+    Returns (pooled_float32 [N, C*H*W] for flatten or [N, C] for spatial_mean, latent_shape [C,H,W]).
     Works identically for CLI (model loaded from file) and node (ComfyUI graph input).
     """
     import torch
@@ -125,7 +137,6 @@ def encode_image_tensor(
         images = imgs_nchw.permute(0, 2, 3, 1)
 
     all_pooled: list[np.ndarray] = []
-    all_full: list[np.ndarray] = []
     latent_shape: list[int] = []
     n_batches = (len(images) + batch_size - 1) // batch_size
 
@@ -139,9 +150,6 @@ def encode_image_tensor(
         if not latent_shape:
             latent_shape = list(raw.shape[1:])
 
-        if save_full_latents:
-            all_full.append(raw.detach().cpu().float().numpy())
-
         if image_pooling == "flatten":
             pooled = raw.detach().flatten(start_dim=1).cpu().float()
         else:
@@ -149,10 +157,4 @@ def encode_image_tensor(
 
         all_pooled.append(pooled.numpy().astype(np.float32))
 
-    vectors = np.concatenate(all_pooled, axis=0).astype(np.float32)
-    full_np = (
-        np.concatenate(all_full, axis=0).astype(np.float32)
-        if save_full_latents
-        else None
-    )
-    return vectors, latent_shape, full_np
+    return np.concatenate(all_pooled, axis=0).astype(np.float32), latent_shape

@@ -1,11 +1,10 @@
-import { h } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { Header } from "./Header.js";
 import { SessionCard } from "./SessionCard.js";
 import { OperationCard } from "./OperationCard.js";
 import { ResultCard } from "./ResultCard.js";
 import { EventLog } from "./EventLog.js";
-import { HoverTooltip, updateMousePos } from "./HoverTooltip.js";
+import { HoverTooltip2D, updateMousePos } from "./HoverTooltip2D.js";
 import {
   initRenderer as init2D,
   destroyRenderer as destroy2D,
@@ -77,7 +76,7 @@ export function Panel() {
             class="nels-sigma-container"
             onMouseMove={onMouseMove}
           />
-          {hoverPoint.value && <HoverTooltip containerRef={containerRef} />}
+          {hoverPoint.value && <HoverTooltip2D containerRef={containerRef} />}
           {graphData.value.points.length === 0 && (
             <div class="nels-panel-empty">
               {isLoading ? (

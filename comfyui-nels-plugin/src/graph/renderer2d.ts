@@ -1,11 +1,17 @@
 import Sigma from "sigma";
 import { MultiGraph } from "graphology";
 import EdgeCurveProgram from "@sigma/edge-curve";
-import { effect } from "@preact/signals";
+import { computed, effect } from "@preact/signals";
 import type { Settings as SigmaSettings } from "sigma/settings";
 import { selectedIds, emphasizedIds, hoverNodeId } from "../state/selection.js";
 import { graphData } from "../state/graph.js";
-import { operationResult } from "../state/operation.js";
+import {
+  operationConfig,
+  operationResult,
+  trajectoryOverlayVisible,
+} from "../state/operation.js";
+
+const _snapEndpoints = computed(() => operationConfig.value.snap_endpoints);
 import { view, animationEnabled } from "../state/events.js";
 import { hslToHex, dimHex, mixHex } from "./colors.js";
 import { syncSigmaGraph, addOverlayEdgesImpl } from "./adapter.js";
@@ -14,6 +20,8 @@ import type { NelsOperationResult } from "../api/types.js";
 let sigma: Sigma | null = null;
 let sigmaGraph: MultiGraph | null = null;
 const overlayEdgeKeys: string[] = [];
+const overlayNodeKeys: string[] = [];
+const snapLinks = new Map<string, string>(); // ghost node key -> snapped real node key
 const pulses = new Map<string, number>();
 const basePositions = new Map<string, { x: number; y: number }>();
 let pulseRaf: number | null = null;
@@ -21,7 +29,7 @@ let ambientRaf: number | null = null;
 let ambientTime = 0;
 const effectDisposals: (() => void)[] = [];
 
-// Mutable render state — written by signal effects, read by Sigma reducers (hot path)
+// Mutable render state -> written by signal effects, read by Sigma reducers
 const rs = {
   selectedIds: new Set<string>(),
   emphasizedIds: new Set<string>(),
@@ -55,9 +63,20 @@ export function initRenderer(container: HTMLElement): void {
     effect(() => {
       const gd = graphData.value;
       const opResult = operationResult.value;
+      const showOverlay = trajectoryOverlayVisible.value;
+      const snapEp = _snapEndpoints.value;
       if (!sigma || !sigmaGraph) return;
-      syncSigmaGraph(sigmaGraph, gd, opResult, overlayEdgeKeys);
-      // Snapshot after build — animation loop reads these as origin
+      syncSigmaGraph(
+        sigmaGraph,
+        gd,
+        opResult,
+        overlayEdgeKeys,
+        overlayNodeKeys,
+        showOverlay,
+        snapEp,
+        snapLinks,
+      );
+      // Snapshot after build -> animation loop reads these as origin
       basePositions.clear();
       sigmaGraph.forEachNode((node) => {
         basePositions.set(node, {
@@ -92,7 +111,6 @@ export function initRenderer(container: HTMLElement): void {
       else stopAmbientLoop();
     }),
   );
-
 }
 
 export function destroyRenderer(): void {
@@ -107,10 +125,17 @@ export function destroyRenderer(): void {
   sigma = null;
   sigmaGraph = null;
   overlayEdgeKeys.length = 0;
+  overlayNodeKeys.length = 0;
+  snapLinks.clear();
   pulses.clear();
 }
 
 export function sigmaRefresh(): void {
+  sigma?.refresh();
+}
+
+export function highlightGhostStep(_stepId: string | null): void {
+  // hoverNodeId is set by the caller; sigma picks it up on next refresh
   sigma?.refresh();
 }
 
@@ -146,7 +171,15 @@ export function fitCamera(): void {
 
 export function addOverlayEdges(): void {
   if (!sigmaGraph) return;
-  addOverlayEdgesImpl(sigmaGraph, operationResult.value, overlayEdgeKeys);
+  addOverlayEdgesImpl(
+    sigmaGraph,
+    operationResult.value,
+    overlayEdgeKeys,
+    overlayNodeKeys,
+    trajectoryOverlayVisible.value,
+    _snapEndpoints.value,
+    snapLinks,
+  );
 }
 
 export function pulseIds(ids: string[]): void {
@@ -178,6 +211,26 @@ function nodeReducer(
   node: string,
   data: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (data.isGhost) {
+    const hover = rs.hoverNodeId === node;
+    if (hover) {
+      return {
+        ...data,
+        size: ((data.size as number) || 3.5) * 2.2,
+        color: "#facc15",
+        highlighted: true,
+        zIndex: 5,
+      };
+    }
+    const phase = ambientPhase(node);
+    const breath = 0.5 + 0.5 * Math.sin(phase);
+    const shimmer = 0.5 + 0.5 * Math.sin(phase * 0.72 + 1.7);
+    return {
+      ...data,
+      size: ((data.size as number) || 3.5) * (0.82 + breath * 0.18),
+      color: `rgba(251,146,60,${(0.28 + shimmer * 0.38).toFixed(2)})`,
+    };
+  }
   const phase = ambientPhase(node);
   const breath = 0.5 + 0.5 * Math.sin(phase);
   const shimmer = 0.5 + 0.5 * Math.sin(phase * 0.72 + 1.7);
@@ -190,10 +243,14 @@ function nodeReducer(
   const pulseUntil = pulses.get(node) ?? 0;
   const pulsing = pulseUntil > Date.now();
 
-  // Fast path: no interaction and no pulse — only ambient visual changes needed
+  // Fast path: no interaction and no pulse -> only ambient visual changes needed
   if (!selected && !hover && !emphasized && !dim && !pulsing) {
     const res = { ...data } as Record<string, unknown>;
-    res.color = mixHex((data.color as string) || "#40a0ff", "#ffffff", 0.02 + shimmer * 0.04);
+    res.color = mixHex(
+      (data.color as string) || "#40a0ff",
+      "#ffffff",
+      0.02 + shimmer * 0.04,
+    );
     res.size = ((data.size as number) || 6) * (0.94 + breath * 0.08);
     return res;
   }
@@ -321,7 +378,6 @@ function ambientPhase(node: string): number {
   return ambientTime / 900 + hashString(node) * 0.0007;
 }
 
-// FNV-1a 32-bit: good avalanche even for single-char inputs (sequential IDs).
 function hashString(value: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < value.length; i++) {
@@ -334,7 +390,12 @@ function hashString(value: string): number {
 function startAmbientLoop(): void {
   if (ambientRaf) return;
   const loop = (): void => {
-    if (!sigma || !sigmaGraph || view.value !== "graph" || !animationEnabled.value) {
+    if (
+      !sigma ||
+      !sigmaGraph ||
+      view.value !== "graph" ||
+      !animationEnabled.value
+    ) {
       ambientRaf = null;
       restoreBasePositions();
       return;
@@ -342,17 +403,34 @@ function startAmbientLoop(): void {
     ambientTime = performance.now();
     const t = ambientTime / 1000;
     // Per-node phase offsets: each node oscillates independently so the centroid
-    // stays approximately fixed — Sigma recomputes its normalization bounding box
-    // on every refresh(), and a collective (same-delta) wave would be canceled out.
+    // stays approximately fixed -> Sigma recomputes its normalization bounding box
     basePositions.forEach(({ x, y }, node) => {
       if (sigmaGraph!.hasNode(node)) {
         const h = hashString(node);
-        const px = (h & 0xffff) * (Math.PI * 2 / 0xffff);
-        const py = (h >>> 16) * (Math.PI * 2 / 0xffff);
-        const dx = Math.sin(t * 0.6 + px) * 0.035 + Math.sin(t * 0.35 + px + 1.2) * 0.02;
-        const dy = Math.cos(t * 0.45 + py) * 0.03 + Math.cos(t * 0.25 + py + 2.1) * 0.015;
+        const px = (h & 0xffff) * ((Math.PI * 2) / 0xffff);
+        const py = (h >>> 16) * ((Math.PI * 2) / 0xffff);
+        const dx =
+          Math.sin(t * 0.6 + px) * 0.035 + Math.sin(t * 0.35 + px + 1.2) * 0.02;
+        const dy =
+          Math.cos(t * 0.45 + py) * 0.03 +
+          Math.cos(t * 0.25 + py + 2.1) * 0.015;
         sigmaGraph!.setNodeAttribute(node, "x", x + dx);
         sigmaGraph!.setNodeAttribute(node, "y", y + dy);
+      }
+    });
+    // Snapped ghost endpoints follow their anchor nodes animated position
+    snapLinks.forEach((realKey, ghostKey) => {
+      if (sigmaGraph!.hasNode(ghostKey) && sigmaGraph!.hasNode(realKey)) {
+        sigmaGraph!.setNodeAttribute(
+          ghostKey,
+          "x",
+          sigmaGraph!.getNodeAttribute(realKey, "x") as number,
+        );
+        sigmaGraph!.setNodeAttribute(
+          ghostKey,
+          "y",
+          sigmaGraph!.getNodeAttribute(realKey, "y") as number,
+        );
       }
     });
     sigma.refresh();

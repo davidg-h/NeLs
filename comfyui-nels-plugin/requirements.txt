@@ -4,15 +4,10 @@ numpy
 safetensors
 umap-learn
 scikit-learn
-
-# Prompt encoding (--type prompt)
-transformers
-
-# Image encoding (--type image)
-diffusers[torch]
+joblib
 Pillow
 torch  # usually already present in a ComfyUI environment
 
-# HuggingFace dataset loading
+# HuggingFace dataset loading (optional — only needed when loading HF datasets)
 datasets
 
