@@ -1,4 +1,6 @@
-"""Queued metrics for NELS graph sessions."""
+"""
+Queued metrics for NELS graph sessions.
+"""
 
 from __future__ import annotations
 
@@ -14,8 +16,8 @@ class NelsMetrics:
     def INPUT_TYPES(cls):
         return {"required": {"session_bundle": ("NELS_SESSION_BUNDLE",)}}
 
-    RETURN_TYPES = ("NELS_SESSION_BUNDLE", "NELS_METRICS", "STRING")
-    RETURN_NAMES = ("session_bundle", "metrics", "metrics_json")
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("metrics_json",)
     FUNCTION = "execute"
     CATEGORY = "nels/enhanced"
     OUTPUT_NODE = True
@@ -32,14 +34,16 @@ class NelsMetrics:
         run_id = bundle["run_id"]
         rev = bundle["state_revision"]
 
-        store.publish_node_event(
-            sid, "metrics_started",
-            node_name="NELS Metrics",
-            message=f"NELS Metrics started {mode}",
-            status="running",
-            run_id=run_id, state_revision=rev,
-            payload={"metric_mode": mode},
-        )
+        def emit(event_type: str, message: str, status: str, payload: Any = None) -> None:
+            store.publish_node_event(
+                sid, event_type,
+                node_name="NELS Metrics",
+                message=message, status=status,
+                run_id=run_id, state_revision=rev,
+                payload=payload or {},
+            )
+
+        emit("metrics_started", f"NELS Metrics started {mode}", "running", {"metric_mode": mode})
         try:
             metrics = compute_metrics(
                 metric_mode=mode,
@@ -49,41 +53,13 @@ class NelsMetrics:
             )
         except Exception as exc:
             failed_payload = {"metric_mode": mode, "error": str(exc)}
-            store.publish_node_event(
-                sid, "metrics_failed",
-                node_name="NELS Metrics",
-                message=f"NELS Metrics failed {mode}: {exc}",
-                status="failed",
-                run_id=run_id, state_revision=rev,
-                payload=failed_payload,
-            )
-            store.publish_node_event(
-                sid, "run_failed",
-                node_name="NELS Metrics",
-                message="NELS pipeline run failed",
-                status="failed",
-                run_id=run_id, state_revision=rev,
-                payload=failed_payload,
-            )
+            emit("metrics_failed", f"NELS Metrics failed {mode}: {exc}", "failed", failed_payload)
+            emit("run_failed", "NELS pipeline run failed", "failed", failed_payload)
             raise
         bundle["metrics"] = metrics
-        store.publish_node_event(
-            sid, "metrics_result",
-            node_name="NELS Metrics",
-            message=f"NELS Metrics computed {metrics.get('metric_mode', mode)}",
-            status="completed",
-            run_id=run_id, state_revision=rev,
-            payload=metrics,
-        )
-        store.publish_node_event(
-            sid, "run_completed",
-            node_name="NELS Metrics",
-            message="NELS pipeline run completed",
-            status="completed",
-            run_id=run_id, state_revision=rev,
-            payload={"metric_mode": mode},
-        )
-        return (bundle, metrics, metrics_to_json(metrics))
+        emit("metrics_result", f"NELS Metrics computed {metrics.get('metric_mode', mode)}", "completed", metrics)
+        emit("run_completed", "NELS pipeline run completed", "completed", {"metric_mode": mode})
+        return (metrics_to_json(metrics),)
 
 
 NODE_CLASS_MAPPINGS = {"nels_Metrics": NelsMetrics}

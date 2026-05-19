@@ -1,9 +1,9 @@
 import type { NelsPoint } from "../api/types.js";
 
-// Background color components for dimHex mixing — must match .nels-sigma-container background
+// Background color components for dimHex mixing
 const BG = [0x05, 0x09, 0x0f] as const; // #05090f
 
-// Opaque hex output — Sigma's WebGL premultiplied-alpha darkens semi-transparent colors.
+// Opaque hex output
 export function hslToHex(h: number, s: number, l: number): string {
   const sf = s / 100;
   const lf = l / 100;
@@ -44,11 +44,7 @@ export function mixHex(hex: string, targetHex: string, amount: number): string {
   return `#${mix(sr, tr)}${mix(sg, tg)}${mix(sb, tb)}`;
 }
 
-export function clusterColor(
-  point: NelsPoint,
-  normX = 0,
-  normY = 0,
-): string {
+export function clusterColor(point: NelsPoint, normX = 0, normY = 0): string {
   const raw = point?.metadata?.cluster;
   const n = Number(raw);
   const hasCluster =
@@ -59,9 +55,8 @@ export function clusterColor(
     return hslToHex(hue, 100, 58);
   }
 
-  // No cluster label — map UMAP angle to hue so nearby points share similar colors.
+  // No cluster label -> map UMAP angle to hue so nearby points share similar colors.
   const angle = Math.atan2(normY, normX) * (180 / Math.PI);
   const hue = (angle + 180) % 360;
-  const dist = Math.min(Math.hypot(normX, normY), 0.6);
   return hslToHex(hue, 100, 58);
 }

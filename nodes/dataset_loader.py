@@ -1,4 +1,7 @@
-"""NELS Dataset Loader — loads a pre-encoded dataset from disk into the session pipeline."""
+"""
+NELS Dataset Loader:
+loads a pre-encoded dataset from disk into the session pipeline.
+"""
 
 from __future__ import annotations
 
@@ -35,7 +38,7 @@ def _remap_knn_to_local(
     """Remap global kNN row/col indices to local indices for a selected subset."""
     import numpy as _np
 
-    global_to_local = {int(g): l for l, g in enumerate(selected_indices)}
+    global_to_local = {int(g): local_i for local_i, g in enumerate(selected_indices)}
     n = len(selected_indices)
     stored_k = knn_indices.shape[1]
 
@@ -104,6 +107,25 @@ def _build_embedding_set(
     samples = dataset["samples"]
     meta = dataset["metadata"]
 
+    has_full_cond = dataset.get("cond_tensors_available", False)
+
+    # Load selected cond tensors up front
+    cond_by_id: dict[str, Any] = {}
+    if has_full_cond:
+        cond_path = Path(dataset.get("path", "")) / "cond_tensors.safetensors"
+        if cond_path.exists():
+            try:
+                from safetensors import safe_open
+
+                with safe_open(str(cond_path), framework="pt") as f:
+                    available_keys = set(f.keys())
+                    for i in indices:
+                        sid = str(samples[i].get("id", f"p_{i:06d}"))
+                        if sid in available_keys:
+                            cond_by_id[sid] = f.get_tensor(sid)
+            except ImportError:
+                has_full_cond = False
+
     points = []
     for i in indices:
         sample = samples[i]
@@ -126,9 +148,10 @@ def _build_embedding_set(
         label = sample.get("text") or sample.get("image_path") or point_id
         label = str(label)[:64]  # cap label length for display
 
-        points.append(make_embedding_point(point_id, label, vec, point_meta))
-
-    has_full_latents = dataset.get("full_latents_available", False)
+        point = make_embedding_point(point_id, label, vec, point_meta)
+        if point_id in cond_by_id:
+            point["cond_tensor"] = cond_by_id[point_id]
+        points.append(point)
 
     return create_embedding_set(
         points,
@@ -138,11 +161,13 @@ def _build_embedding_set(
             "dataset_path": str(dataset.get("path", "")),
             "source_type": meta.get("type", "prompt_embedding"),
             "sample_count": len(indices),
-            "embedding_dim": int(pooled.shape[1]) if pooled.ndim > 1 else int(pooled.shape[0]),
+            "embedding_dim": int(pooled.shape[1])
+            if pooled.ndim > 1
+            else int(pooled.shape[0]),
             "encoder": meta.get("encoder", ""),
             "source_dataset": meta.get("source_dataset", ""),
             "encoding_params": meta.get("encoding_params", {}),
-            "has_full_latents": has_full_latents,
+            "has_full_cond": has_full_cond,
         },
     )
 
@@ -166,7 +191,7 @@ def build_loader_snapshot(
     saved_3d = dataset.get("umap_3d") if dataset else None
 
     if saved_2d is not None and saved_3d is not None and indices is not None:
-        # Fast path: use the pre-computed projections saved by the encoder.
+        # Fast path -> use the pre-computed projections saved by the encoder.
         coords_2d = normalize_projected_coordinates(
             torch.from_numpy(np.asarray(saved_2d[indices], dtype=np.float32))
         ).tolist()
@@ -187,7 +212,7 @@ def build_loader_snapshot(
         warnings: list[str] = []
         projection_method = "umap"
     else:
-        # Slow fallback: recompute UMAP (dataset was created with --no-umap or projections missing).
+        # Slow fallback -> recompute UMAP (dataset was created with --no-umap or projections missing).
         dual = project_both_modes(
             embedding_set,
             seed=config.get("random_seed", 42),

@@ -102,21 +102,6 @@ function stabilizeSnapshot(
         .filter((p) => p.coords_3d)
         .map((p) => [String(p.id), p.coords_3d!]),
     );
-    // Fallback: seed caches from single coords field for backward-compat snapshots.
-    if (!coordCache2d.size) {
-      coordCache2d = new Map(
-        points
-          .filter((p) => p.coords?.length === 2)
-          .map((p) => [String(p.id), p.coords as [number, number]]),
-      );
-    }
-    if (!coordCache3d.size) {
-      coordCache3d = new Map(
-        points
-          .filter((p) => p.coords?.length === 3)
-          .map((p) => [String(p.id), p.coords as [number, number, number]]),
-      );
-    }
     return snap;
   }
 

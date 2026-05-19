@@ -1,6 +1,6 @@
 """Shared dataset I/O for NELS.
 
-Optional runtime dependencies (imported lazily or with safe fallbacks):
+Runtime dependencies (imported lazily or with safe fallbacks):
   - datasets  : required for loading HuggingFace prompt datasets
   - umap-learn: required for UMAP projection
   - scikit-learn: required for kNN precomputation
@@ -23,7 +23,7 @@ try:
 except ImportError:
     hf_load = None
 
-DATASET_VERSION = 2
+DATASET_VERSION = 3
 
 DEFAULT_UMAP_PARAMS: dict[str, Any] = {
     "n_neighbors": 15,
@@ -54,22 +54,22 @@ def build_dataset(
             "text_pooling": config.get("text_pooling", "pooler"),
             "batch_size": config.get("batch_size"),
             "hf_split": config.get("hf_split", "train"),
+            "has_full_cond": config.get("save_full_cond", False),
         }
         top_level_pooling = config.get("text_pooling", "pooler")
     elif config.get("type") == "image_latent":
         encoding_params = {
             "latent_mode": config.get("latent_mode", "mean"),
-            "image_pooling": config.get("image_pooling", "spatial_mean"),
+            "image_pooling": config.get("image_pooling", "flatten"),
             "vae_scale_factor": config.get("vae_scale_factor", 8),
             "vae_latent_scaling_factor": config.get("vae_latent_scaling_factor"),
             "latents_scaled_for_diffusion": False,
             "latent_shape": config.get("latent_shape"),
             "processed_size": config.get("processed_size"),
             "latent_reproducible": config.get("latent_reproducible", True),
-            "save_full_latents": config.get("save_full_latents", False),
             "batch_size": config.get("batch_size"),
         }
-        top_level_pooling = config.get("image_pooling", "spatial_mean")
+        top_level_pooling = config.get("image_pooling", "flatten")
     else:
         top_level_pooling = config.get("pooling", "none")
 
@@ -98,7 +98,6 @@ def build_dataset(
         "pooled": vectors,
         "umap_2d": None,
         "umap_3d": None,
-        "full_latents": None,
     }
 
 
@@ -182,7 +181,6 @@ def compute_knn(
     nn.fit(pooled)
     distances, indices = nn.kneighbors(pooled)
 
-    # Strip self from each row (self is included by kneighbors on the training data)
     out_idx = np.zeros((n, effective_k), dtype=np.int32)
     out_dst = np.zeros((n, effective_k), dtype=np.float32)
     for i in range(n):
@@ -211,7 +209,7 @@ def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
         for sample in dataset["samples"]:
             f.write(json.dumps(sample, ensure_ascii=False) + "\n")
 
-    np.save(str(path / "pooled.npy"), dataset["pooled"])
+    np.save(str(path / "embeddings.npy"), dataset["pooled"])
 
     if dataset.get("umap_2d") is not None:
         np.save(str(path / "umap_2d.npy"), dataset["umap_2d"])
@@ -230,10 +228,8 @@ def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
                 dataset[f"knn_{metric}_distances"],
             )
 
-    _save_tensors(dataset["pooled"], dataset["samples"], path)
-
-    if dataset.get("full_latents") is not None:
-        _save_full_latents(dataset["full_latents"], dataset["samples"], path)
+    if dataset.get("cond_tensors") is not None:
+        _save_cond_tensors(dataset["cond_tensors"], dataset["samples"], path)
 
     return str(path)
 
@@ -272,7 +268,10 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
             if line:
                 samples.append(json.loads(line))
 
-    pooled = np.load(str(path / "pooled.npy"))
+    embeddings_path = path / "embeddings.npy"
+    if not embeddings_path.exists():
+        raise FileNotFoundError(f"embeddings.npy not found in {path}")
+    pooled = np.load(str(embeddings_path))
 
     umap_2d: np.ndarray | None = (
         np.load(str(path / "umap_2d.npy")) if (path / "umap_2d.npy").exists() else None
@@ -301,9 +300,7 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
         else None
     )
 
-    full_latents_available = (path / "full_latents.safetensors").exists() or (
-        path / "full_latents.npz"
-    ).exists()
+    cond_tensors_available = (path / "cond_tensors.safetensors").exists()
 
     return {
         "metadata": metadata,
@@ -315,8 +312,7 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
         "knn_cosine_distances": knn_cosine_distances,
         "knn_euclidean_indices": knn_euclidean_indices,
         "knn_euclidean_distances": knn_euclidean_distances,
-        "full_latents": None,
-        "full_latents_available": full_latents_available,
+        "cond_tensors_available": cond_tensors_available,
         "path": str(path),
     }
 
@@ -336,16 +332,17 @@ def finalize_dataset(
     umap_params: dict[str, Any] | None = None,
     compute_knn_flag: bool = True,
     knn_k: int = 15,
-    full_latents: np.ndarray | None = None,
+    cond_tensors: list[np.ndarray] | None = None,
 ) -> str:
-    """Build, compute projections, and save a dataset. Returns the saved path string.
+    """
+    Build, compute projections, and save a dataset. Returns the saved path string.
 
     Single entry point for the create pipeline shared by CLI and ComfyUI nodes.
     """
     output_path = Path(output_path)
     dataset = build_dataset(vectors, samples, config)
-    if full_latents is not None:
-        dataset["full_latents"] = full_latents
+    if cond_tensors is not None:
+        dataset["cond_tensors"] = cond_tensors
 
     r2d = r3d = None
     if compute_umap_flag:
@@ -494,7 +491,8 @@ def load_images_from_source(
     limit: int = 0,
     hf_split: str = "train",
 ) -> tuple:
-    """Load images from a local folder or HuggingFace dataset.
+    """
+    Load images from a local folder or HuggingFace dataset.
 
     For local folders, delegates to load_images_from_folder.
     For HuggingFace dataset IDs, loads via datasets.load_dataset and converts
@@ -564,66 +562,35 @@ def load_images_from_source(
 # ---------------------------------------------------------------------------
 
 
-def _save_tensors(pooled: np.ndarray, samples: list[dict[str, Any]], path: Path) -> str:
-    try:
-        import torch
-        from safetensors.torch import save_file
-
-        tensors = {
-            str(s["id"]): torch.from_numpy(pooled[i]).float()
-            for i, s in enumerate(samples)
-        }
-        save_file(tensors, str(path / "tensors.safetensors"))
-        return "tensors.safetensors"
-    except ImportError:
-        np.savez_compressed(
-            str(path / "tensors.npz"),
-            **{str(s["id"]): pooled[i] for i, s in enumerate(samples)},
-        )
-        return "tensors.npz"
-
-
-def _save_full_latents(
-    full_latents: np.ndarray,
+def _save_cond_tensors(
+    cond_list: list[np.ndarray],
     samples: list[dict[str, Any]],
     path: Path,
 ) -> str:
+    """Save per-sample cond tensors indexed by sample ID to cond_tensors.safetensors."""
+    import torch
+    from safetensors.torch import save_file
+
+    tensors = {
+        str(s["id"]): torch.from_numpy(cond_list[i]).float()
+        for i, s in enumerate(samples)
+    }
+    save_file(tensors, str(path / "cond_tensors.safetensors"))
+    return "cond_tensors.safetensors"
+
+
+def _load_cond_tensors_all(path: Path) -> dict[str, np.ndarray] | None:
+    """Load all cond tensors from cond_tensors.safetensors into a {sample_id: array} dict."""
+    sf_path = path / "cond_tensors.safetensors"
+    if not sf_path.exists():
+        return None
     try:
-        import torch
-        from safetensors.torch import save_file
+        from safetensors import safe_open
 
-        tensors = {
-            str(s["id"]): torch.from_numpy(full_latents[i]).float()
-            for i, s in enumerate(samples)
-        }
-        save_file(tensors, str(path / "full_latents.safetensors"))
-        return "full_latents.safetensors"
+        result: dict[str, np.ndarray] = {}
+        with safe_open(str(sf_path), framework="pt") as f:
+            for k in f.keys():
+                result[k] = f.get_tensor(k).numpy().copy()
+        return result
     except ImportError:
-        np.savez_compressed(
-            str(path / "full_latents.npz"),
-            **{str(s["id"]): full_latents[i] for i, s in enumerate(samples)},
-        )
-        return "full_latents.npz"
-
-
-def _load_full_latents_all(path: Path) -> dict[str, np.ndarray] | None:
-    sf_path = path / "full_latents.safetensors"
-    if sf_path.exists():
-        try:
-            from safetensors import safe_open
-
-            result: dict[str, np.ndarray] = {}
-            with safe_open(str(sf_path), framework="pt") as f:
-                for k in f.keys():
-                    # .copy() ensures no reference to the mmap remains after the context exits.
-                    result[k] = f.get_tensor(k).numpy().copy()
-            return result
-        except ImportError:
-            pass
-
-    npz_path = path / "full_latents.npz"
-    if npz_path.exists():
-        data = np.load(str(npz_path))
-        return {k: data[k].copy() for k in data}
-
-    return None
+        return None

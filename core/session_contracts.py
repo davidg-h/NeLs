@@ -1,4 +1,6 @@
-"""Session bundle contracts shared by NELS nodes and routes."""
+"""
+Session bundle contracts shared by NELS nodes and routes.
+"""
 
 from __future__ import annotations
 
@@ -11,8 +13,8 @@ from typing import Any
 from .embedding_ops import embedding_set_snapshot, validate_embedding_set
 
 
-SESSION_BUNDLE_TYPE = "NELS_SESSION_BUNDLE"
 SESSION_BUNDLE_VERSION = 1
+SESSION_BUNDLE_TYPE = "NELS_SESSION_BUNDLE"
 
 DEFAULT_UI_STATE: dict[str, Any] = {
     "session_id": "default",
@@ -52,7 +54,9 @@ def normalize_ui_state(
     if isinstance(state, dict):
         normalized.update(copy.deepcopy(state))
 
-    normalized["session_id"] = str(normalized.get("session_id") or session_id or "default")
+    normalized["session_id"] = str(
+        normalized.get("session_id") or session_id or "default"
+    )
     selected = normalized.get("selected_point_ids", [])
     if isinstance(selected, str):
         selected = [selected]
@@ -85,6 +89,8 @@ def make_operation_request(ui_state: dict[str, Any], *, run_id: str) -> dict[str
         "selected_point_ids": list(ui_state.get("selected_point_ids") or []),
         "alpha_schedule": str(ui_state.get("alpha_schedule") or "0,0.25,0.5,0.75,1"),
         "neighbor_count": int(ui_state.get("neighbor_count") or 4),
+        "nearest_sample": bool(ui_state.get("nearest_sample", False)),
+        "metric_mode": str(ui_state.get("metric_mode") or "step_distance"),
     }
 
 
@@ -97,7 +103,9 @@ def make_selection(
     validate_embedding_set(embedding_set)
     existing = {point["id"] for point in embedding_set.get("points", [])}
     selected_ids = [
-        point_id for point_id in ui_state.get("selected_point_ids", []) if point_id in existing
+        point_id
+        for point_id in ui_state.get("selected_point_ids", [])
+        if point_id in existing
     ]
     return {
         "version": 1,
@@ -152,7 +160,12 @@ def merge_dual_points(
 ) -> list[dict[str, Any]]:
     """Merge project_both_modes output into snapshot point dicts with coords_2d/coords_3d."""
     return [
-        {**p2d, "coords": p2d["coords"], "coords_2d": p2d["coords"], "coords_3d": p3d["coords"]}
+        {
+            **p2d,
+            "coords": p2d["coords"],
+            "coords_2d": p2d["coords"],
+            "coords_3d": p3d["coords"],
+        }
         for p2d, p3d in zip(points_2d, points_3d)
     ]
 

@@ -1,4 +1,6 @@
-"""Metrics for NELS graph selections and trajectories."""
+"""
+Metrics for NELS graph selections and trajectories.
+"""
 
 from __future__ import annotations
 

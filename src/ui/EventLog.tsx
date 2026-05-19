@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { useRef, useEffect } from "preact/hooks";
 import { eventLog } from "../state/events.js";
 

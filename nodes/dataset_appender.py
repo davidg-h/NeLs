@@ -1,4 +1,7 @@
-"""NELS Add to Dataset node — appends new prompts or images to an existing dataset."""
+"""
+NELS Add to Dataset node:
+appends new prompts or images to an existing dataset.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +11,7 @@ from typing import Any
 import numpy as np
 
 from ..scripts.dataset_core import (
-    _load_full_latents_all,
+    _load_cond_tensors_all,
     compute_knn,
     compute_umap,
     load_dataset,
@@ -71,12 +74,6 @@ class NelsAddToDataset:
                         "tooltip": "[Prompt] Path to a .txt file of prompts (input_source='local').",
                     },
                 ),
-                "images": (
-                    "IMAGE",
-                    {
-                        "tooltip": "[Image] Image batch from another node. Always takes priority over folder/HF source.",
-                    },
-                ),
                 "image_folder_path": (
                     "STRING",
                     {
@@ -115,7 +112,6 @@ class NelsAddToDataset:
         prompt_text: str = "",
         prompt_file_path: str = "",
         hf_column: str = "Prompt",
-        images: Any = None,
         image_folder_path: str = "",
         encode_limit: int = 0,
     ) -> tuple[str]:
@@ -129,7 +125,7 @@ class NelsAddToDataset:
         meta: dict = ds["metadata"]
         offset = len(existing_samples)
 
-        new_full_latents_np: np.ndarray | None = None
+        new_cond_list: list[np.ndarray] | None = None
 
         # encode new items using the same settings as the original dataset
         if type == "prompt":
@@ -137,6 +133,8 @@ class NelsAddToDataset:
                 raise ValueError(
                     "NELS Add to Dataset: CLIP must be connected when type=prompt."
                 )
+
+            has_full_cond = bool(ds.get("cond_tensors_available", False))
 
             extra = [line.strip() for line in prompt_text.splitlines() if line.strip()]
             source_limit = max(0, encode_limit - len(extra)) if encode_limit > 0 else 0
@@ -159,7 +157,9 @@ class NelsAddToDataset:
             if not prompts:
                 raise ValueError("NELS Add to Dataset: no prompts to encode.")
 
-            new_vectors = encode_prompts(clip, prompts)
+            new_vectors, new_cond_list = encode_prompts(
+                clip, prompts, save_full_cond=has_full_cond
+            )
             new_samples = [
                 {
                     "id": f"pt_{offset + i:06d}",
@@ -178,21 +178,14 @@ class NelsAddToDataset:
                 )
 
             enc = meta.get("encoding_params", {})
-            orig_image_pooling: str = enc.get("image_pooling", "spatial_mean")
-            orig_save_full_latents: bool = bool(enc.get("save_full_latents", False))
+            orig_image_pooling: str = enc.get("image_pooling", "flatten")
 
             # Restore original resize dimensions so new latents live in the same space
             processed_size: list | None = enc.get("processed_size")
             orig_width: int | None = processed_size[0] if processed_size else None
             orig_height: int | None = processed_size[1] if processed_size else None
 
-            if images is not None:
-                image_tensor = images if encode_limit == 0 else images[:encode_limit]
-                image_names = [
-                    f"added_{offset + i:06d}" for i in range(image_tensor.shape[0])
-                ]
-                source_id = "comfyui_image_input"
-            elif input_source == "huggingface" and hf_dataset_id.strip():
+            if input_source == "huggingface" and hf_dataset_id.strip():
                 image_tensor, image_names = load_images_from_source(
                     hf_dataset_id.strip(),
                     image_column=hf_column,
@@ -207,16 +200,15 @@ class NelsAddToDataset:
                 source_id = image_folder_path.strip()
             else:
                 raise ValueError(
-                    "NELS Add to Dataset: connect an images node, provide an image_folder_path, "
+                    "NELS Add to Dataset: provide an image_folder_path, "
                     "or set input_source='huggingface' with a hf_dataset_id."
                 )
 
-            new_vectors, _, new_full_latents_np = encode_image_tensor(
+            new_vectors, _ = encode_image_tensor(
                 vae,
                 image_tensor,
                 encode_limit=0,
                 image_pooling=orig_image_pooling,
-                save_full_latents=orig_save_full_latents,
                 image_width=orig_width,
                 image_height=orig_height,
             )
@@ -244,34 +236,26 @@ class NelsAddToDataset:
         merged_vectors = np.concatenate([existing_vectors, new_vectors], axis=0)
         merged_samples = existing_samples + new_samples
 
-        # merge full_latents if the original dataset had them
-        full_latents_for_save: np.ndarray | None = None
-        if new_full_latents_np is not None and ds.get("full_latents_available"):
-            existing_full = _load_full_latents_all(path_obj)
-            if existing_full is not None:
-                existing_ordered = np.stack(
-                    [existing_full[str(s["id"])] for s in existing_samples], axis=0
-                )
-                if existing_ordered.shape[1:] != new_full_latents_np.shape[1:]:
-                    orig_shape = list(existing_ordered.shape[1:])
-                    new_shape = list(new_full_latents_np.shape[1:])
-                    ps = enc.get("processed_size")
-                    orig_scale = (
-                        ps[0] // orig_shape[2] if (ps and orig_shape[2]) else "?"
+        # merge cond tensors if the original dataset had them (prompt datasets only)
+        cond_for_save: list[np.ndarray] | None = None
+        if type == "prompt" and new_cond_list is not None:
+            if new_cond_list:
+                hidden_dim = new_cond_list[0].shape[-1]
+                if hidden_dim >= 2048:
+                    print(
+                        "Warning: cond_tensors.safetensors is very large for T5 models "
+                        "(~4GB/1k samples). Loading into memory for merge."
                     )
-                    new_scale = ps[0] // new_shape[2] if (ps and new_shape[2]) else "?"
-                    raise ValueError(
-                        f"Full latent shape mismatch: existing latents are {orig_shape} "
-                        f"(VAE scale ×{orig_scale}) but new latents are {new_shape} "
-                        f"(VAE scale ×{new_scale}). "
-                        "You are using a different VAE than was used to create this dataset. "
-                        "Connect the same VAE model that encoded the original images."
-                    )
-                full_latents_for_save = np.concatenate(
-                    [existing_ordered, new_full_latents_np], axis=0
-                )
-            else:
-                full_latents_for_save = new_full_latents_np
+            existing_cond = _load_cond_tensors_all(path_obj) or {}
+            for i, cond in enumerate(new_cond_list):
+                existing_cond[str(new_samples[i]["id"])] = cond
+            cond_for_save = [
+                existing_cond[str(s["id"])]
+                for s in merged_samples
+                if str(s["id"]) in existing_cond
+            ]
+            if len(cond_for_save) != len(merged_samples):
+                cond_for_save = None  # incomplete merge — skip to avoid corrupt file
 
         # UMAP: transform new points into existing space, or refit
         umap_2d = ds.get("umap_2d")
@@ -316,18 +300,18 @@ class NelsAddToDataset:
 
         # save everything
         updated_meta = {**meta, "sample_count": len(merged_samples)}
-        save_dataset(
-            {
-                "metadata": updated_meta,
-                "samples": merged_samples,
-                "pooled": merged_vectors,
-                "umap_2d": umap_2d,
-                "umap_3d": umap_3d,
-                "full_latents": full_latents_for_save,
-                **knn_arrays,
-            },
-            path_obj,
-        )
+        dataset_dict: dict[str, Any] = {
+            "metadata": updated_meta,
+            "samples": merged_samples,
+            "pooled": merged_vectors,
+            "umap_2d": umap_2d,
+            "umap_3d": umap_3d,
+            **knn_arrays,
+        }
+        if cond_for_save is not None:
+            dataset_dict["cond_tensors"] = cond_for_save
+
+        save_dataset(dataset_dict, path_obj)
         return (str(path_obj),)
 
 

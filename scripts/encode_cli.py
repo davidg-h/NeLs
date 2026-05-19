@@ -1,5 +1,6 @@
 """
-NELS dataset CLI — encode prompts or images using ComfyUI model classes directly.
+NELS dataset CLI:
+encode prompts or images using ComfyUI model classes directly.
 
 No ComfyUI server required. Models are loaded from .safetensors files using ComfyUI's
 own infrastructure, producing embeddings that are byte-for-byte identical to those
@@ -14,17 +15,7 @@ ComfyUI root detection (in order):
   2. COMFYUI_ROOT environment variable
   3. Auto-detect: 4 levels up from this file when plugin is symlinked inside custom_nodes/
 
-Usage examples:
-  python -m scripts.encode_cli create \\
-      --type prompt \\
-      --clip models/text_encoders/qwen_3_4b.safetensors --clip-type FLUX2 \\
-      --input Gustavosta/Stable-Diffusion-Prompts --hf-column Prompt \\
-      --output datasets/sd_prompts --encode-limit 5000
-
-  python -m scripts.encode_cli add \\
-      --dataset datasets/sd_prompts \\
-      --type prompt \\
-      --input extra_prompts.txt
+Usage: Read the ENCODE_CLI.md documentation for detailed instructions.
 """
 
 from __future__ import annotations
@@ -38,7 +29,7 @@ from typing import Any
 import numpy as np
 
 from dataset_core import (
-    _load_full_latents_all,
+    _load_cond_tensors_all,
     compute_knn,
     compute_umap,
     finalize_dataset,
@@ -197,6 +188,8 @@ def cmd_create(args: argparse.Namespace) -> None:
         "random_state": args.umap_seed,
     }
 
+    cond_tensors: list | None = None
+
     if args.type == "prompt":
         print(f"Loading prompts from: {args.input}")
         prompts, source_id = load_prompts_from_source(
@@ -211,8 +204,11 @@ def cmd_create(args: argparse.Namespace) -> None:
             )
 
         clip = _load_clip(args.clip, args.clip_type, comfyui_root)
+        save_full_cond: bool = getattr(args, "save_full_cond", False)
         print(f"Encoding {len(prompts)} prompts...")
-        vectors = encode_prompts(clip, prompts, batch_size=args.batch_size)
+        vectors, cond_tensors = encode_prompts(
+            clip, prompts, batch_size=args.batch_size, save_full_cond=save_full_cond
+        )
 
         samples = [
             {
@@ -231,18 +227,25 @@ def cmd_create(args: argparse.Namespace) -> None:
             "source_dataset": source_id,
             "text_pooling": "pooler",
             "umap_params": umap_params,
+            "save_full_cond": save_full_cond,
             "cli_encoder": {
                 "clip_path": _to_rel(args.clip, comfyui_root),
                 "clip_type": args.clip_type,
             },
         }
-        full_latents_np = None
         latent_shape = processed_size = None
 
     else:  # image
         vae = _load_vae(args.vae, comfyui_root)
         _iw = args.image_width if args.image_width and args.image_width > 0 else None
         _ih = args.image_height if args.image_height and args.image_height > 0 else None
+
+        if args.image_pooling == "spatial_mean":
+            print(
+                "WARNING: spatial_mean pooling discards spatial structure. "
+                "Trajectory steps cannot be decoded to images. "
+                "Navigation, UMAP, and kNN still work."
+            )
 
         print(f"Loading images from: {args.input}")
         image_tensor, image_names = load_images_from_source(
@@ -257,11 +260,10 @@ def cmd_create(args: argparse.Namespace) -> None:
         actual_h = _ih if _ih is not None else int(image_tensor.shape[1])
 
         print(f"Encoding {len(image_names)} images...")
-        vectors, latent_shape, full_latents_np = encode_image_tensor(
+        vectors, latent_shape = encode_image_tensor(
             vae,
             image_tensor,
             image_pooling=args.image_pooling,
-            save_full_latents=args.save_full_latents,
             image_width=_iw,
             image_height=_ih,
             batch_size=args.batch_size,
@@ -295,7 +297,6 @@ def cmd_create(args: argparse.Namespace) -> None:
             "processed_size": processed_size,
             "vae_scale_factor": vae_scale_factor,
             "latent_reproducible": True,
-            "save_full_latents": args.save_full_latents,
             "umap_params": umap_params,
             "cli_encoder": {"vae_path": _to_rel(args.vae, comfyui_root)},
         }
@@ -309,7 +310,7 @@ def cmd_create(args: argparse.Namespace) -> None:
         umap_params=umap_params,
         compute_knn_flag=not args.no_knn,
         knn_k=args.knn_k,
-        full_latents=full_latents_np,
+        cond_tensors=cond_tensors,
     )
 
     n = vectors.shape[0]
@@ -352,13 +353,12 @@ def cmd_add(args: argparse.Namespace) -> None:
     clip_type_str = args.clip_type or cli_enc.get("clip_type") or "FLUX2"
 
     enc = meta.get("encoding_params", {})
-    orig_image_pooling: str = enc.get("image_pooling", "spatial_mean")
-    orig_save_full_latents: bool = bool(enc.get("save_full_latents", False))
+    orig_image_pooling: str = enc.get("image_pooling", "flatten")
     processed_size = enc.get("processed_size")
     orig_width: int | None = processed_size[0] if processed_size else None
     orig_height: int | None = processed_size[1] if processed_size else None
 
-    new_full_latents_np: np.ndarray | None = None
+    new_cond_list: list | None = None
 
     if args.type == "prompt":
         if not clip_path:
@@ -368,6 +368,8 @@ def cmd_add(args: argparse.Namespace) -> None:
                 "Specify: --clip /path/to/clip.safetensors --clip-type FLUX2"
             )
         clip = _load_clip(clip_path, clip_type_str, comfyui_root)
+
+        has_full_cond = bool(ds.get("cond_tensors_available", False))
 
         print(f"Loading prompts from: {args.input}")
         prompts, source_id = load_prompts_from_source(
@@ -380,7 +382,9 @@ def cmd_add(args: argparse.Namespace) -> None:
             raise SystemExit("No prompts found — check --input and --encode-limit.")
 
         print(f"Encoding {len(prompts)} new prompts...")
-        new_vectors = encode_prompts(clip, prompts, batch_size=args.batch_size)
+        new_vectors, new_cond_list = encode_prompts(
+            clip, prompts, batch_size=args.batch_size, save_full_cond=has_full_cond
+        )
         new_samples = [
             {
                 "id": f"pt_{offset + i:06d}",
@@ -408,11 +412,10 @@ def cmd_add(args: argparse.Namespace) -> None:
             args.encode_limit,
             hf_split=args.hf_split,
         )
-        new_vectors, _, new_full_latents_np = encode_image_tensor(
+        new_vectors, _ = encode_image_tensor(
             vae,
             image_tensor,
             image_pooling=orig_image_pooling,
-            save_full_latents=orig_save_full_latents,
             image_width=orig_width,
             image_height=orig_height,
             batch_size=args.batch_size,
@@ -440,19 +443,22 @@ def cmd_add(args: argparse.Namespace) -> None:
     merged_vectors = np.concatenate([existing_vectors, new_vectors], axis=0)
     merged_samples = existing_samples + new_samples
 
-    # Merge full latents if the original dataset had them
-    full_latents_for_save: np.ndarray | None = None
-    if new_full_latents_np is not None and ds.get("full_latents_available"):
-        existing_full = _load_full_latents_all(path_obj)
-        if existing_full is not None:
-            existing_ordered = np.stack(
-                [existing_full[str(s["id"])] for s in existing_samples], axis=0
-            )
-            full_latents_for_save = np.concatenate(
-                [existing_ordered, new_full_latents_np], axis=0
-            )
-        else:
-            full_latents_for_save = new_full_latents_np
+    # merge cond tensors if the original dataset had them (prompt datasets only)
+    cond_for_save: list | None = None
+    if args.type == "prompt" and new_cond_list is not None:
+        if new_cond_list:
+            hidden_dim = new_cond_list[0].shape[-1]
+            if hidden_dim >= 2048:
+                print(
+                    "Warning: cond_tensors.safetensors is very large for T5 models "
+                    "(~4GB/1k samples). Loading into memory for merge."
+                )
+        existing_cond = _load_cond_tensors_all(path_obj) or {}
+        for i, cond in enumerate(new_cond_list):
+            existing_cond[str(new_samples[i]["id"])] = cond
+        cond_for_save_list = [existing_cond.get(str(s["id"])) for s in merged_samples]
+        if all(c is not None for c in cond_for_save_list):
+            cond_for_save = cond_for_save_list
 
     # UMAP: transform new points into existing space, or refit if models are missing
     umap_2d = ds.get("umap_2d")
@@ -508,18 +514,18 @@ def cmd_add(args: argparse.Namespace) -> None:
         updated_meta = {**meta, "sample_count": len(merged_samples)}
 
     before = _snapshot_mtimes(path_obj)
-    save_dataset(
-        {
-            "metadata": updated_meta,
-            "samples": merged_samples,
-            "pooled": merged_vectors,
-            "umap_2d": umap_2d,
-            "umap_3d": umap_3d,
-            "full_latents": full_latents_for_save,
-            **knn_arrays,
-        },
-        path_obj,
-    )
+    dataset_dict: dict[str, Any] = {
+        "metadata": updated_meta,
+        "samples": merged_samples,
+        "pooled": merged_vectors,
+        "umap_2d": umap_2d,
+        "umap_3d": umap_3d,
+        **knn_arrays,
+    }
+    if cond_for_save is not None:
+        dataset_dict["cond_tensors"] = cond_for_save
+
+    save_dataset(dataset_dict, path_obj)
 
     n_new = new_vectors.shape[0]
     print(f"\nAdded {n_new} samples to: {path_obj}")
@@ -601,9 +607,11 @@ def main() -> None:
     )
     cp.add_argument(
         "--image-pooling",
-        default="spatial_mean",
-        choices=["spatial_mean", "flatten"],
-        help="Latent pooling strategy for images (default: spatial_mean).",
+        default="flatten",
+        choices=["flatten", "spatial_mean"],
+        help="Latent pooling strategy for images (default: flatten). "
+        "flatten: full C×H×W vector, supports decode. "
+        "spatial_mean: compact (C,) channel means, navigation only.",
     )
     cp.add_argument(
         "--image-width",
@@ -618,9 +626,10 @@ def main() -> None:
         help="Resize images to this height before encoding. 0 = keep original.",
     )
     cp.add_argument(
-        "--save-full-latents",
+        "--save-full-cond",
         action="store_true",
-        help="Save raw (C,H,W) latents per image to full_latents.safetensors.",
+        help="[--type prompt only] Save full CLIP cond tensors per sample for KSampler. "
+        "Not recommended for T5/Flux (~4GB/1k samples).",
     )
     cp.add_argument(
         "--no-umap",

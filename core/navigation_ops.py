@@ -1,4 +1,6 @@
-"""High-dimensional graph navigation operations for enhanced NELS nodes."""
+"""
+High-dimensional graph navigation operations for enhanced NELS nodes.
+"""
 
 from __future__ import annotations
 
@@ -11,7 +13,6 @@ import torch
 from .embedding_ops import (
     NelsEmbeddingError,
     cosine_similarity,
-    euclidean_distance,
     flatten_tensor,
     get_embedding_point,
     nearest_neighbors,
@@ -110,6 +111,14 @@ def build_interpolation_trajectory(
         raise NelsNavigationError(f"{method.upper()} requires two selected points")
 
     start, end = points[0], points[1]
+    enc = embedding_set.get("metadata", {}).get("encoding_params", {})
+    embedding_type = embedding_set.get("embedding_type")
+    latent_shape = enc.get("latent_shape")
+    image_pooling = enc.get("image_pooling")
+    has_cond = bool(embedding_set.get("metadata", {}).get("has_full_cond", False))
+    cond_a = start.get("cond_tensor")
+    cond_b = end.get("cond_tensor")
+
     alphas = parse_alpha_schedule(alpha_schedule)
     trajectory_points = []
     for index, alpha in enumerate(alphas):
@@ -119,9 +128,10 @@ def build_interpolation_trajectory(
             tensor = slerp_tensor(start["tensor"], end["tensor"], alpha)
         else:
             raise NelsNavigationError(f"Unsupported interpolation method: {method}")
-        trajectory_points.append(
-            _trajectory_point(index, tensor, alpha, [start["id"], end["id"]], method)
-        )
+        step = _trajectory_point(index, tensor, alpha, [start["id"], end["id"]], method)
+        if cond_a is not None and cond_b is not None:
+            step["cond_tensor"] = lerp_tensor(cond_a, cond_b, alpha)
+        trajectory_points.append(step)
 
     return _trajectory_payload(
         operation=method,
@@ -129,6 +139,10 @@ def build_interpolation_trajectory(
         source_point_ids=[start["id"], end["id"]],
         request_id=request_id,
         state_revision=state_revision,
+        embedding_type=embedding_type,
+        latent_shape=latent_shape,
+        image_pooling=image_pooling,
+        has_cond_tensors=has_cond,
     )
 
 
@@ -146,10 +160,20 @@ def build_delta_walk_trajectory(
     if not points:
         raise NelsNavigationError("delta_walk requires at least one selected point")
 
+    enc = embedding_set.get("metadata", {}).get("encoding_params", {})
+    embedding_type = embedding_set.get("embedding_type")
+    latent_shape = enc.get("latent_shape")
+    image_pooling = enc.get("image_pooling")
+    has_cond = bool(embedding_set.get("metadata", {}).get("has_full_cond", False))
+
     start = points[0]
+    cond_a: torch.Tensor | None = None
+    cond_b: torch.Tensor | None = None
     if len(points) >= 2:
         direction = points[1]["tensor"] - points[0]["tensor"]
         source_ids = [points[0]["id"], points[1]["id"]]
+        cond_a = points[0].get("cond_tensor")
+        cond_b = points[1].get("cond_tensor")
     else:
         tensors = [point["tensor"].detach().float() for point in embedding_set["points"]]
         centroid = torch.stack(tensors).mean(dim=0).to(start["tensor"].device)
@@ -159,9 +183,10 @@ def build_delta_walk_trajectory(
     trajectory_points = []
     for index, scale in enumerate(parse_alpha_schedule(alpha_schedule)):
         tensor = start["tensor"] + direction * float(scale)
-        trajectory_points.append(
-            _trajectory_point(index, tensor, scale, source_ids, "delta_walk")
-        )
+        step = _trajectory_point(index, tensor, scale, source_ids, "delta_walk")
+        if cond_a is not None and cond_b is not None:
+            step["cond_tensor"] = lerp_tensor(cond_a, cond_b, scale)
+        trajectory_points.append(step)
 
     return _trajectory_payload(
         operation="delta_walk",
@@ -169,6 +194,10 @@ def build_delta_walk_trajectory(
         source_point_ids=source_ids,
         request_id=request_id,
         state_revision=state_revision,
+        embedding_type=embedding_type,
+        latent_shape=latent_shape,
+        image_pooling=image_pooling,
+        has_cond_tensors=has_cond,
     )
 
 
@@ -231,27 +260,77 @@ def nearest_neighbor_result(
     }
 
 
-def trajectory_result_summary(trajectory: dict[str, Any]) -> dict[str, Any]:
-    """Create graph-readable JSON summary for a trajectory."""
+def trajectory_result_summary(
+    trajectory: dict[str, Any],
+    embedding_set: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Create graph-readable JSON summary for a trajectory.
+
+    If embedding_set is provided, each step is annotated with the top-3 nearest
+    real dataset samples (cosine kNN).
+    """
     points = trajectory.get("points", [])
+    steps = []
+    for point in points:
+        step: dict[str, Any] = {
+            "index": point.get("index"),
+            "id": point.get("id"),
+            "alpha": point.get("alpha"),
+            "norm": point.get("norm"),
+            "tensor_shape": point.get("tensor_shape", []),
+            "dtype": point.get("dtype"),
+        }
+        if embedding_set is not None and point.get("tensor") is not None:
+            try:
+                step["nearest_top_k"] = _nearest_real_samples(point["tensor"], embedding_set, k=3)
+            except Exception:
+                pass
+        steps.append(step)
+
     return {
         "version": 1,
         "operation": trajectory.get("operation"),
         "request_id": trajectory.get("request_id"),
         "state_revision": trajectory.get("state_revision", 0),
         "source_point_ids": trajectory.get("source_point_ids", []),
-        "trajectory": [
-            {
-                "index": point.get("index"),
-                "id": point.get("id"),
-                "alpha": point.get("alpha"),
-                "tensor_shape": point.get("tensor_shape", []),
-                "dtype": point.get("dtype"),
-                "metadata": point.get("metadata", {}),
-            }
-            for point in points
-        ],
+        "trajectory": steps,
     }
+
+
+def _nearest_real_samples(
+    tensor: torch.Tensor,
+    embedding_set: dict[str, Any],
+    k: int = 3,
+) -> list[dict[str, Any]]:
+    """Return the top-k nearest real dataset samples to a synthetic tensor (cosine).
+
+    Deduplicates by label so that near-identical embeddings with the same label
+    don't fill all k slots.
+    """
+    candidates = embedding_set.get("points", [])
+    if not candidates:
+        return []
+    ranked = nearest_neighbors(
+        tensor,
+        [p["tensor"] for p in candidates],
+        limit=min(len(candidates), k * 4),
+        metric="cosine",
+    )
+    seen_labels: set[str] = set()
+    result: list[dict[str, Any]] = []
+    for idx, score in ranked:
+        label = str(candidates[idx].get("label", candidates[idx]["id"]))
+        if label in seen_labels:
+            continue
+        seen_labels.add(label)
+        result.append({
+            "id": str(candidates[idx]["id"]),
+            "distance": float(score),
+            "label": label,
+        })
+        if len(result) >= k:
+            break
+    return result
 
 
 def operation_result_to_json(result: dict[str, Any]) -> str:
@@ -266,17 +345,14 @@ def _trajectory_point(
     source_point_ids: list[str],
     operation: str,
 ) -> dict[str, Any]:
+    t_float = tensor.detach().float()
     return {
         "id": f"{operation}_{index:04d}",
         "index": int(index),
         "alpha": float(alpha),
         "tensor": tensor,
+        "norm": float(t_float.norm().item()),
         "source_point_ids": list(source_point_ids),
-        "metadata": {
-            "operation": operation,
-            "alpha": float(alpha),
-            "source_point_ids": list(source_point_ids),
-        },
         **tensor_summary(tensor),
     }
 
@@ -288,6 +364,10 @@ def _trajectory_payload(
     source_point_ids: list[str],
     request_id: str | None,
     state_revision: int | None,
+    embedding_type: str | None = None,
+    latent_shape: list[int] | None = None,
+    image_pooling: str | None = None,
+    has_cond_tensors: bool = False,
 ) -> dict[str, Any]:
     return {
         "version": 1,
@@ -297,30 +377,63 @@ def _trajectory_payload(
         "state_revision": int(state_revision or 0),
         "source_point_ids": list(source_point_ids),
         "points": trajectory_points,
+        "embedding_type": embedding_type,
+        "latent_shape": latent_shape,
+        "image_pooling": image_pooling,
+        "has_cond_tensors": has_cond_tensors,
     }
 
 
-def tensor_distance(left: torch.Tensor, right: torch.Tensor, metric: str) -> float:
-    """Distance/similarity helper used by metrics."""
-    if metric == "cosine_similarity":
-        return cosine_similarity(left, right)
-    if metric == "cosine_distance":
-        return 1.0 - cosine_similarity(left, right)
-    if metric == "euclidean":
-        return euclidean_distance(left, right)
-    raise NelsNavigationError(f"Unsupported metric: {metric}")
+def compute_trajectory_metrics(
+    trajectory_points: list[dict[str, Any]],
+    metric_mode: str,
+) -> list[float]:
+    """Compute one float per trajectory step for the chosen metric mode."""
+    tensors = [
+        pt["tensor"].detach().float()
+        for pt in trajectory_points
+        if pt.get("tensor") is not None
+    ]
+    if not tensors:
+        return []
+    n = len(tensors)
+
+    if metric_mode == "step_distance":
+        values: list[float] = [0.0]
+        for i in range(1, n):
+            values.append(max(0.0, 1.0 - float(cosine_similarity(tensors[i], tensors[i - 1]))))
+        return values
+
+    if metric_mode == "distance_to_start":
+        start = tensors[0]
+        return [max(0.0, 1.0 - float(cosine_similarity(t, start))) for t in tensors]
+
+    if metric_mode == "distance_to_target":
+        end = tensors[-1]
+        return [max(0.0, 1.0 - float(cosine_similarity(t, end))) for t in tensors]
+
+    if metric_mode == "norm_drift":
+        return [float(t.norm().item()) for t in tensors]
+
+    if metric_mode == "similarity_matrix":
+        values = [1.0]
+        for i in range(1, n):
+            values.append(float(cosine_similarity(tensors[i], tensors[i - 1])))
+        return values
+
+    return []
 
 
 __all__ = [
     "NelsNavigationError",
     "build_delta_walk_trajectory",
     "build_interpolation_trajectory",
+    "compute_trajectory_metrics",
     "lerp_tensor",
     "nearest_neighbor_result",
     "operation_result_to_json",
     "parse_alpha_schedule",
     "selected_points",
     "slerp_tensor",
-    "tensor_distance",
     "trajectory_result_summary",
 ]

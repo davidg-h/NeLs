@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { activeSession } from "../state/session.js";
 import { graphData } from "../state/graph.js";
 import { selectedIds } from "../state/selection.js";
@@ -19,7 +18,6 @@ export function SessionCard() {
   const processedSize = encParams?.processed_size as number[] | undefined;
   const latentMode = encParams?.latent_mode as string | undefined;
   const vaeScaling = encParams?.vae_latent_scaling_factor as number | undefined;
-  const hasFullLatents = snapSource?.has_full_latents as boolean | undefined;
 
   const rows: [string, string][] = sess
     ? [
@@ -35,7 +33,6 @@ export function SessionCard() {
         ...(latentShape ? [["latent_shape", latentShape.join("×")] as [string, string]] : []),
         ...(processedSize ? [["proc_size", `${processedSize[0]}×${processedSize[1]}`] as [string, string]] : []),
         ...(vaeScaling != null ? [["vae_scale", String(vaeScaling)] as [string, string]] : []),
-        ...(hasFullLatents != null ? [["full_lat", hasFullLatents ? "yes" : "no"] as [string, string]] : []),
         ["revision", String(revision)],
         ["selected", String(selectedIds.value.size)],
       ]

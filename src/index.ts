@@ -4,7 +4,6 @@ import { injectStyle } from "./style.js";
 import { Panel } from "./ui/Panel.js";
 import { registerEventListener } from "./state/session.js";
 
-const SESSION_NODE = "nels_Session";
 const LAUNCHER_NODE = "nels_GraphPanelLauncher";
 let cleanupNelsGraphPanel: (() => void) | null = null;
 

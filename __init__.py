@@ -1,4 +1,7 @@
-"""NELS ComfyUI plugin: interactive graph UI plus queued execution pipeline."""
+"""
+NELS ComfyUI plugin:
+interactive graph UI plus queued execution pipeline.
+"""
 
 from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
 from .server import register_routes

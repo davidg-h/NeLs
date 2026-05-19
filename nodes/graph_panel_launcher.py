@@ -1,4 +1,6 @@
-"""Canvas launcher node for the NELS graph panel."""
+"""
+Canvas launcher node for the NELS graph panel.
+"""
 
 from __future__ import annotations
 

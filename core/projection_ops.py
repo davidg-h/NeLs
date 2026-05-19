@@ -1,8 +1,11 @@
-"""Projection helpers for the NELS graph pipeline."""
+"""
+Projection helpers for the NELS graph pipeline.
+"""
 
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 from typing import Any, Callable, Iterable
 
 import torch
@@ -15,10 +18,7 @@ from .embedding_ops import (
     validate_embedding_set,
 )
 
-try:  # Declared plugin dependency for the enhanced graph pipeline.
-    import umap  # type: ignore
-except Exception:  # pragma: no cover - depends on local runtime environment.
-    umap = None
+import umap
 
 
 class NelsProjectionError(ValueError):
@@ -48,11 +48,6 @@ def umap_project(
     seed: int = 0,
 ) -> torch.Tensor:
     """Project with native UMAP, raising a clear error if unavailable."""
-    if umap is None:
-        raise NelsProjectionError(
-            "UMAP projection requires the 'umap-learn' package. Install the "
-            "plugin requirements or run: pip install umap-learn"
-        )
     if dimensions not in (2, 3):
         raise NelsProjectionError("UMAP projection supports only 2D or 3D")
     if matrix.shape[0] < 2:
@@ -101,7 +96,6 @@ def _edges_from_precomputed_knn(
     metric: str = "cosine",
 ) -> list[dict[str, Any]]:
     """Build edge list from a precomputed kNN index array (local indices)."""
-    import numpy as _np
 
     edges: list[dict[str, Any]] = []
     seen: set[tuple[int, int]] = set()
@@ -137,6 +131,7 @@ def build_edges_for_mode(
     precomputed_knn: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build frontend graph edges from high-dimensional relationships."""
+
     mode = str(edge_mode or "").strip().lower()
     if mode == "none":
         return []
@@ -326,6 +321,83 @@ def project_both_modes(
     }
 
 
+def project_trajectory(
+    trajectory_points: list[dict[str, Any]],
+    dataset_path: str | None,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Project synthetic trajectory tensors into 2D/3D canvas space.
+
+    Returns (overlay_points, warning). overlay_points is a list of dicts with
+    id, alpha, coords_2d, coords_3d. warning is set if projection was unavailable.
+    Points that fail to project are omitted from the list.
+    """
+    import numpy as _np
+
+    if not dataset_path:
+        return [], "UMAP model unavailable — showing arc only"
+
+    path = Path(dataset_path)
+    model_2d_path = path / "umap_model_2d.pkl"
+    model_3d_path = path / "umap_model_3d.pkl"
+    ref_2d_path = path / "umap_2d.npy"
+    ref_3d_path = path / "umap_3d.npy"
+
+    try:
+        import joblib as _joblib
+
+        model_2d = _joblib.load(model_2d_path)
+        model_3d = _joblib.load(model_3d_path)
+        ref_2d: _np.ndarray = _np.load(str(ref_2d_path))
+        ref_3d: _np.ndarray = _np.load(str(ref_3d_path))
+    except Exception as exc:
+        return [], f"UMAP model unavailable — showing arc only ({exc})"
+
+    # Build synthetic embedding matrix [steps, features]
+    tensors = [pt["tensor"] for pt in trajectory_points if pt.get("tensor") is not None]
+    if not tensors:
+        return [], None
+
+    try:
+        matrix = stack_flattened_tensors(tensors).numpy()
+        raw_2d: _np.ndarray = model_2d.transform(matrix)
+        raw_3d: _np.ndarray = model_3d.transform(matrix)
+    except Exception as exc:
+        return [], f"UMAP transform failed — showing arc only ({exc})"
+
+    # Normalize ghost coords using the same params derived from real dataset coords.
+    # This puts ghost nodes in the same space as the real graph points.
+    def _apply_norm(ghost: _np.ndarray, reference: _np.ndarray) -> _np.ndarray:
+        mean = reference.mean(axis=0)
+        max_abs = float(_np.abs(reference - mean).max())
+        if max_abs == 0.0:
+            return ghost - mean
+        return (ghost - mean) / max_abs
+
+    norm_2d = _apply_norm(raw_2d, ref_2d)
+    norm_3d = _apply_norm(raw_3d, ref_3d)
+
+    overlay: list[dict[str, Any]] = []
+    mat_idx = 0
+    for pt in trajectory_points:
+        if pt.get("tensor") is None:
+            continue
+        overlay.append(
+            {
+                "id": pt["id"],
+                "alpha": float(pt.get("alpha", 0.0)),
+                "coords_2d": [float(norm_2d[mat_idx, 0]), float(norm_2d[mat_idx, 1])],
+                "coords_3d": [
+                    float(norm_3d[mat_idx, 0]),
+                    float(norm_3d[mat_idx, 1]),
+                    float(norm_3d[mat_idx, 2]),
+                ],
+            }
+        )
+        mat_idx += 1
+
+    return overlay, None
+
+
 __all__ = [
     "NelsProjectionError",
     "build_edges_for_mode",
@@ -333,5 +405,6 @@ __all__ = [
     "build_threshold_cosine_edges",
     "normalize_projected_coordinates",
     "project_both_modes",
+    "project_trajectory",
     "stack_flattened_tensors",
 ]

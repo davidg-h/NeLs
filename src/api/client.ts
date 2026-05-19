@@ -20,11 +20,6 @@ function postJson<T>(url: string, payload: unknown): Promise<T> {
   });
 }
 
-// GET /nels/api/sessions
-export function getSessions(): Promise<{ sessions: NelsSession[] }> {
-  return fetchJson("/nels/api/sessions");
-}
-
 // POST /nels/api/canvas-sessions/sync
 export function syncCanvasSessions(
   sessions: CanvasSessionPayload[],

@@ -1,4 +1,6 @@
-"""HTTP routes used by the NELS graph UI."""
+"""
+HTTP routes used by the NELS graph UI.
+"""
 
 from __future__ import annotations
 

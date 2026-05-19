@@ -1,4 +1,6 @@
-"""In-memory state and event store for NELS graph UI sessions."""
+"""
+In-memory state and event store for NELS graph UI sessions.
+"""
 
 from __future__ import annotations
 
