@@ -1,33 +1,44 @@
-"""
-Shared embedding-set data contracts and tensor helpers for enhanced NELS nodes.
-"""
+"""Shared embedding-set contracts and tensor helpers for NELS nodes"""
 
 from __future__ import annotations
 
 import copy
 import math
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import torch
 
-
-EMBEDDING_SET_VERSION = 1
 EMBEDDING_SET_TYPE = "NELS_EMBEDDING_SET"
 
 
-class NelsEmbeddingError(ValueError):
-    """Raised when an embedding-set payload violates the NELS contract."""
+def selected_points(
+    embedding_set: dict[str, Any],
+    selection: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Resolve selection IDs against an embedding set, skipping missing points"""
+    validate_embedding_set(embedding_set)
+    selected_ids = (selection or {}).get("selected_point_ids") or []
+    if isinstance(selected_ids, str):
+        selected_ids = [selected_ids]
+    points = []
+    for point_id in selected_ids:
+        try:
+            points.append(get_embedding_point(embedding_set, str(point_id)))
+        except NelsEmbeddingError:
+            continue
+    return points
 
 
 def flatten_tensor(value: torch.Tensor) -> torch.Tensor:
-    """Return a detached 1D float tensor for distance/projection math."""
+    """Return detached 1D float tensor for distance/projection math"""
     if not torch.is_tensor(value):
         raise NelsEmbeddingError("Expected a torch.Tensor")
     return value.detach().float().reshape(-1)
 
 
 def tensor_summary(value: torch.Tensor) -> dict[str, Any]:
-    """Create a JSON-safe tensor summary without copying tensor values."""
+    """JSON-safe tensor summary without copying values"""
     if not torch.is_tensor(value):
         raise NelsEmbeddingError("Expected a torch.Tensor")
     return {
@@ -45,7 +56,7 @@ def make_embedding_point(
     *,
     tensor_ref: str | None = None,
 ) -> dict[str, Any]:
-    """Create one runtime point record for a NELS embedding set."""
+    """Create one runtime point record"""
     if not str(point_id).strip():
         raise NelsEmbeddingError("point_id must not be empty")
     if not str(label).strip():
@@ -70,11 +81,9 @@ def create_embedding_set(
     *,
     embedding_type: str = "unknown",
     metadata: dict[str, Any] | None = None,
-    version: int = EMBEDDING_SET_VERSION,
 ) -> dict[str, Any]:
-    """Create a runtime `NELS_EMBEDDING_SET` payload."""
+    """Create a runtime `NELS_EMBEDDING_SET` payload"""
     payload = {
-        "version": int(version),
         "type": EMBEDDING_SET_TYPE,
         "embedding_type": str(embedding_type),
         "points": [],
@@ -91,7 +100,7 @@ def validate_embedding_point(
     *,
     require_tensor: bool = True,
 ) -> dict[str, Any]:
-    """Validate and normalize one embedding point in place."""
+    """Validate and normalize one embedding point"""
     if not isinstance(point, dict):
         raise NelsEmbeddingError("Embedding point must be a dict")
 
@@ -105,9 +114,7 @@ def validate_embedding_point(
     point["id"] = point_id
     point["label"] = label
     if not isinstance(point.get("metadata", {}), dict):
-        raise NelsEmbeddingError(
-            f"Embedding point {point_id!r} metadata must be a dict"
-        )
+        raise NelsEmbeddingError(f"Embedding point {point_id!r} metadata must be a dict")
     point.setdefault("metadata", {})
 
     tensor = point.get("tensor")
@@ -129,13 +136,9 @@ def validate_embedding_set(
     *,
     require_tensors: bool = True,
 ) -> dict[str, Any]:
-    """Validate and normalize a runtime `NELS_EMBEDDING_SET` payload."""
+    """Validate and normalize a `NELS_EMBEDDING_SET` payload"""
     if not isinstance(embedding_set, dict):
         raise NelsEmbeddingError("NELS_EMBEDDING_SET must be a dict")
-    if int(embedding_set.get("version", 0)) != EMBEDDING_SET_VERSION:
-        raise NelsEmbeddingError(
-            f"Unsupported embedding set version: {embedding_set.get('version')!r}"
-        )
 
     points = embedding_set.get("points")
     if not isinstance(points, list):
@@ -170,10 +173,9 @@ def validate_embedding_set(
 
 
 def embedding_set_snapshot(embedding_set: dict[str, Any]) -> dict[str, Any]:
-    """Return a JSON-safe snapshot of an embedding set without tensor values."""
+    """JSON-safe snapshot of an embedding set without tensor values"""
     validate_embedding_set(embedding_set, require_tensors=False)
     snapshot = {
-        "version": embedding_set["version"],
         "type": embedding_set.get("type", EMBEDDING_SET_TYPE),
         "embedding_type": embedding_set.get("embedding_type", "unknown"),
         "point_count": len(embedding_set.get("points", [])),
@@ -201,7 +203,7 @@ def get_embedding_point(
     embedding_set: dict[str, Any],
     point_id: str,
 ) -> dict[str, Any]:
-    """Return a point by ID or raise a clear contract error."""
+    """Return point by ID, raise if not found"""
     validate_embedding_set(embedding_set)
     for point in embedding_set["points"]:
         if point["id"] == point_id:
@@ -215,7 +217,7 @@ def add_embedding_point(
     *,
     replace: bool = False,
 ) -> dict[str, Any]:
-    """Add a point to an embedding set, optionally replacing an existing ID."""
+    """Add point to an embedding set, optionally replacing existing ID"""
     validate_embedding_point(point)
     points = embedding_set.setdefault("points", [])
     if not isinstance(points, list):
@@ -237,13 +239,13 @@ def add_embedding_point(
 
 
 def collect_point_tensors(embedding_set: dict[str, Any]) -> list[torch.Tensor]:
-    """Collect point tensors in point order."""
+    """Collect point tensors in order"""
     validate_embedding_set(embedding_set)
     return [point["tensor"] for point in embedding_set["points"]]
 
 
 def normalize_tensor(value: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
-    """Normalize a tensor as a flat vector."""
+    """Normalize tensor as flat vector"""
     vector = flatten_tensor(value)
     norm = torch.linalg.vector_norm(vector)
     if float(norm) <= eps:
@@ -251,17 +253,15 @@ def normalize_tensor(value: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
     return vector / norm.clamp_min(eps)
 
 
-def cosine_similarity(
-    left: torch.Tensor, right: torch.Tensor, eps: float = 1e-12
-) -> float:
-    """Cosine similarity between two tensors after flattening."""
+def cosine_similarity(left: torch.Tensor, right: torch.Tensor, eps: float = 1e-12) -> float:
+    """Cosine similarity after flattening"""
     left_vector = normalize_tensor(left, eps=eps)
     right_vector = normalize_tensor(right, eps=eps)
     return float(torch.dot(left_vector, right_vector).item())
 
 
 def euclidean_distance(left: torch.Tensor, right: torch.Tensor) -> float:
-    """Euclidean distance between two tensors after flattening."""
+    """Euclidean distance after flattening"""
     left_vector = flatten_tensor(left)
     right_vector = flatten_tensor(right)
     if left_vector.shape != right_vector.shape:
@@ -279,7 +279,7 @@ def nearest_neighbors(
     metric: str = "cosine",
     tie_precision: int = 8,
 ) -> list[tuple[int, float]]:
-    """Return ranked candidate indices and scores for one query tensor."""
+    """Ranked candidate indices and scores for one query tensor"""
     if limit <= 0:
         return []
 
@@ -296,99 +296,13 @@ def nearest_neighbors(
 
     precision = max(0, int(tie_precision))
     if metric == "cosine":
-        return sorted(ranked, key=lambda item: (-round(item[1], precision), item[0]))[
-            :limit
-        ]
+        return sorted(ranked, key=lambda item: (-round(item[1], precision), item[0]))[:limit]
     return sorted(ranked, key=lambda item: (round(item[1], precision), item[0]))[:limit]
 
 
-def build_weighted_edges(
-    embedding_set: dict[str, Any],
-    *,
-    neighbor_count: int = 3,
-    metric: str = "cosine",
-    include_self: bool = False,
-) -> list[dict[str, Any]]:
-    """Build KNN-style weighted edges. Uses sklearn when available, falls back to pairwise scan."""
-    validate_embedding_set(embedding_set)
-    points = embedding_set["points"]
-    n = len(points)
-    if n < 2:
-        return []
-    k = int(neighbor_count)
-
-    try:
-        import numpy as _np
-        from sklearn.neighbors import NearestNeighbors as _NNN
-
-        matrix = _np.stack([p["tensor"].numpy() for p in points])
-        actual_k = min(k + (1 if not include_self else 0) + 1, n)
-        nn = _NNN(n_neighbors=actual_k, metric=metric, algorithm="auto", n_jobs=-1)
-        nn.fit(matrix)
-        distances, indices = nn.kneighbors(matrix)
-
-        edges: list[dict[str, Any]] = []
-        seen: set[tuple[int, int]] = set()
-        for i, point in enumerate(points):
-            emitted = 0
-            for dist, j in zip(distances[i], indices[i]):
-                j = int(j)
-                if j == i and not include_self:
-                    continue
-                key = (min(i, j), max(i, j))
-                if key in seen:
-                    continue
-                seen.add(key)
-                weight = (
-                    max(0.0, 1.0 - float(dist)) if metric == "cosine" else float(dist)
-                )
-                edges.append(
-                    {
-                        "source": point["id"],
-                        "target": points[j]["id"],
-                        "weight": weight,
-                        "metric": metric,
-                    }
-                )
-                emitted += 1
-                if emitted >= k:
-                    break
-        return edges
-
-    except ImportError:
-        pass
-
-    # Fallback
-    tensors = [point["tensor"] for point in points]
-    edges = []
-    for source_index, source in enumerate(points):
-        ranked = nearest_neighbors(
-            tensors[source_index],
-            tensors,
-            limit=min(n, max(k + 1, 1)),
-            metric=metric,
-        )
-        emitted = 0
-        for target_index, score in ranked:
-            if target_index == source_index and not include_self:
-                continue
-            edges.append(
-                {
-                    "source": source["id"],
-                    "target": points[target_index]["id"],
-                    "weight": float(score),
-                    "metric": metric,
-                }
-            )
-            emitted += 1
-            if emitted >= k:
-                break
-    return edges
-
-
 def _refresh_embedding_set_summary(embedding_set: dict[str, Any]) -> None:
+    """keep metadata of embedding set consistent"""
     points = embedding_set.get("points", [])
-    embedding_set.setdefault("version", EMBEDDING_SET_VERSION)
     embedding_set.setdefault("type", EMBEDDING_SET_TYPE)
     embedding_set["point_count"] = len(points)
     if points:
@@ -416,6 +330,7 @@ def _validate_point_shape_compatible(
 
 
 def _json_safe(value: Any) -> Any:
+    """Convert value to JSON-safe representation"""
     if torch.is_tensor(value):
         return tensor_summary(value)
     if isinstance(value, dict):
@@ -429,12 +344,14 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
+class NelsEmbeddingError(ValueError):
+    """Raised when an embedding-set payload violates the NELS contract"""
+
+
 __all__ = [
     "EMBEDDING_SET_TYPE",
-    "EMBEDDING_SET_VERSION",
     "NelsEmbeddingError",
     "add_embedding_point",
-    "build_weighted_edges",
     "collect_point_tensors",
     "cosine_similarity",
     "create_embedding_set",
@@ -445,6 +362,7 @@ __all__ = [
     "make_embedding_point",
     "nearest_neighbors",
     "normalize_tensor",
+    "selected_points",
     "tensor_summary",
     "validate_embedding_point",
     "validate_embedding_set",
