@@ -53,7 +53,7 @@ The CLI needs to find ComfyUI's Python packages. It checks in this order:
 | ----------- | ---------------------------------------------------------------------------------------------------------------- |
 | Flag        | `--comfyui-path /path/to/ComfyUI`                                                                                |
 | Env var     | `export COMFYUI_ROOT=/path/to/ComfyUI`                                                                           |
-| Auto-detect | Walks 4 levels up from `encode_cli.py` — works automatically when the plugin is inside ComfyUI's `custom_nodes/` |
+| Auto-detect | Walks up from `encode_cli.py` until a ComfyUI root is found — works when the plugin is anywhere inside a ComfyUI installation |
 
 When a HuggingFace model is downloaded via `--clip owner/repo/file.safetensors`, it is saved to
 `<comfyui_root>/models/text_encoders/` so it is available for ComfyUI nodes on subsequent runs.

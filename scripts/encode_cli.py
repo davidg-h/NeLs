@@ -13,7 +13,7 @@ Subcommands:
 ComfyUI root detection (in order):
   1. --comfyui-path flag (explicit path to ComfyUI root)
   2. COMFYUI_ROOT environment variable
-  3. Auto-detect: 4 levels up from this file when plugin is inside custom_nodes/
+  3. Auto-detect: walks up from this file until a ComfyUI root is found
 
 Usage: Read the ENCODE_CLI.md documentation for detailed instructions
 """
@@ -82,10 +82,13 @@ def _find_comfyui_root(explicit: str | None = None) -> Path:
             )
         return p
 
-    # location search: encode_cli.py -> scripts/ -> plugin_root/ -> custom_nodes/ -> ComfyUI/
-    candidate = Path(__file__).parent.parent.parent.parent
-    if _is_comfyui_root(candidate):
-        return candidate
+    # walk up from encode_cli.py until a ComfyUI root is found
+    candidate = Path(__file__).resolve()
+    for _ in range(8):
+        candidate = candidate.parent
+        print(f"Checking for ComfyUI root at: {candidate}")
+        if _is_comfyui_root(candidate):
+            return candidate
 
     raise RuntimeError(
         "ComfyUI root not found.\n"
@@ -534,18 +537,39 @@ def main() -> None:
         default=0,
         help="Max samples to encode. 0 = all (default: 0).",
     )
-    cp.add_argument("--batch-size", type=int, default=ENCODE_BATCH_SIZE, help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).")
+    cp.add_argument(
+        "--batch-size",
+        type=int,
+        default=ENCODE_BATCH_SIZE,
+        help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).",
+    )
     cp.add_argument("--umap-n-neighbors", type=int, default=UMAP_N_NEIGHBORS)
     cp.add_argument("--umap-min-dist", type=float, default=UMAP_MIN_DIST)
     cp.add_argument("--umap-seed", type=int, default=UMAP_SEED)
-    cp.add_argument("--cluster-umap-dims", type=int, default=CLUSTER_UMAP_DIMS,
-                    help=f"Dimensions for cluster UMAP (default: {CLUSTER_UMAP_DIMS}).")
-    cp.add_argument("--cluster-umap-neighbors", type=int, default=CLUSTER_UMAP_NEIGHBORS,
-                    help=f"n_neighbors for cluster UMAP (default: {CLUSTER_UMAP_NEIGHBORS}).")
-    cp.add_argument("--cluster-min-size", type=int, default=CLUSTER_MIN_SIZE,
-                    help=f"HDBSCAN min_cluster_size (default: {CLUSTER_MIN_SIZE}).")
-    cp.add_argument("--cluster-min-samples", type=int, default=CLUSTER_MIN_SAMPLES,
-                    help=f"HDBSCAN min_samples (default: {CLUSTER_MIN_SAMPLES}).")
+    cp.add_argument(
+        "--cluster-umap-dims",
+        type=int,
+        default=CLUSTER_UMAP_DIMS,
+        help=f"Dimensions for cluster UMAP (default: {CLUSTER_UMAP_DIMS}).",
+    )
+    cp.add_argument(
+        "--cluster-umap-neighbors",
+        type=int,
+        default=CLUSTER_UMAP_NEIGHBORS,
+        help=f"n_neighbors for cluster UMAP (default: {CLUSTER_UMAP_NEIGHBORS}).",
+    )
+    cp.add_argument(
+        "--cluster-min-size",
+        type=int,
+        default=CLUSTER_MIN_SIZE,
+        help=f"HDBSCAN min_cluster_size (default: {CLUSTER_MIN_SIZE}).",
+    )
+    cp.add_argument(
+        "--cluster-min-samples",
+        type=int,
+        default=CLUSTER_MIN_SAMPLES,
+        help=f"HDBSCAN min_samples (default: {CLUSTER_MIN_SAMPLES}).",
+    )
 
     # ---- add ----
     ap = subparsers.add_parser("add", help="Add new samples to an existing NELS dataset.")
@@ -597,7 +621,12 @@ def main() -> None:
         default=0,
         help="Max new samples to encode. 0 = all (default: 0).",
     )
-    ap.add_argument("--batch-size", type=int, default=ENCODE_BATCH_SIZE, help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).")
+    ap.add_argument(
+        "--batch-size",
+        type=int,
+        default=ENCODE_BATCH_SIZE,
+        help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).",
+    )
 
     args = parser.parse_args()
 
