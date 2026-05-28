@@ -4,10 +4,11 @@ numpy
 safetensors
 umap-learn
 scikit-learn
+hdbscan
 joblib
-Pillow
 torch  # usually already present in a ComfyUI environment
 
-# HuggingFace dataset loading (optional — only needed when loading HF datasets)
+# HuggingFace (dataset loading + model downloads)
+huggingface_hub
 datasets
 
