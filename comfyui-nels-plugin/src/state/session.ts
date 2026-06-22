@@ -1,13 +1,14 @@
 import { signal, computed } from "@preact/signals";
 import { app } from "comfyui/app";
 import { api } from "comfyui/api";
+import type { ComfyNode } from "../comfyui.js";
 import type {
   NelsSession,
   NelsEvent,
   NelsGraphSnapshot,
   NelsOperationResult,
-  NelsMetricsResult,
   NelsSourceConfig,
+  NelsEmbeddingMeta,
   CanvasSessionPayload,
 } from "../api/types.js";
 import {
@@ -16,13 +17,19 @@ import {
   pushUiState,
   requestSourcePreview,
 } from "../api/client.js";
-import { setStatus, addLog, clearLog } from "./events.js";
+import {
+  setStatus,
+  addLog,
+  clearLog,
+  lockStatus,
+  unlockStatus,
+  operationRunning,
+} from "./events.js";
 import { selectedIds, applySelectedPointIds } from "./selection.js";
 import {
   snapshot as snapshotSignal,
   graphData,
   setSnapshot,
-  setViewMode,
   viewMode,
   acceptRuntimeSnapshot,
 } from "./graph.js";
@@ -30,27 +37,13 @@ import {
   operationConfig,
   setOperationConfig,
   setOperationResult,
-  setMetrics,
+  setReconLiveState,
 } from "./operation.js";
-
-// Renderer functions imported lazily to avoid circular module initialization
-type RendererModule = typeof import("../graph/renderer2d.js");
-let cached2d: RendererModule | null = null;
-let cached3d: RendererModule | null = null;
-function getRenderer(): Promise<RendererModule> {
-  if (viewMode.value === "3d") {
-    if (cached3d) return Promise.resolve(cached3d);
-    return import("../graph/renderer3d.js").then((m) => {
-      cached3d = m as unknown as RendererModule;
-      return cached3d;
-    });
-  }
-  if (cached2d) return Promise.resolve(cached2d);
-  return import("../graph/renderer2d.js").then((m) => {
-    cached2d = m;
-    return m;
-  });
-}
+import type { RendererModule } from "../graph/rendering_common.js";
+import * as renderer2d from "../graph/2d/renderer2d.js";
+import * as renderer3d from "../graph/3d/renderer3d.js";
+import { normalizeSigmaCoords } from "../graph/2d/sigma.js";
+import { registerPushCallback, registerGetRenderer } from "./rendererBridge.js";
 
 export const sessions = signal<NelsSession[]>([]);
 export const activeSessionId = signal<string>("");
@@ -59,8 +52,20 @@ export const activeSession = computed<NelsSession | null>(
     sessions.value.find((s) => s.session_id === activeSessionId.value) ?? null,
 );
 
+// embedding_meta isnt persisted server-side (only returned by source-preview), so its
+// tagged with the session it was fetched for and dropped if the active session changes
+const datasetMetaRaw = signal<NelsEmbeddingMeta | null>(null);
+const datasetMetaSessionId = signal<string>("");
+export const datasetMeta = computed<NelsEmbeddingMeta | null>(() =>
+  datasetMetaSessionId.value === activeSessionId.value
+    ? datasetMetaRaw.value
+    : null,
+);
+
 let lastSequence = 0;
-let pushTimer: ReturnType<typeof setTimeout> | null = null;
+
+registerPushCallback(() => void pushState());
+registerGetRenderer(getRenderer);
 
 export async function syncSessions(
   options: { log?: boolean } = {},
@@ -104,11 +109,12 @@ export async function loadSession(): Promise<void> {
   try {
     const data = await getSession(activeSessionId.value);
     upsertSession(data);
-    const snap = data.graph_snapshot ?? data.source_snapshot ?? null;
-    setSnapshot(snap, { fit: true, fitAlways: true, acceptCoordinates: true });
+    const snap = data.graph_snapshot ?? null;
+    setSnapshot(snap, { acceptCoordinates: true });
     setOperationResult(data.operation_result ?? null);
-    setMetrics(data.metrics ?? null);
-    applyUiStateFields(data.ui_state ?? {}, { skipViewport: false });
+    applyUiStateFields((data.ui_state ?? {}) as Record<string, unknown>, {
+      skipViewport: false,
+    });
     lastSequence = Math.max(
       0,
       ...(data.events ?? []).map((e) => e.sequence ?? 0),
@@ -118,7 +124,7 @@ export async function loadSession(): Promise<void> {
     const revision = Number(data.ui_state?.state_revision ?? 0);
     for (const event of data.events ?? []) addLog(event, revision);
 
-    setStatus(snap ? "ready" : "no snapshot loaded");
+    setStatus(snap ? "ready" : "no snapshot loaded", { priority: false });
   } catch (err) {
     setStatus(`session load error: ${(err as Error).message}`);
   }
@@ -140,12 +146,16 @@ export async function loadPreview(): Promise<void> {
   try {
     const data = await requestSourcePreview(activeSessionId.value);
     if (data.session) upsertSession(data.session);
+    datasetMetaRaw.value = data.embedding_meta ?? null;
+    datasetMetaSessionId.value = activeSessionId.value;
     setSnapshot(data.graph_snapshot, {
-      fit: true,
       acceptCoordinates: true,
       forceCoordinates: true,
     });
-    applyUiStateFields(data.session?.ui_state ?? {}, { skipViewport: false });
+    applyUiStateFields(
+      (data.session?.ui_state ?? {}) as Record<string, unknown>,
+      { skipViewport: false },
+    );
     const count = data.graph_snapshot?.points?.length ?? 0;
     addLog({
       event_type: "ui_action",
@@ -156,51 +166,6 @@ export async function loadPreview(): Promise<void> {
     setStatus("preview refreshed");
   } catch (err) {
     setStatus(`preview error: ${(err as Error).message}`);
-  }
-}
-
-export function refreshActiveRenderer(): void {
-  void getRenderer().then((r) => r.sigmaRefresh());
-}
-
-export function highlightGhostStepOnCanvas(stepId: string | null): void {
-  void getRenderer().then((r) => {
-    (
-      r as unknown as { highlightGhostStep?: (id: string | null) => void }
-    ).highlightGhostStep?.(stepId);
-    r.sigmaRefresh();
-  });
-}
-
-export function schedulePushState(): void {
-  if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(() => void pushState(), 120);
-}
-
-async function pushState(): Promise<void> {
-  if (!activeSessionId.value) return;
-  const r = await getRenderer();
-  const cam = r.getCameraState();
-  const cfg = operationConfig.value;
-  const snap = snapshotSignal.value;
-  const sess = activeSession.value;
-  const payload = {
-    selected_point_ids: [...selectedIds.value],
-    operation: cfg.operation,
-    metric_mode: cfg.metric_mode,
-    neighbor_count: Math.max(1, cfg.neighbor_count),
-    alpha_schedule: cfg.alpha_schedule,
-    projection_mode: viewMode.value === "3d" ? "3d_umap" : "2d_umap",
-    edge_mode: operationConfig.value.edge_mode,
-    nearest_sample: cfg.nearest_sample,
-    viewport: cam,
-  };
-  try {
-    const data = await pushUiState(activeSessionId.value, payload);
-    if (data.session) upsertSession(data.session);
-    setStatus(`state revision ${data.ui_state?.state_revision ?? "-"}`);
-  } catch (err) {
-    setStatus(`state sync error: ${(err as Error).message}`);
   }
 }
 
@@ -228,10 +193,7 @@ export function onSessionEvent(event: NelsEvent): void {
     }
   }
 
-  if (
-    event.event_type === "source_snapshot" ||
-    event.event_type === "graph_snapshot"
-  ) {
+  if (event.event_type === "source_snapshot") {
     const incoming = event.payload as NelsGraphSnapshot | undefined;
     if (incoming) {
       const replace = acceptRuntimeSnapshot(
@@ -241,30 +203,103 @@ export function onSessionEvent(event: NelsEvent): void {
       );
       if (replace) {
         setSnapshot(incoming, {
-          fit: true,
           acceptCoordinates: true,
           forceCoordinates: true,
         });
-        void getRenderer().then((r) =>
-          r.pulseIds((incoming.points ?? []).map((p) => String(p.id))),
+        getRenderer().pulseIds(
+          (incoming.points ?? []).map((p) => String(p.id)),
         );
       }
     }
   }
 
-  if (event.event_type === "operation_result") {
-    const result = (event.payload ?? null) as NelsOperationResult | null;
-    setOperationResult(result);
-    void getRenderer().then((r) => {
-      r.addOverlayEdges();
-      r.pulseOperationResult(result);
-      r.sigmaRefresh();
-    });
+  if (event.event_type === "operation_started") {
+    const op =
+      (event.payload as { operation?: string } | null)?.operation ??
+      "operation";
+    setReconLiveState(null);
+    operationRunning.value = true;
+    lockStatus();
+    setStatus(`running ${op}…`, { priority: true });
+    return;
   }
 
-  if (event.event_type === "metrics_result") {
-    setMetrics((event.payload ?? null) as NelsMetricsResult | null);
-    void getRenderer().then((r) => r.sigmaRefresh());
+  if (event.event_type === "recon_iteration") {
+    const p =
+      (event.payload as {
+        step?: number;
+        max_step?: number;
+        best_text?: string;
+        cosine_sim?: number;
+      } | null) ?? {};
+    setReconLiveState({
+      step: Number(p.step ?? 0),
+      maxStep: Number(p.max_step ?? 0),
+      bestText: String(p.best_text ?? ""),
+      cosine_sim: Number(p.cosine_sim ?? 0),
+    });
+    lockStatus();
+    setStatus(`reconstructing step ${p.step ?? "?"}/${p.max_step ?? "?"}…`, {
+      priority: true,
+    });
+    return;
+  }
+
+  if (event.event_type === "operation_result") {
+    setReconLiveState(null);
+    operationRunning.value = false;
+    unlockStatus();
+    setStatus(`event operation_result #${lastSequence}`, { priority: true });
+    const result = (event.payload ?? null) as NelsOperationResult | null;
+    setOperationResult(result);
+
+    // Compute cross-mode probe coords from the hit points so the probe is visible in both views
+    if (result?.operation === "latent_probe") {
+      const hits = result.inverse_project ?? [];
+      const cfg = operationConfig.value;
+      const gd = graphData.value;
+      if (hits.length > 0 && cfg.probe_coords) {
+        const crossKey = cfg.probe_mode === "2d" ? "coords_3d" : "coords_2d";
+        const dims = cfg.probe_mode === "2d" ? 3 : 2;
+        const sumCoords = new Array(dims).fill(0) as number[];
+        let totalWeight = 0;
+        for (const h of hits) {
+          const pt = gd.byId.get(String(h.id));
+          const c =
+            pt?.[crossKey] ??
+            (pt as { view_coords?: number[] } | undefined)?.view_coords;
+          if (!c || c.length < dims) continue;
+          const w = h.score ?? 1;
+          for (let i = 0; i < dims; i++) sumCoords[i] += c[i] * w;
+          totalWeight += w;
+        }
+        if (totalWeight > 0) {
+          let crossCoords = sumCoords.map((v) => v / totalWeight);
+          // 3D probe -> 2D cross: raw UMAP 2D coords need Sigma graph-space normalization
+          if (cfg.probe_mode === "3d" && crossCoords.length >= 2) {
+            const [nx, ny] = normalizeSigmaCoords(
+              crossCoords[0],
+              crossCoords[1],
+            );
+            crossCoords = [nx, ny];
+          }
+          setOperationConfig({ probe_cross_coords: crossCoords });
+        }
+      }
+    }
+
+    const r = getRenderer();
+    r.addOverlayEdges();
+    r.pulseOperationResult(result);
+    r.sigmaRefresh();
+    return;
+  }
+
+  if (event.event_type === "operation_failed") {
+    operationRunning.value = false;
+    unlockStatus();
+    setStatus(event.message ?? "operation failed", { priority: true });
+    return;
   }
 
   if (event.event_type === "computing_projection") {
@@ -281,6 +316,57 @@ export function registerEventListener(abortSignal: AbortSignal): void {
     (e: CustomEvent) => onSessionEvent((e.detail as NelsEvent) ?? {}),
     { signal: abortSignal },
   );
+  api.addEventListener(
+    "execution_error",
+    () => {
+      operationRunning.value = false;
+      unlockStatus();
+      setReconLiveState(null);
+      setStatus("execution error", { priority: true });
+    },
+    { signal: abortSignal },
+  );
+}
+
+function getRenderer(): RendererModule {
+  return viewMode.value === "3d" ? renderer3d : renderer2d;
+}
+
+async function pushState(): Promise<void> {
+  if (!activeSessionId.value) return;
+  const cfg = operationConfig.value;
+  const payload = {
+    selected_point_ids: [...selectedIds.value],
+    operation: cfg.operation,
+    neighbor_count: Math.max(1, cfg.neighbor_count),
+    alpha_schedule: cfg.alpha_schedule,
+    nearest_sample: cfg.nearest_sample,
+    variant_count: cfg.variant_count,
+    variation_strength: cfg.variation_strength,
+    axis_group_a: cfg.axis_group_a,
+    axis_group_b: cfg.axis_group_b,
+    probe_coords: cfg.probe_coords ?? null,
+    probe_mode: cfg.probe_mode,
+    probe_text_recon: cfg.probe_text_recon,
+    probe_recon_max_minutes: cfg.probe_recon_max_minutes,
+    probe_recon_max_iter: cfg.probe_recon_max_iter,
+    probe_seed_count: cfg.probe_seed_count,
+    probe_noise_count: cfg.probe_noise_count,
+    probe_negative_count: cfg.probe_negative_count,
+    // 3D has no equivalent viewport model -> omit so it doesnt take up the saved 2D camera state
+    ...(viewMode.value === "2d"
+      ? { viewport: getRenderer().getCameraState() }
+      : {}),
+  };
+  try {
+    const data = await pushUiState(activeSessionId.value, payload);
+    if (data.session) upsertSession(data.session);
+    setStatus(`state revision ${data.ui_state?.state_revision ?? "-"}`, {
+      priority: false,
+    });
+  } catch (err) {
+    setStatus(`state sync error: ${(err as Error).message}`);
+  }
 }
 
 function upsertSession(data: NelsSession): void {
@@ -305,50 +391,75 @@ function applyUiStateFields(
 
   setOperationConfig({
     operation: String(uiState.operation ?? operationConfig.value.operation),
-    metric_mode: String(
-      uiState.metric_mode ?? operationConfig.value.metric_mode,
-    ),
     neighbor_count: Number(
       uiState.neighbor_count ?? operationConfig.value.neighbor_count,
     ),
-    alpha_schedule: String(
-      uiState.alpha_schedule ?? operationConfig.value.alpha_schedule,
-    ),
-    edge_mode: String(uiState.edge_mode ?? operationConfig.value.edge_mode),
+    alpha_schedule: Array.isArray(uiState.alpha_schedule)
+      ? (uiState.alpha_schedule as number[]).map(Number)
+      : operationConfig.value.alpha_schedule,
     nearest_sample: Boolean(
       uiState.nearest_sample ?? operationConfig.value.nearest_sample,
     ),
+    variant_count:
+      uiState.variant_count != null
+        ? Math.max(1, Number(uiState.variant_count))
+        : operationConfig.value.variant_count,
+    variation_strength:
+      uiState.variation_strength != null
+        ? Math.max(0, Math.min(1, Number(uiState.variation_strength)))
+        : operationConfig.value.variation_strength,
+    axis_group_a: Array.isArray(uiState.axis_group_a)
+      ? (uiState.axis_group_a as string[]).map(String)
+      : operationConfig.value.axis_group_a,
+    axis_group_b: Array.isArray(uiState.axis_group_b)
+      ? (uiState.axis_group_b as string[]).map(String)
+      : operationConfig.value.axis_group_b,
+    probe_coords: Array.isArray(uiState.probe_coords)
+      ? (uiState.probe_coords as number[]).map(Number)
+      : uiState.probe_coords === null
+        ? null
+        : operationConfig.value.probe_coords,
+    probe_mode:
+      uiState.probe_mode === "3d" || uiState.probe_mode === "2d"
+        ? uiState.probe_mode
+        : operationConfig.value.probe_mode,
+    probe_text_recon: Boolean(
+      uiState.probe_text_recon ?? operationConfig.value.probe_text_recon,
+    ),
+    probe_recon_max_minutes:
+      uiState.probe_recon_max_minutes != null
+        ? Math.max(1, Number(uiState.probe_recon_max_minutes))
+        : operationConfig.value.probe_recon_max_minutes,
+    probe_recon_max_iter:
+      uiState.probe_recon_max_iter != null
+        ? Math.max(1, Number(uiState.probe_recon_max_iter))
+        : operationConfig.value.probe_recon_max_iter,
+    probe_seed_count:
+      uiState.probe_seed_count != null
+        ? Math.max(1, Number(uiState.probe_seed_count))
+        : operationConfig.value.probe_seed_count,
+    probe_noise_count:
+      uiState.probe_noise_count != null
+        ? Math.max(0, Number(uiState.probe_noise_count))
+        : operationConfig.value.probe_noise_count,
+    probe_negative_count:
+      uiState.probe_negative_count != null
+        ? Math.max(0, Number(uiState.probe_negative_count))
+        : operationConfig.value.probe_negative_count,
   });
 
-  const projMode = String(uiState.projection_mode ?? "2d_umap");
-  setViewMode(projMode.startsWith("3d") ? "3d" : "2d");
-
-  if (!options.skipViewport) {
+  if (!options.skipViewport && viewMode.value === "2d") {
     const vp = uiState.viewport as
       | { x: number; y: number; ratio: number }
       | undefined;
     if (vp && typeof vp === "object") {
-      void getRenderer().then((r) => r.applySigmaViewport(vp));
+      getRenderer().applySigmaViewport(vp);
     }
   }
 }
 
-interface ComfyWidgetNode {
-  id: number;
-  type?: string;
-  comfyClass?: string;
-  title?: string;
-  properties?: Record<string, unknown>;
-  inputs?: Array<{ name: string; link?: number | null }>;
-  widgets?: Array<{
-    name: string;
-    value: unknown;
-    callback?: (v: unknown) => void;
-  }>;
-}
-
 function collectSessionNodes(): CanvasSessionPayload[] {
-  const nodes = (app.graph?._nodes ?? []) as ComfyWidgetNode[];
+  const nodes: ComfyNode[] = app.graph?._nodes ?? [];
   return nodes.filter(isSessionNode).map((node) => ({
     session_node_id: String(node.id),
     session_label: String(
@@ -358,15 +469,9 @@ function collectSessionNodes(): CanvasSessionPayload[] {
   }));
 }
 
-function sourceConfigForSession(
-  sessionNode: ComfyWidgetNode,
-): NelsSourceConfig {
+function sourceConfigForSession(sessionNode: ComfyNode): NelsSourceConfig {
   const src = linkedSourceNode(sessionNode);
-  const nodeClass =
-    src &&
-    (((src as Record<string, unknown>).comfyClass as string | undefined) ??
-      src.type ??
-      (src.properties?.["Node name for S&R"] as string | undefined));
+  const nodeClass = nodeClassName(src);
 
   if (nodeClass === "nels_DatasetLoader") {
     return {
@@ -377,41 +482,37 @@ function sourceConfigForSession(
       count: Number(nodeWidgetValue(src, "count", 1000) ?? 1000),
       window_start: Number(nodeWidgetValue(src, "window_start", 0) ?? 0),
       random_seed: Number(nodeWidgetValue(src, "random_seed", 42) ?? 42),
-      edge_mode: operationConfig.value.edge_mode,
-      neighbor_count: Math.max(1, operationConfig.value.neighbor_count),
     };
   }
 
-  return {
-    edge_mode: operationConfig.value.edge_mode,
-    neighbor_count: Math.max(1, operationConfig.value.neighbor_count),
-  };
+  return {};
 }
 
-function linkedSourceNode(
-  node: ComfyWidgetNode | null,
-): ComfyWidgetNode | null {
+function linkedSourceNode(node: ComfyNode | null): ComfyNode | null {
   const linkId = node?.inputs?.find((i) => i.name === "embedding_set")?.link;
   if (linkId === undefined || linkId === null || !app.graph?.links) return null;
   const link = app.graph.links[linkId] ?? app.graph.links[String(linkId)];
   const originId = link?.origin_id;
-  return (
-    ((app.graph?._nodes ?? []) as ComfyWidgetNode[]).find(
-      (n) => String(n.id) === String(originId),
-    ) ?? null
-  );
+  const nodes: ComfyNode[] = app.graph?._nodes ?? [];
+  return nodes.find((n) => String(n.id) === String(originId)) ?? null;
 }
 
-function isSessionNode(node: ComfyWidgetNode): boolean {
-  const cls =
-    ((node as Record<string, unknown>).comfyClass as string | undefined) ??
-    node.type ??
-    (node.properties?.["Node name for S&R"] as string | undefined);
+function isSessionNode(node: ComfyNode): boolean {
+  const cls = nodeClassName(node);
   return cls === "nels_Session" || node.title === "NELS Session";
 }
 
+function nodeClassName(node: ComfyNode | null): string | undefined {
+  if (!node) return undefined;
+  return (
+    node.comfyClass ??
+    node.type ??
+    (node.properties?.["Node name for S&R"] as string | undefined)
+  );
+}
+
 function nodeWidgetValue(
-  node: ComfyWidgetNode | null,
+  node: ComfyNode | null,
   name: string,
   fallback: unknown,
 ): unknown {

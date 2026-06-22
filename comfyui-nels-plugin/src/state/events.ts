@@ -14,9 +14,24 @@ export const eventLog = signal<LogEntry[]>([]);
 export const status = signal("initializing");
 export const view = signal<"graph" | "logs">("graph");
 export const animationEnabled = signal(true);
+export const operationRunning = signal(false);
 
-export function setStatus(text: string): void {
+// While true, low-priority status updates (state revision, ready) are suppressed
+const statusLocked = signal(false);
+
+export function setStatus(
+  text: string,
+  { priority = false }: { priority?: boolean } = {},
+): void {
+  if (!priority && statusLocked.value) return;
   status.value = text;
+}
+
+export function lockStatus(): void {
+  statusLocked.value = true;
+}
+export function unlockStatus(): void {
+  statusLocked.value = false;
 }
 
 export function setView(v: "graph" | "logs"): void {
