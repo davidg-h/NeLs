@@ -3,6 +3,7 @@ import { app } from "comfyui/app";
 import { injectStyle } from "./style.js";
 import { Panel } from "./ui/Panel.js";
 import { registerEventListener } from "./state/session.js";
+import { stopLlmPoll } from "./ui/Header.js";
 
 const LAUNCHER_NODE = "nels_GraphPanelLauncher";
 let cleanupNelsGraphPanel: (() => void) | null = null;
@@ -38,10 +39,22 @@ app.registerExtension({
     nodeData: { name: string },
   ) {
     if (nodeData.name === LAUNCHER_NODE) {
-      const onNodeCreated = nodeType.prototype.onNodeCreated as (() => void) | undefined;
-      nodeType.prototype.onNodeCreated = function (this: { addWidget: Function; size: number[] }) {
+      const onNodeCreated = nodeType.prototype.onNodeCreated as
+        | (() => void)
+        | undefined;
+      nodeType.prototype.onNodeCreated = function (this: {
+        addWidget: (
+          type: string,
+          name: string,
+          value: unknown,
+          callback: () => void,
+        ) => void;
+        size: number[];
+      }) {
         onNodeCreated?.apply(this, []);
-        this.addWidget("button", "Open NELS Graph Panel", "open", () => openNelsGraphPanel());
+        this.addWidget("button", "Open NELS Graph Panel", "open", () =>
+          openNelsGraphPanel(),
+        );
         this.size = [260, 82];
       };
     }
@@ -76,6 +89,7 @@ app.registerExtension({
       destroy() {
         cleanupNelsGraphPanel?.();
         cleanupNelsGraphPanel = null;
+        stopLlmPoll();
       },
     },
   ],

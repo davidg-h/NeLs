@@ -4,21 +4,8 @@ import type {
   NelsSession,
   NelsUiState,
   NelsGraphSnapshot,
+  NelsEmbeddingMeta,
 } from "./types.js";
-
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await api.fetchApi(url, options);
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-  return response.json() as Promise<T>;
-}
-
-function postJson<T>(url: string, payload: unknown): Promise<T> {
-  return fetchJson<T>(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload ?? {}),
-  });
-}
 
 // POST /nels/api/canvas-sessions/sync
 export function syncCanvasSessions(
@@ -44,12 +31,41 @@ export function pushUiState(
 }
 
 // POST /nels/api/session/{session_id}/source-preview
-export function requestSourcePreview(
-  sessionId: string,
-): Promise<{ session: NelsSession; graph_snapshot: NelsGraphSnapshot }> {
+export function requestSourcePreview(sessionId: string): Promise<{
+  session: NelsSession;
+  graph_snapshot: NelsGraphSnapshot;
+  embedding_meta: NelsEmbeddingMeta;
+}> {
   return postJson(
     `/nels/api/session/${encodeURIComponent(sessionId)}/source-preview`,
     {},
   );
 }
 
+// GET /nels/api/llm/status
+export function getLlmStatus(): Promise<{
+  loaded: boolean;
+  model_id: string | null;
+}> {
+  return fetchJson("/nels/api/llm/status");
+}
+
+// POST /nels/api/llm/unload
+export function unloadLlm(): Promise<{ ok: boolean }> {
+  return postJson("/nels/api/llm/unload", {});
+}
+
+async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+  const response = await api.fetchApi(url, options);
+  if (!response.ok)
+    throw new Error(`${response.status} ${response.statusText}`);
+  return response.json() as Promise<T>;
+}
+
+function postJson<T>(url: string, payload: unknown): Promise<T> {
+  return fetchJson<T>(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload ?? {}),
+  });
+}
