@@ -1,5 +1,5 @@
-// Ambient type declarations for ComfyUI runtime globals.
-// These modules are NOT bundled — they are served by ComfyUI itself at runtime.
+// Ambient type declarations for ComfyUI runtime globals
+// These modules are NOT bundled or served by ComfyUI itself at runtime
 
 export interface ComfyNode {
   id: number;
@@ -8,7 +8,7 @@ export interface ComfyNode {
   title?: string;
   properties?: Record<string, unknown>;
   inputs?: Array<{ name: string; link?: number | null }>;
-  widgets?: Array<{ name: string; value: unknown; callback?: (v: unknown) => void }>;
+  widgets?: Array<{ name: string; value: unknown }>;
 }
 
 declare module "comfyui/app" {
@@ -16,7 +16,7 @@ declare module "comfyui/app" {
     registerExtension(ext: Record<string, unknown>): void;
     graph?: {
       _nodes?: ComfyNode[];
-      links?: Record<string | number, { origin_id: number; target_id: number }>;
+      links?: Record<string | number, { origin_id: number }>;
     };
     extensionManager?: {
       bottomPanel?: { toggleBottomPanelTab(id: string): void };
@@ -33,10 +33,6 @@ declare module "comfyui/api" {
       event: string,
       handler: (e: CustomEvent) => void,
       options?: AddEventListenerOptions,
-    ): void;
-    removeEventListener(
-      event: string,
-      handler: (e: CustomEvent) => void,
     ): void;
   };
   export { api };

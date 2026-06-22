@@ -3,6 +3,9 @@ import preact from "@preact/preset-vite";
 
 export default defineConfig({
   plugins: [preact()],
+  resolve: {
+    dedupe: ["three"],
+  },
   build: {
     outDir: "js",
     emptyOutDir: true,
