@@ -8,6 +8,15 @@ hdbscan
 joblib
 torch  # usually already present in a ComfyUI environment
 
+# kNN acceleration
+faiss-cpu
+
+# LLM inference
+transformers
+
+# Image saving
+Pillow
+
 # HuggingFace (dataset loading + model downloads)
 huggingface_hub
 datasets

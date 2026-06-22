@@ -1,7 +1,5 @@
 """Dataset serialization I/O for NELS: save and load"""
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 from typing import Any
@@ -24,6 +22,7 @@ def resolve_dataset_path(
 
 
 def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
+    """Write dataset dict to disk: dataset.json, samples.jsonl, embeddings + umap npy files"""
     path = Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
 
@@ -32,7 +31,7 @@ def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
         encoding="utf-8",
     )
 
-    with open(path / "samples.jsonl", "w", encoding="utf-8") as f:
+    with (path / "samples.jsonl").open("w", encoding="utf-8") as f:
         for sample in dataset["samples"]:
             f.write(json.dumps(sample, ensure_ascii=False) + "\n")
 
@@ -49,6 +48,7 @@ def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
 
 
 def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
+    """Load a dataset dir back into the dict shape save_dataset expects, npy arrays with mmap"""
     path = Path(dataset_path)
     if not path.is_dir():
         raise FileNotFoundError(f"Dataset folder not found: {path}")
@@ -83,8 +83,4 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
         "umap_cluster": _load_npy("umap_cluster.npy"),
         "umap_2d": _load_npy("umap_2d.npy"),
         "umap_3d": _load_npy("umap_3d.npy"),
-        "path": str(path),
     }
-
-
-__all__ = ["load_dataset", "resolve_dataset_path", "save_dataset"]
