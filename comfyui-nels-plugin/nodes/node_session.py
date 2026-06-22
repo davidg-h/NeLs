@@ -1,8 +1,4 @@
-"""
-Session sync node for queued NELS execution.
-"""
-
-from __future__ import annotations
+"""Session sync node for queued NELS execution"""
 
 from ..core.session_contracts import json_dumps, make_session_bundle
 from ..server.session_store import get_store
@@ -37,31 +33,22 @@ class NelsSession:
         )
         store.sync_source_config(session_id, embedding_set.get("_source_config") or {})
         ui_state = store.get_ui_state(session_id)
-        snapshot = store.get_session(session_id).get("graph_snapshot") or {}
         bundle = make_session_bundle(
             embedding_set=embedding_set,
             ui_state=ui_state,
-            graph_snapshot=snapshot,
         )
-        store.publish_event(
+        store.publish_node_event(
             session_id,
-            {
-                "event_type": "run_started",
-                "session_id": session_id,
-                "run_id": bundle["run_id"],
-                "state_revision": bundle["state_revision"],
-                "node_name": "NELS Session",
-                "message": (
-                    "NELS Session synced UI state revision "
-                    f"{bundle['state_revision']} for operation "
-                    f"{bundle['operation_request']['operation']}"
-                ),
-                "status": "running",
-                "payload": {
-                    "operation_request": bundle["operation_request"],
-                    "selection": bundle["selection"],
-                },
-            },
+            "run_started",
+            node_name="NELS Session",
+            message=(
+                "NELS Session synced UI state revision "
+                f"{bundle['state_revision']} for operation "
+                f"{bundle['operation_request']['operation']}"
+            ),
+            status="running",
+            run_id=bundle["run_id"],
+            state_revision=bundle["state_revision"],
         )
         return (
             bundle,
