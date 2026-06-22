@@ -2,7 +2,7 @@
 NELS dataset CLI:
 encode prompts using ComfyUI model classes
 
-No ComfyUI server required — models are loaded from .safetensors files using ComfyUIs
+No ComfyUI server required - models are loaded from .safetensors files using ComfyUIs
 own infrastructure, producing embeddings byte-for-byte identical to those
 created by ComfyUI encoder nodes
 
@@ -18,30 +18,28 @@ ComfyUI root detection (in order):
 Usage: Read the ENCODE_CLI.md documentation for detailed instructions
 """
 
-from __future__ import annotations
-
 import argparse
 import os
 import sys
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 # Bootstrap plugin root so core/ is importable at module load time
 _PLUGIN_ROOT = Path(__file__).parent.parent
 if str(_PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_PLUGIN_ROOT))
 
+from core.annotation_ops import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
 from core.dataset_io import (
     load_dataset,
     resolve_dataset_path,
-    save_dataset,
 )
 from core.dataset_ops import (
+    append_to_dataset,
+    build_source_loader_meta,
     finalize_dataset,
     load_texts_from_source,
-    predict_cluster_for_new,
+    make_sample_record,
 )
 from core.defaults import (
     CLUSTER_MIN_SAMPLES,
@@ -50,402 +48,13 @@ from core.defaults import (
     CLUSTER_UMAP_NEIGHBORS,
     DEFAULT_DATASETS,
     ENCODE_BATCH_SIZE,
-    UMAP_METRIC,
     UMAP_MIN_DIST,
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
+    UMAP_SUBSET_FIT_SIZE,
+    UMAP_SUBSET_THRESHOLD,
 )
-from core.encoding_ops import encode_prompts
-from core.projection_ops import extend_umap_with_models_or_refit
-
-# ---------------------------------------------------------------------------
-# ComfyUI root detection
-# ---------------------------------------------------------------------------
-
-
-def _is_comfyui_root(p: Path) -> bool:
-    return (p / "comfy").is_dir() and (p / "main.py").exists()
-
-
-def _find_comfyui_root(explicit: str | None = None) -> Path:
-    if explicit:
-        p = Path(explicit)
-        if not _is_comfyui_root(p):
-            raise RuntimeError(f"Not a valid ComfyUI root (no comfy/ or main.py): {explicit}")
-        return p
-
-    if "COMFYUI_ROOT" in os.environ:
-        p = Path(os.environ["COMFYUI_ROOT"])
-        if not _is_comfyui_root(p):
-            raise RuntimeError(
-                f"COMFYUI_ROOT={p} is not a valid ComfyUI root (no comfy/ or main.py)"
-            )
-        return p
-
-    # walk up from encode_cli.py until a ComfyUI root is found
-    candidate = Path(__file__).resolve()
-    for _ in range(8):
-        candidate = candidate.parent
-        print(f"Checking for ComfyUI root at: {candidate}")
-        if _is_comfyui_root(candidate):
-            return candidate
-
-    raise RuntimeError(
-        "ComfyUI root not found.\n"
-        "Options:\n"
-        "  1. Pass --comfyui-path /path/to/ComfyUI\n"
-        "  2. Set the COMFYUI_ROOT environment variable:\n"
-        "       export COMFYUI_ROOT=/path/to/ComfyUI\n"
-        "  3. Run from inside the custom_nodes/ directory structure."
-    )
-
-
-def _setup_paths(comfyui_root: Path) -> None:
-    """add ComfyUI root and plugin root to sys.path"""
-    if str(comfyui_root) not in sys.path:
-        sys.path.insert(0, str(comfyui_root))
-    if str(_PLUGIN_ROOT) not in sys.path:
-        sys.path.insert(0, str(_PLUGIN_ROOT))
-
-
-# ---------------------------------------------------------------------------
-# Model loading (only after _setup_paths)
-# ---------------------------------------------------------------------------
-
-
-def _resolve_clip_path(clip_str: str, comfyui_root: Path) -> Path:
-    """Return a local path for --clip; downloads from HF if needed
-
-    Accepts local path or HF path: owner/repo/[subpath/]filename.safetensors
-    Downloads to <comfyui_root>/models/text_encoders/
-    """
-    p = Path(clip_str)
-    if p.exists():
-        return p
-    if p.is_absolute():
-        raise FileNotFoundError(f"CLIP model not found: {clip_str}")
-
-    # relative path that doesnt exist locally -> treat as HF owner/repo/file
-    parts = clip_str.replace("\\", "/").split("/")
-    if len(parts) < 3:
-        raise ValueError(
-            f"--clip {clip_str!r} is not a local file and not a valid HF path.\n"
-            "Expected a local path or: owner/repo/filename.safetensors"
-        )
-
-    repo_id = f"{parts[0]}/{parts[1]}"
-    hf_file = "/".join(parts[2:])
-    local_dir = comfyui_root / "models" / "text_encoders"
-    local_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        from huggingface_hub import hf_hub_download
-    except ImportError as err:
-        raise RuntimeError(
-            "huggingface_hub is required for HF model downloads: pip install huggingface_hub"
-        ) from err
-
-    dest = local_dir / Path(hf_file)
-    if dest.exists():
-        print(f"Using cached model: {dest}")
-        return dest
-
-    print(f"Downloading {repo_id}/{hf_file} → {dest}")
-    downloaded = hf_hub_download(repo_id=repo_id, filename=hf_file, local_dir=str(local_dir))
-    return Path(downloaded)
-
-
-def _load_clip(clip_path: Path, clip_type_str: str, comfyui_root: Path) -> Any:
-    """load a CLIP model using ComfyUIs infrastructure, returning the loaded model object"""
-    _setup_paths(comfyui_root)
-    import comfy.sd as sd
-    from comfy.sd import CLIPType
-
-    type_map: dict[str, Any] = {}
-    for name in dir(CLIPType):
-        if not name.startswith("_"):
-            type_map[name.upper()] = getattr(CLIPType, name)
-
-    clip_type = type_map.get(clip_type_str.upper())
-    if clip_type is None:
-        raise ValueError(f"Unknown --clip-type {clip_type_str!r}. Valid values: {sorted(type_map)}")
-
-    print(f"Loading CLIP ({clip_type_str}): {clip_path}")
-    return sd.load_clip(ckpt_paths=[str(clip_path)], clip_type=clip_type)
-
-
-# ---------------------------------------------------------------------------
-# Relative path helper & file reporting
-# ---------------------------------------------------------------------------
-
-
-def _file_size_label(size: int) -> str:
-    if size >= 1024 * 1024:
-        return f"{size / (1024 * 1024):.1f} MB"
-    if size >= 1024:
-        return f"{size // 1024} KB"
-    return f"{size} B"
-
-
-def _print_files(folder: Path) -> None:
-    print("\nGenerated files:")
-    for f in sorted(folder.iterdir()):
-        print(f"  {f.name:<40} {_file_size_label(f.stat().st_size)}")
-
-
-def _snapshot_mtimes(folder: Path) -> dict:
-    return {f: f.stat().st_mtime for f in folder.iterdir() if f.is_file()}
-
-
-def _print_updated_files(folder: Path, before: dict) -> None:
-    print("\nUpdated files:")
-    for f in sorted(folder.iterdir()):
-        if not f.is_file():
-            continue
-        st = f.stat()
-        if f not in before or st.st_mtime != before[f]:
-            print(f"  {f.name:<40} {_file_size_label(st.st_size)}")
-
-
-def _to_rel(path_str: str, comfyui_root: Path) -> str:
-    """Store path relative to ComfyUI root for portability; fall back to absolute"""
-    try:
-        return str(Path(path_str).resolve().relative_to(comfyui_root.resolve()))
-    except ValueError:
-        return path_str
-
-
-# ---------------------------------------------------------------------------
-# Shared helpers for create / add
-# ---------------------------------------------------------------------------
-
-
-def _parse_metadata_columns(args: Any) -> list[str] | None:
-    val = getattr(args, "metadata_columns", None)
-    if not val:
-        return None
-    return [c.strip() for c in val.split(",") if c.strip()]
-
-
-def _make_sample(sample_id: str, record: dict, source_id: str) -> dict:
-    s: dict = {
-        "id": sample_id,
-        "type": "prompt_embedding",
-        "text": record["text"],
-        "raw_text": record.get("raw_text", record["text"]),
-        "source": source_id,
-    }
-    if record.get("template"):
-        s["template"] = record["template"]
-    if record.get("metadata"):
-        s["metadata"] = record["metadata"]
-    return s
-
-
-def _source_loader_meta(args: Any, source_id: str) -> dict:
-    return {
-        "input": args.input,
-        "hf_config": getattr(args, "hf_config", None),
-        "hf_split": getattr(args, "hf_split", "train"),
-        "hf_column": getattr(args, "hf_column", None),
-        "text_template": getattr(args, "text_template", None),
-        "encode_limit": getattr(args, "encode_limit", 0),
-        "dedupe": getattr(args, "dedupe", False),
-        "min_words": getattr(args, "min_words", 0),
-        "max_words": getattr(args, "max_words", 0),
-        "source_id": source_id,
-    }
-
-
-# ---------------------------------------------------------------------------
-# create subcommand
-# ---------------------------------------------------------------------------
-
-
-def cmd_create(args: argparse.Namespace) -> None:
-    comfyui_root = _find_comfyui_root(args.comfyui_path)
-    _setup_paths(comfyui_root)
-
-    output_path = Path(args.output)
-    name = args.name or output_path.name
-    umap_params = {
-        "n_neighbors": args.umap_n_neighbors,
-        "min_dist": args.umap_min_dist,
-        "metric": UMAP_METRIC,
-        "random_state": args.umap_seed,
-    }
-    cluster_params = {
-        "umap_dims": args.cluster_umap_dims,
-        "umap_neighbors": args.cluster_umap_neighbors,
-        "min_size": args.cluster_min_size,
-        "min_samples": args.cluster_min_samples,
-    }
-
-    resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
-
-    metadata_cols = _parse_metadata_columns(args)
-
-    print(f"Loading texts from: {args.input}")
-    records, source_id = load_texts_from_source(
-        args.input,
-        column=args.hf_column or "Prompt",
-        limit=args.encode_limit,
-        hf_split=args.hf_split,
-        hf_config=getattr(args, "hf_config", None),
-        text_template=getattr(args, "text_template", None),
-        metadata_columns=metadata_cols,
-        dedupe=getattr(args, "dedupe", False),
-        min_words=getattr(args, "min_words", 0),
-        max_words=getattr(args, "max_words", 0),
-    )
-    if not records:
-        raise SystemExit("No texts found: check --input, --hf-column, --encode-limit.")
-
-    prompts = [r["text"] for r in records]
-    clip = _load_clip(resolved_clip, args.clip_type, comfyui_root)
-    print(f"Encoding {len(prompts)} prompts...")
-    vectors = encode_prompts(clip, prompts, batch_size=args.batch_size)
-
-    samples = [_make_sample(f"pt_{i:06d}", r, source_id) for i, r in enumerate(records)]
-    config: dict[str, Any] = {
-        "name": name,
-        "type": "prompt_embedding",
-        "encoder": _to_rel(str(resolved_clip), comfyui_root),
-        "source_dataset": source_id,
-        "text_pooling": "pooler",
-        "umap_params": umap_params,
-        "cli_encoder": {
-            "clip_path": _to_rel(str(resolved_clip), comfyui_root),
-            "clip_type": args.clip_type,
-        },
-        "source_loader": _source_loader_meta(args, source_id),
-    }
-
-    out = finalize_dataset(
-        vectors,
-        samples,
-        config,
-        output_path,
-        umap_params=umap_params,
-        cluster_params=cluster_params,
-    )
-
-    n = vectors.shape[0]
-    print(f"\nDataset saved to: {out}")
-    print(f"  samples: {n}  |  dim: {vectors.shape[1]}")
-    _print_files(Path(out))
-
-
-# ---------------------------------------------------------------------------
-# add subcommand
-# ---------------------------------------------------------------------------
-
-
-def cmd_add(args: argparse.Namespace) -> None:
-    comfyui_root = _find_comfyui_root(args.comfyui_path)
-    _setup_paths(comfyui_root)
-
-    path_obj = resolve_dataset_path(args.dataset.strip(), datasets_root=DEFAULT_DATASETS)
-    if not path_obj.is_dir():
-        raise SystemExit(f"Dataset folder not found: {args.dataset}")
-
-    ds = load_dataset(path_obj)
-    meta = ds["metadata"]
-    existing_vectors: np.ndarray = ds["pooled"]
-    existing_samples: list[dict] = ds["samples"]
-    offset = len(existing_samples)
-
-    cli_enc: dict[str, Any] = meta.get("cli_encoder", {})
-
-    clip_path = args.clip
-    if not clip_path:
-        rel = cli_enc.get("clip_path")
-        clip_path = str(comfyui_root / rel) if rel else None
-    clip_type_str = args.clip_type or cli_enc.get("clip_type") or "FLUX2"
-
-    if not clip_path:
-        raise SystemExit(
-            "Cannot determine CLIP model path.\n"
-            "Dataset was created via ComfyUI node — model paths were not recorded.\n"
-            "Specify: --clip /path/to/clip.safetensors --clip-type FLUX2"
-        )
-
-    # user-supplied --clip may be an HF path; cli_encoder paths are already local
-    resolved_clip = _resolve_clip_path(args.clip, comfyui_root) if args.clip else Path(clip_path)
-    clip = _load_clip(resolved_clip, clip_type_str, comfyui_root)
-
-    metadata_cols = _parse_metadata_columns(args)
-
-    print(f"Loading texts from: {args.input}")
-    records, source_id = load_texts_from_source(
-        args.input,
-        column=args.hf_column or "Prompt",
-        limit=args.encode_limit,
-        hf_split=args.hf_split,
-        hf_config=getattr(args, "hf_config", None),
-        text_template=getattr(args, "text_template", None),
-        metadata_columns=metadata_cols,
-        dedupe=getattr(args, "dedupe", False),
-        min_words=getattr(args, "min_words", 0),
-        max_words=getattr(args, "max_words", 0),
-    )
-    if not records:
-        raise SystemExit("No texts found — check --input and --encode-limit.")
-
-    prompts = [r["text"] for r in records]
-    print(f"Encoding {len(prompts)} new prompts...")
-    new_vectors = encode_prompts(clip, prompts, batch_size=args.batch_size)
-    new_samples = [
-        _make_sample(f"pt_{offset + i:06d}", r, source_id) for i, r in enumerate(records)
-    ]
-
-    if existing_vectors.shape[1] != new_vectors.shape[1]:
-        raise SystemExit(
-            f"Dimension mismatch: dataset has dim {existing_vectors.shape[1]}, "
-            f"new vectors have dim {new_vectors.shape[1]}.\n"
-            "Ensure you use the same model that was used for the original dataset."
-        )
-
-    merged_vectors = np.concatenate([existing_vectors, new_vectors], axis=0)
-    merged_samples = existing_samples + new_samples
-
-    umap_2d, umap_3d = extend_umap_with_models_or_refit(
-        path=path_obj,
-        merged_vectors=merged_vectors,
-        new_vectors=new_vectors,
-        existing_umap_2d=ds.get("umap_2d"),
-        existing_umap_3d=ds.get("umap_3d"),
-        umap_params=meta.get("umap_params") or {},
-    )
-
-    cluster_results, cluster_warning = predict_cluster_for_new(path_obj, new_vectors)
-    for sample, result in zip(new_samples, cluster_results, strict=True):
-        sample["cluster_global"] = result["cluster_global"]
-        sample["is_noise"] = result["is_noise"]
-        sample["membership_strength"] = result["membership_strength"]
-
-    if cluster_warning:
-        print(cluster_warning)
-
-    updated_meta = {**meta, "sample_count": len(merged_samples)}
-    before = _snapshot_mtimes(path_obj)
-    save_dataset(
-        {
-            "metadata": updated_meta,
-            "samples": merged_samples,
-            "pooled": merged_vectors,
-            "umap_cluster": ds.get("umap_cluster"),
-            "umap_2d": umap_2d,
-            "umap_3d": umap_3d,
-        },
-        path_obj,
-    )
-
-    n_new = new_vectors.shape[0]
-    print(f"\nAdded {n_new} samples to: {path_obj}")
-    print(f"  total: {len(merged_samples)} samples  |  dim: {merged_vectors.shape[1]}")
-    _print_updated_files(path_obj, before)
-
+from core.encoding_ops import encode_prompts_pooled
 
 # ---------------------------------------------------------------------------
 # CLI entry point
@@ -455,7 +64,7 @@ def cmd_add(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="nels",
-        description="NELS dataset CLI — create and extend datasets using ComfyUI models.",
+        description="NELS dataset CLI - create and extend datasets using ComfyUI models.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -543,9 +152,32 @@ def main() -> None:
         default=ENCODE_BATCH_SIZE,
         help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).",
     )
+    cp.add_argument(
+        "--annotate",
+        action="store_true",
+        help="Run LLM cluster annotation after dataset creation.",
+    )
+    cp.add_argument(
+        "--annotate-model",
+        default=ANNOTATION_MODEL,
+        help=f"HuggingFace model for annotation (default: {ANNOTATION_MODEL}).",
+    )
+    cp.add_argument(
+        "--annotate-top-n",
+        type=int,
+        default=ANNOTATION_TOP_N,
+        help=f"Prompts per cluster sent to the LLM (default: {ANNOTATION_TOP_N}).",
+    )
     cp.add_argument("--umap-n-neighbors", type=int, default=UMAP_N_NEIGHBORS)
     cp.add_argument("--umap-min-dist", type=float, default=UMAP_MIN_DIST)
     cp.add_argument("--umap-seed", type=int, default=UMAP_SEED)
+    cp.add_argument(
+        "--umap-subset-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help=f"Points to fit UMAP on when N > {UMAP_SUBSET_THRESHOLD:,}. Omit to use default ({UMAP_SUBSET_FIT_SIZE:,}).",
+    )
     cp.add_argument(
         "--cluster-umap-dims",
         type=int,
@@ -571,6 +203,23 @@ def main() -> None:
         help=f"HDBSCAN min_samples (default: {CLUSTER_MIN_SAMPLES}).",
     )
 
+    # ---- annotate ----
+    annp = subparsers.add_parser(
+        "annotate", help="Generate LLM cluster labels for an existing dataset."
+    )
+    annp.add_argument("--dataset", required=True, help="Path to the dataset folder.")
+    annp.add_argument(
+        "--model",
+        default=ANNOTATION_MODEL,
+        help=f"HuggingFace model for annotation (default: {ANNOTATION_MODEL}).",
+    )
+    annp.add_argument(
+        "--top-n",
+        type=int,
+        default=ANNOTATION_TOP_N,
+        help=f"Prompts per cluster sent to the LLM (default: {ANNOTATION_TOP_N}).",
+    )
+
     # ---- add ----
     ap = subparsers.add_parser("add", help="Add new samples to an existing NELS dataset.")
     ap.add_argument("--dataset", required=True, help="Path to the existing dataset folder.")
@@ -583,13 +232,13 @@ def main() -> None:
         "--clip",
         default=None,
         help="Path to CLIP .safetensors. "
-        "Auto-loaded from cli_encoder block if dataset was created via CLI. "
+        "Auto-loaded from the dataset's recorded encoder path if it was created via CLI. "
         "Required if dataset was created via ComfyUI node.",
     )
     ap.add_argument(
         "--clip-type",
         default=None,
-        help="ComfyUI CLIPType. Required alongside --clip when no cli_encoder block.",
+        help="ComfyUI CLIPType. Required alongside --clip when the dataset has no recorded clip_type.",
     )
     ap.add_argument(
         "--hf-column",
@@ -633,6 +282,8 @@ def main() -> None:
     try:
         if args.command == "create":
             cmd_create(args)
+        elif args.command == "annotate":
+            cmd_annotate(args)
         else:
             cmd_add(args)
     finally:
@@ -649,5 +300,346 @@ def main() -> None:
             pass
 
 
+# ---------------------------------------------------------------------------
+# create subcommand
+# ---------------------------------------------------------------------------
+
+
+def cmd_create(args: argparse.Namespace) -> None:
+    comfyui_root = _find_comfyui_root(args.comfyui_path)
+    _setup_paths(comfyui_root)
+
+    output_path = Path(args.output)
+    name = args.name or output_path.name
+    umap_params = {
+        "n_neighbors": args.umap_n_neighbors,
+        "min_dist": args.umap_min_dist,
+        "random_state": args.umap_seed,
+        "subset_size": args.umap_subset_size,
+    }
+    cluster_params = {
+        "umap_dims": args.cluster_umap_dims,
+        "umap_neighbors": args.cluster_umap_neighbors,
+        "min_size": args.cluster_min_size,
+        "min_samples": args.cluster_min_samples,
+    }
+
+    resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
+
+    metadata_cols = _parse_metadata_columns(args)
+
+    print(f"Loading texts from: {args.input}")
+    records, source_id = load_texts_from_source(
+        args.input,
+        column=args.hf_column or "Prompt",
+        limit=args.encode_limit,
+        hf_split=args.hf_split,
+        hf_config=args.hf_config,
+        text_template=args.text_template,
+        metadata_columns=metadata_cols,
+        dedupe=args.dedupe,
+        min_words=args.min_words,
+        max_words=args.max_words,
+    )
+    if not records:
+        raise SystemExit("No texts found: check --input, --hf-column, --encode-limit.")
+
+    prompts = [r["text"] for r in records]
+    clip = _load_clip(resolved_clip, args.clip_type, comfyui_root)
+    print(f"Encoding {len(prompts)} prompts...")
+    vectors = encode_prompts_pooled(clip, prompts, batch_size=args.batch_size)
+
+    samples = [make_sample_record(f"pt_{i:06d}", r, source_id) for i, r in enumerate(records)]
+    config: dict[str, Any] = {
+        "name": name,
+        "type": "prompt_embedding",
+        "encoder": _to_rel(str(resolved_clip), comfyui_root),
+        "source_dataset": source_id,
+        "batch_size": args.batch_size,
+        "umap_params": umap_params,
+        "clip_type": args.clip_type,
+        "source_loader": build_source_loader_meta(
+            source_input=args.input,
+            hf_config=args.hf_config,
+            hf_split=args.hf_split,
+            hf_column=args.hf_column,
+            text_template=args.text_template,
+            encode_limit=args.encode_limit,
+            dedupe=args.dedupe,
+            min_words=args.min_words,
+            max_words=args.max_words,
+        ),
+    }
+
+    out = finalize_dataset(
+        vectors,
+        samples,
+        config,
+        output_path,
+        umap_params=umap_params,
+        cluster_params=cluster_params,
+    )
+
+    n = vectors.shape[0]
+    print(f"\nDataset saved to: {out}")
+    print(f"  samples: {n}  |  dim: {vectors.shape[1]}")
+    _print_files(Path(out))
+
+    if args.annotate:
+        print("\nRunning cluster annotation...")
+        annotate_clusters(Path(out), model_name=args.annotate_model, top_n=args.annotate_top_n)
+
+
+# ---------------------------------------------------------------------------
+# annotate subcommand
+# ---------------------------------------------------------------------------
+
+
+def cmd_annotate(args: argparse.Namespace) -> None:
+    path = resolve_dataset_path(args.dataset.strip(), datasets_root=DEFAULT_DATASETS)
+    if not path.is_dir():
+        raise SystemExit(f"Dataset folder not found: {args.dataset}")
+    annotate_clusters(path, model_name=args.model, top_n=args.top_n)
+
+
+# ---------------------------------------------------------------------------
+# add subcommand
+# ---------------------------------------------------------------------------
+
+
+def cmd_add(args: argparse.Namespace) -> None:
+    comfyui_root = _find_comfyui_root(args.comfyui_path)
+    _setup_paths(comfyui_root)
+
+    path_obj = resolve_dataset_path(args.dataset.strip(), datasets_root=DEFAULT_DATASETS)
+    if not path_obj.is_dir():
+        raise SystemExit(f"Dataset folder not found: {args.dataset}")
+
+    ds = load_dataset(path_obj)
+    meta = ds["metadata"]
+    offset = len(ds["samples"])
+
+    # clip_type is only ever recorded for CLI-created datasets, so its presence
+    # signals that "encoder" holds a resolvable local path rather than a node placeholder
+    clip_path = args.clip
+    if not clip_path and meta.get("clip_type"):
+        rel = meta.get("encoder")
+        clip_path = str(comfyui_root / rel) if rel else None
+    clip_type_str = args.clip_type or meta.get("clip_type") or "FLUX2"
+
+    if not clip_path:
+        raise SystemExit(
+            "Cannot determine CLIP model path.\n"
+            "Dataset was created via ComfyUI node - model paths were not recorded.\n"
+            "Specify: --clip /path/to/clip.safetensors --clip-type FLUX2"
+        )
+
+    # user-supplied --clip may be an HF path; recorded encoder paths are already local
+    resolved_clip = _resolve_clip_path(args.clip, comfyui_root) if args.clip else Path(clip_path)
+    clip = _load_clip(resolved_clip, clip_type_str, comfyui_root)
+
+    metadata_cols = _parse_metadata_columns(args)
+
+    print(f"Loading texts from: {args.input}")
+    records, source_id = load_texts_from_source(
+        args.input,
+        column=args.hf_column or "Prompt",
+        limit=args.encode_limit,
+        hf_split=args.hf_split,
+        hf_config=args.hf_config,
+        text_template=args.text_template,
+        metadata_columns=metadata_cols,
+        dedupe=args.dedupe,
+        min_words=args.min_words,
+        max_words=args.max_words,
+    )
+    if not records:
+        raise SystemExit("No texts found - check --input and --encode-limit.")
+
+    prompts = [r["text"] for r in records]
+    print(f"Encoding {len(prompts)} new prompts...")
+    new_vectors = encode_prompts_pooled(clip, prompts, batch_size=args.batch_size)
+    new_samples = [
+        make_sample_record(f"pt_{offset + i:06d}", r, source_id) for i, r in enumerate(records)
+    ]
+
+    before = _snapshot_mtimes(path_obj)
+    try:
+        updated_meta = append_to_dataset(path_obj, ds, new_vectors, new_samples)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    n_new = new_vectors.shape[0]
+    print(f"\nAdded {n_new} samples to: {path_obj}")
+    print(f"  total: {updated_meta['sample_count']} samples  |  dim: {new_vectors.shape[1]}")
+    _print_updated_files(path_obj, before)
+
+
 if __name__ == "__main__":
     main()
+
+# ---------------------------------------------------------------------------
+# Helper functions for CLI commands
+# ---------------------------------------------------------------------------
+
+# ---- ComfyUI root detection ----
+
+
+def _is_comfyui_root(p: Path) -> bool:
+    return (p / "comfy").is_dir() and (p / "main.py").exists()
+
+
+def _find_comfyui_root(explicit: str | None = None) -> Path:
+    if explicit:
+        p = Path(explicit)
+        if not _is_comfyui_root(p):
+            raise RuntimeError(f"Not a valid ComfyUI root (no comfy/ or main.py): {explicit}")
+        return p
+
+    if "COMFYUI_ROOT" in os.environ:
+        p = Path(os.environ["COMFYUI_ROOT"])
+        if not _is_comfyui_root(p):
+            raise RuntimeError(
+                f"COMFYUI_ROOT={p} is not a valid ComfyUI root (no comfy/ or main.py)"
+            )
+        return p
+
+    # walk up from encode_cli.py until a ComfyUI root is found
+    candidate = Path(__file__).resolve()
+    for _ in range(8):
+        candidate = candidate.parent
+        print(f"Checking for ComfyUI root at: {candidate}")
+        if _is_comfyui_root(candidate):
+            return candidate
+
+    raise RuntimeError(
+        "ComfyUI root not found.\n"
+        "Options:\n"
+        "  1. Pass --comfyui-path /path/to/ComfyUI\n"
+        "  2. Set the COMFYUI_ROOT environment variable:\n"
+        "       export COMFYUI_ROOT=/path/to/ComfyUI\n"
+        "  3. Run from inside the custom_nodes/ directory structure."
+    )
+
+
+def _setup_paths(comfyui_root: Path) -> None:
+    """Add ComfyUI root and plugin root to sys.path"""
+    if str(comfyui_root) not in sys.path:
+        sys.path.insert(0, str(comfyui_root))
+    if str(_PLUGIN_ROOT) not in sys.path:
+        sys.path.insert(0, str(_PLUGIN_ROOT))
+
+
+# ---- Model loading (only after _setup_paths) ----
+
+
+def _resolve_clip_path(clip_str: str, comfyui_root: Path) -> Path:
+    """Return a local path for --clip; downloads from HF if needed
+
+    Accepts local path or HF path: owner/repo/[subpath/]filename.safetensors
+    Downloads to <comfyui_root>/models/text_encoders/
+    """
+    p = Path(clip_str)
+    if p.exists():
+        return p
+    if p.is_absolute():
+        raise FileNotFoundError(f"CLIP model not found: {clip_str}")
+
+    # relative path that doesnt exist locally -> treat as HF owner/repo/file
+    parts = clip_str.replace("\\", "/").split("/")
+    if len(parts) < 3:
+        raise ValueError(
+            f"--clip {clip_str!r} is not a local file and not a valid HF path.\n"
+            "Expected a local path or: owner/repo/filename.safetensors"
+        )
+
+    repo_id = f"{parts[0]}/{parts[1]}"
+    hf_file = "/".join(parts[2:])
+    local_dir = comfyui_root / "models" / "text_encoders"
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from huggingface_hub import hf_hub_download
+    except ImportError as err:
+        raise RuntimeError(
+            "huggingface_hub is required for HF model downloads: pip install huggingface_hub"
+        ) from err
+
+    dest = local_dir / Path(hf_file)
+    if dest.exists():
+        print(f"Using cached model: {dest}")
+        return dest
+
+    print(f"Downloading {repo_id}/{hf_file} -> {dest}")
+    downloaded = hf_hub_download(repo_id=repo_id, filename=hf_file, local_dir=str(local_dir))
+    return Path(downloaded)
+
+
+def _load_clip(clip_path: Path, clip_type_str: str, comfyui_root: Path) -> Any:
+    """Load a CLIP model using ComfyUI's infrastructure, return the loaded model object"""
+    _setup_paths(comfyui_root)
+    import comfy.sd as sd
+    from comfy.sd import CLIPType
+
+    type_map: dict[str, Any] = {}
+    for name in dir(CLIPType):
+        if not name.startswith("_"):
+            type_map[name.upper()] = getattr(CLIPType, name)
+
+    clip_type = type_map.get(clip_type_str.upper())
+    if clip_type is None:
+        raise ValueError(f"Unknown --clip-type {clip_type_str!r}. Valid values: {sorted(type_map)}")
+
+    print(f"Loading CLIP ({clip_type_str}): {clip_path}")
+    return sd.load_clip(ckpt_paths=[str(clip_path)], clip_type=clip_type)
+
+
+# ---------------------------------------------------------------------------
+# Relative path helper & file reporting
+# ---------------------------------------------------------------------------
+
+
+def _file_size_label(size: int) -> str:
+    if size >= 1024 * 1024:
+        return f"{size / (1024 * 1024):.1f} MB"
+    if size >= 1024:
+        return f"{size // 1024} KB"
+    return f"{size} B"
+
+
+def _print_files(folder: Path) -> None:
+    print("\nGenerated files:")
+    for f in sorted(folder.iterdir()):
+        print(f"  {f.name:<40} {_file_size_label(f.stat().st_size)}")
+
+
+def _snapshot_mtimes(folder: Path) -> dict:
+    return {f: f.stat().st_mtime for f in folder.iterdir() if f.is_file()}
+
+
+def _print_updated_files(folder: Path, before: dict) -> None:
+    print("\nUpdated files:")
+    for f in sorted(folder.iterdir()):
+        if not f.is_file():
+            continue
+        st = f.stat()
+        if f not in before or st.st_mtime != before[f]:
+            print(f"  {f.name:<40} {_file_size_label(st.st_size)}")
+
+
+def _to_rel(path_str: str, comfyui_root: Path) -> str:
+    """Store path relative to ComfyUI root for portability; fall back to absolute"""
+    try:
+        return str(Path(path_str).resolve().relative_to(comfyui_root.resolve()))
+    except ValueError:
+        return path_str
+
+
+# ---- Shared helpers for create / add ----
+
+
+def _parse_metadata_columns(args: Any) -> list[str] | None:
+    val = args.metadata_columns
+    if not val:
+        return None
+    return [c.strip() for c in val.split(",") if c.strip()]
