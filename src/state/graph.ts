@@ -5,56 +5,26 @@ export const snapshot = signal<NelsGraphSnapshot | null>(null);
 export const graphData = signal<GraphData>(emptyGraph());
 export const viewMode = signal<"2d" | "3d">("2d");
 
-// Tracks coordinate layout across snapshot updates to prevent UMAP coords from
-// being replaced by operation-result snapshots that omit coordinates.
+// Preserves UMAP coords across snapshot updates
 let coordinateCacheKey = "";
 let coordCache2d = new Map<string, [number, number]>();
 let coordCache3d = new Map<string, [number, number, number]>();
 
 export function setSnapshot(
   snap: NelsGraphSnapshot | null,
-  options: { fit?: boolean; fitAlways?: boolean; acceptCoordinates?: boolean; forceCoordinates?: boolean } = {},
-): boolean {
+  options: {
+    acceptCoordinates?: boolean;
+    forceCoordinates?: boolean;
+  } = {},
+): void {
   const stabilized = stabilizeSnapshot(snap, options);
   snapshot.value = stabilized;
   graphData.value = buildGraph(stabilized);
-  return !!(options.fitAlways || (options.fit && snap));
 }
 
 export function setViewMode(mode: "2d" | "3d"): void {
   viewMode.value = mode;
   graphData.value = buildGraph(snapshot.value);
-}
-
-export function buildGraph(snap: NelsGraphSnapshot | null): GraphData {
-  const rawPoints = Array.isArray(snap?.points) ? snap!.points : [];
-  const mode = viewMode.value;
-
-  // Pick the correct coordinate set for the active view mode.
-  const points: NelsPoint[] = rawPoints.map((p) => {
-    if (mode === "3d" && p.coords_3d) return { ...p, coords: p.coords_3d };
-    if (mode === "2d" && p.coords_2d) return { ...p, coords: p.coords_2d };
-    return p;
-  });
-
-  const edges = Array.isArray(snap?.edges) ? snap!.edges : [];
-  const byId = new Map<string, NelsPoint>(points.map((p) => [String(p.id), p]));
-  const adjacency = new Map<string, Set<string>>();
-  const degrees = new Map<string, number>();
-  for (const p of points) {
-    adjacency.set(String(p.id), new Set());
-    degrees.set(String(p.id), 0);
-  }
-  for (const edge of edges) {
-    const s = String(edge.source);
-    const t = String(edge.target);
-    if (!adjacency.has(s) || !adjacency.has(t)) continue;
-    adjacency.get(s)!.add(t);
-    adjacency.get(t)!.add(s);
-    degrees.set(s, (degrees.get(s) ?? 0) + 1);
-    degrees.set(t, (degrees.get(t) ?? 0) + 1);
-  }
-  return { points, edges, byId, adjacency, degrees, bounds: bounds(points) };
 }
 
 export function acceptRuntimeSnapshot(
@@ -76,6 +46,34 @@ export function acceptRuntimeSnapshot(
   return !samePointSet || !sameCoordConfig;
 }
 
+function buildGraph(snap: NelsGraphSnapshot | null): GraphData {
+  const rawPoints = Array.isArray(snap?.points) ? snap!.points : [];
+  const mode = viewMode.value;
+
+  // Pick the correct coordinate set for the active view mode
+  const points: NelsPoint[] = rawPoints.map((p) => {
+    if (mode === "3d" && p.coords_3d) return { ...p, view_coords: p.coords_3d };
+    if (mode === "2d" && p.coords_2d) return { ...p, view_coords: p.coords_2d };
+    return p;
+  });
+
+  const byId = new Map<string, NelsPoint>(points.map((p) => [String(p.id), p]));
+  return { points, byId, bounds: bounds(points) };
+}
+
+function coordinateConfig(
+  snap: NelsGraphSnapshot | null,
+): Record<string, unknown> {
+  const src = snap?.source_config ?? {};
+  return {
+    dataset_path: src.dataset_path,
+    load_mode: src.load_mode,
+    count: src.count,
+    window_start: src.window_start,
+    random_seed: src.random_seed,
+  };
+}
+
 function stabilizeSnapshot(
   snap: NelsGraphSnapshot | null,
   options: { acceptCoordinates?: boolean; forceCoordinates?: boolean } = {},
@@ -86,7 +84,8 @@ function stabilizeSnapshot(
   const pointIds = new Set(points.map((p) => String(p.id)));
   const sameKey = key === coordinateCacheKey;
   const cacheMatches =
-    sameKey && [...pointIds].every((id) => coordCache2d.has(id) || coordCache3d.has(id));
+    sameKey &&
+    [...pointIds].every((id) => coordCache2d.has(id) || coordCache3d.has(id));
   const accept = options.acceptCoordinates !== false;
   const force = options.forceCoordinates === true || !sameKey;
 
@@ -122,23 +121,14 @@ function stabilizeSnapshot(
   return snap;
 }
 
-export function coordinateConfig(snap: NelsGraphSnapshot | null): Record<string, unknown> {
-  const src = snap?.source_config ?? {};
-  return {
-    dataset_path: src.dataset_path,
-    load_mode: src.load_mode,
-    count: src.count,
-    window_start: src.window_start,
-    random_seed: src.random_seed,
-  };
-}
-
 function bounds(points: NelsPoint[]): GraphData["bounds"] {
   if (!points.length) return { minX: -1, maxX: 1, minY: -1, maxY: 1 };
-  const xs = points.map((p) => Number(p.coords?.[0] ?? 0));
-  const ys = points.map((p) => Number(p.coords?.[1] ?? 0));
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const xs = points.map((p) => Number(p.view_coords?.[0] ?? 0));
+  const ys = points.map((p) => Number(p.view_coords?.[1] ?? 0));
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
   return {
     minX: minX === maxX ? minX - 1 : minX,
     maxX: minX === maxX ? maxX + 1 : maxX,
@@ -150,10 +140,7 @@ function bounds(points: NelsPoint[]): GraphData["bounds"] {
 function emptyGraph(): GraphData {
   return {
     points: [],
-    edges: [],
     byId: new Map(),
-    adjacency: new Map(),
-    degrees: new Map(),
     bounds: { minX: -1, maxX: 1, minY: -1, maxY: 1 },
   };
 }

@@ -1,26 +1,20 @@
 import { signal, computed } from "@preact/signals";
 import type { NelsPoint } from "../api/types.js";
-import { operationResult } from "./operation.js";
+import { operationResult, extractResultPointIds } from "./operation.js";
 
 export const selectedIds = signal<Set<string>>(new Set());
 export const hoverNodeId = signal<string | null>(null);
 export const hoverPoint = signal<NelsPoint | null>(null);
 
+// Preserve temporary selection IDs that do not exist in graphData.byId
+export function isTempSelectionId(id: string): boolean {
+  return id.startsWith("__ghost__") || id === "probe";
+}
+
 // Derived from operationResult -> nodes to highlight in addition to selection
-export const emphasizedIds = computed<Set<string>>(() => {
-  const result = operationResult.value;
-  if (!result) return new Set();
-  const ids = new Set<string>();
-  if (result.source_point_id) ids.add(String(result.source_point_id));
-  for (const id of result.source_point_ids ?? []) ids.add(String(id));
-  for (const n of result.neighbors ?? []) {
-    const pid = n.point_id ?? n.id;
-    if (pid) ids.add(String(pid));
-  }
-  for (const id of result.selection?.selected_point_ids ?? [])
-    ids.add(String(id));
-  return ids;
-});
+export const emphasizedIds = computed<Set<string>>(
+  () => new Set(extractResultPointIds(operationResult.value)),
+);
 
 export function selectNode(nodeId: string, additive: boolean): void {
   if (additive) {
@@ -41,6 +35,8 @@ export function applySelectedPointIds(
   ids: string[],
   validIds?: Set<string>,
 ): void {
-  const filtered = validIds ? ids.filter((id) => validIds.has(id)) : ids;
+  const filtered = validIds
+    ? ids.filter((id) => isTempSelectionId(id) || validIds.has(id))
+    : ids;
   selectedIds.value = new Set(filtered);
 }
