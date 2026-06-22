@@ -1,17 +1,16 @@
-"""
-In-memory state and event store for NELS graph UI sessions.
-"""
-
-from __future__ import annotations
+"""In-memory state and event store for NELS graph UI sessions"""
 
 import copy
-import hashlib
-import json
 import re
 import threading
 from typing import Any
 
-from ..core.session_contracts import default_ui_state, normalize_ui_state, now_ms
+from ..core.session_contracts import (
+    default_ui_state,
+    normalize_ui_state,
+    now_ms,
+    source_config_hash,
+)
 
 
 class NelsSessionStore:
@@ -22,25 +21,17 @@ class NelsSessionStore:
         self._sequence = 0
 
     def get_session(self, session_id: str = "default") -> dict[str, Any]:
+        """Return deep-copied session dict (creates if missing)"""
         session_key = str(session_id or "default")
         with self._lock:
             session = self._sessions.get(session_key)
             if session is None:
-                session = {
-                    "session_id": session_key,
-                    "ui_state": default_ui_state(session_key),
-                    "source_snapshot": None,
-                    "graph_snapshot": None,
-                    "operation_result": None,
-                    "metrics": None,
-                    "events": [],
-                    "created_at": now_ms(),
-                    "updated_at": now_ms(),
-                }
+                session = self._new_session(session_key)
                 self._sessions[session_key] = session
             return copy.deepcopy(session)
 
     def list_sessions(self) -> list[dict[str, Any]]:
+        """Return summary list of active Session nodes"""
         with self._lock:
             return [
                 {
@@ -55,7 +46,7 @@ class NelsSessionStore:
             ]
 
     def sync_canvas_sessions(self, sessions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Register active Session nodes observed by the frontend canvas."""
+        """Register or deactivate Session nodes from the frontend"""
         active_session_node_ids: set[str] = set()
         for session_info in sessions or []:
             session_node_id = session_info.get("session_node_id")
@@ -74,17 +65,20 @@ class NelsSessionStore:
             changed_at = now_ms()
             for session in self._sessions.values():
                 session_node_key = session.get("session_node_id")
-                if session_node_key is not None and str(session_node_key) not in active_session_node_ids:
+                if (
+                    session_node_key is not None
+                    and str(session_node_key) not in active_session_node_ids
+                ):
                     session["active_session_node"] = False
                     session["updated_at"] = changed_at
 
         return self.list_sessions()
 
     def make_session_id(self, label: str, session_node_id: str | int | None) -> str:
-        base = _slug(label or "default")
+        base = self._slug(label or "default")
         if session_node_id is None or str(session_node_id).strip() == "":
             return base
-        return f"{base}__node_{_slug(str(session_node_id))}"
+        return f"{base}__node_{self._slug(str(session_node_id))}"
 
     def register_session_node(
         self,
@@ -92,6 +86,7 @@ class NelsSessionStore:
         label: str,
         session_node_id: str | int | None,
     ) -> str:
+        """Create or update a session entry for canvas"""
         session_id = self.make_session_id(label, session_node_id)
         with self._lock:
             if session_node_id is not None:
@@ -108,20 +103,21 @@ class NelsSessionStore:
         return session_id
 
     def sync_source_config(self, session_id: str, config: dict[str, Any]) -> dict[str, Any]:
+        """Store the DatasetLoader source config for a session and re-normalize the UI state"""
         session_key = str(session_id or "default")
         with self._lock:
             session = self._ensure_session(session_key)
             session["source_config"] = copy.deepcopy(config or {})
             merged = copy.deepcopy(session["ui_state"])
-            for key in ("projection_mode", "edge_mode", "neighbor_count"):
-                if key in config:
-                    merged[key] = config[key]
             merged["session_id"] = session_key
             session["ui_state"] = normalize_ui_state(merged, session_id=session_key)
             session["updated_at"] = now_ms()
             return copy.deepcopy(session["ui_state"])
 
-    def get_cached_source(self, config: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    def get_cached_source(
+        self, config: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Return cached (embedding_set, snapshot) for the given source config"""
         cache_key = source_config_hash(config)
         with self._lock:
             cached = self._source_cache.get(cache_key)
@@ -138,6 +134,7 @@ class NelsSessionStore:
         embedding_set: dict[str, Any],
         snapshot: dict[str, Any],
     ) -> str:
+        """Store (embedding_set, snapshot) in the source cache keyed by config hash"""
         cache_key = source_config_hash(config)
         with self._lock:
             self._source_cache[cache_key] = {
@@ -148,6 +145,7 @@ class NelsSessionStore:
         return cache_key
 
     def update_ui_state(self, session_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+        """Merge patch into the session's UI state, increment revision, and broadcast update event"""
         session_key = str(session_id or "default")
         with self._lock:
             session = self._ensure_session(session_key)
@@ -185,20 +183,17 @@ class NelsSessionStore:
         return int(self.get_ui_state(session_id).get("state_revision") or 0)
 
     def publish_event(self, session_id: str, event: dict[str, Any]) -> dict[str, Any]:
+        """Store event in the session's event list and broadcast it to clients"""
         session_key = str(session_id or "default")
         with self._lock:
             session = self._ensure_session(session_key)
             stored = self._append_event_locked(session, event)
             event_type = stored.get("event_type")
             payload = stored.get("payload")
-            if event_type in ("source_snapshot", "graph_snapshot"):
+            if event_type == "source_snapshot":
                 session["graph_snapshot"] = copy.deepcopy(payload)
-                if event_type == "source_snapshot":
-                    session["source_snapshot"] = copy.deepcopy(payload)
             elif event_type == "operation_result":
                 session["operation_result"] = copy.deepcopy(payload)
-            elif event_type == "metrics_result":
-                session["metrics"] = copy.deepcopy(payload)
             session["updated_at"] = now_ms()
         self._broadcast(stored)
         return stored
@@ -215,6 +210,7 @@ class NelsSessionStore:
         state_revision: int | None = None,
         payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """Wrapper for node events"""
         return self.publish_event(
             session_id,
             {
@@ -239,6 +235,7 @@ class NelsSessionStore:
         node_name: str = "NELS Data Source Preview",
         message: str | None = None,
     ) -> dict[str, Any]:
+        """Wrapper for source/graph snapshot events"""
         point_count = len((snapshot or {}).get("points", []))
         return self.publish_event(
             session_id,
@@ -254,17 +251,9 @@ class NelsSessionStore:
             },
         )
 
-    def events_since(self, session_id: str, since: int = 0) -> list[dict[str, Any]]:
-        session = self.get_session(session_id)
-        return [
-            event
-            for event in session.get("events", [])
-            if int(event.get("sequence") or 0) > int(since or 0)
-        ]
-
     def _ensure_session(self, session_id: str) -> dict[str, Any]:
         if session_id not in self._sessions:
-            self._sessions[session_id] = self.get_session(session_id)
+            self._sessions[session_id] = self._new_session(session_id)
         return self._sessions[session_id]
 
     def _append_event_locked(
@@ -272,6 +261,7 @@ class NelsSessionStore:
         session: dict[str, Any],
         event: dict[str, Any],
     ) -> dict[str, Any]:
+        """Append event to the session's event list with sequence and timestamp (call with lock held)"""
         self._sequence += 1
         stored = copy.deepcopy(event or {})
         stored.setdefault("event_type", "event")
@@ -288,6 +278,7 @@ class NelsSessionStore:
         return copy.deepcopy(stored)
 
     def _broadcast(self, event: dict[str, Any]) -> None:
+        """Push event to WebSocket clients"""
         try:
             from server import PromptServer
 
@@ -295,23 +286,30 @@ class NelsSessionStore:
         except Exception:
             pass
 
+    @staticmethod
+    def _slug(value: str) -> str:
+        """Normalize a string to a slug suitable for use as a session ID"""
+        slug = re.sub(r"[^a-zA-Z0-9_.-]+", "_", str(value).strip())
+        slug = slug.strip("_")
+        return slug or "default"
+
+    @staticmethod
+    def _new_session(session_id: str) -> dict[str, Any]:
+        """Build the default session dict shape"""
+        return {
+            "session_id": session_id,
+            "ui_state": default_ui_state(session_id),
+            "graph_snapshot": None,
+            "operation_result": None,
+            "events": [],
+            "created_at": now_ms(),
+            "updated_at": now_ms(),
+        }
+
 
 _STORE = NelsSessionStore()
 
 
 def get_store() -> NelsSessionStore:
+    """Return the global NelsSessionStore singleton"""
     return _STORE
-
-
-__all__ = ["NelsSessionStore", "get_store", "source_config_hash"]
-
-
-def _slug(value: str) -> str:
-    slug = re.sub(r"[^a-zA-Z0-9_.-]+", "_", str(value).strip())
-    slug = slug.strip("_")
-    return slug or "default"
-
-
-def source_config_hash(config: dict[str, Any]) -> str:
-    stable = json.dumps(config or {}, sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.sha256(stable.encode("utf-8")).hexdigest()[:16]

@@ -1,20 +1,15 @@
 """
 NELS ComfyUI plugin:
-interactive graph UI plus queued execution pipeline.
+interactive graph UI plus queued execution pipeline
 """
 
-from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
-from .server import register_routes
-
+from .nodes import NODE_CLASS_MAPPINGS as ncm
+from .nodes import NODE_DISPLAY_NAME_MAPPINGS as ndm
+from .server.routes import register_routes
 
 register_routes()
 
 WEB_DIRECTORY = "./js"
 
-
-__all__ = [
-    "NODE_CLASS_MAPPINGS",
-    "NODE_DISPLAY_NAME_MAPPINGS",
-    "WEB_DIRECTORY",
-]
-
+NODE_CLASS_MAPPINGS = ncm
+NODE_DISPLAY_NAME_MAPPINGS = ndm

@@ -1,9 +1,4 @@
-"""
-NELS Save Run Bundle node:
-saves trajectory images and metadata to disk as an experiment bundle.
-"""
-
-from __future__ import annotations
+"""NELS Save Run Bundle node - saves trajectory images and metadata to disk"""
 
 import json
 from datetime import datetime
@@ -12,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from PIL import Image as PILImage
 
 
 class NelsSaveRunBundle:
@@ -50,8 +46,6 @@ class NelsSaveRunBundle:
         run_id: str = "run_001",
         output_dir: str = "experiments/runs",
     ):
-        from PIL import Image as PILImage
-
         out_path = Path(output_dir) / run_id.strip()
         out_path.mkdir(parents=True, exist_ok=True)
 

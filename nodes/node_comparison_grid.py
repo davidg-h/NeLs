@@ -1,9 +1,4 @@
-"""
-NELS Comparison Grid node:
-arrange multiple IMAGE batches as rows for side-by-side comparison.
-"""
-
-from __future__ import annotations
+"""NELS Comparison Grid node - arrange IMAGE batches as rows for side-by-side comparison"""
 
 import torch
 import torch.nn.functional as F
@@ -64,7 +59,6 @@ class NelsComparisonGrid:
         if not rows:
             return (torch.zeros(1, 256, 512, 3),)
 
-        # Resize frames if requested
         if tw > 0 or th > 0:
             resized = []
             for row in rows:
@@ -72,9 +66,7 @@ class NelsComparisonGrid:
                 new_w = tw if tw > 0 else W
                 new_h = th if th > 0 else H
                 t = row.permute(0, 3, 1, 2).float()
-                t = F.interpolate(
-                    t, size=(new_h, new_w), mode="bilinear", align_corners=False
-                )
+                t = F.interpolate(t, size=(new_h, new_w), mode="bilinear", align_corners=False)
                 resized.append(t.permute(0, 2, 3, 1))
             rows = resized
 

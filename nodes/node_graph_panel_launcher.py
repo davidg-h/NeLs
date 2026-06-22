@@ -1,8 +1,4 @@
-"""
-Canvas launcher node for the NELS graph panel.
-"""
-
-from __future__ import annotations
+"""Canvas launcher node for the NELS graph panel"""
 
 
 class NelsGraphPanelLauncher:
@@ -20,6 +16,4 @@ class NelsGraphPanelLauncher:
 
 
 NODE_CLASS_MAPPINGS = {"nels_GraphPanelLauncher": NelsGraphPanelLauncher}
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "nels_GraphPanelLauncher": "NELS Graph Panel Launcher"
-}
+NODE_DISPLAY_NAME_MAPPINGS = {"nels_GraphPanelLauncher": "NELS Graph Panel Launcher"}
