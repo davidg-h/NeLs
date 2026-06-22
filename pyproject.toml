@@ -1,0 +1,15 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # do not perform function calls in default arguments
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/encode_cli.py" = [
+    "E402",   # module level import not at top of file (sys.path bootstrap)
+]

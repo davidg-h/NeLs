@@ -1,7 +1,5 @@
 """Session bundle contracts shared by NELS nodes and routes"""
 
-from __future__ import annotations
-
 import copy
 import hashlib
 import json
@@ -10,19 +8,9 @@ import uuid
 from collections.abc import Iterable
 from typing import Any
 
-from .embedding_ops import embedding_set_snapshot, validate_embedding_set
+from .tensor_ops import validate_embedding_set
 
 SESSION_BUNDLE_TYPE = "NELS_SESSION_BUNDLE"
-
-DEFAULT_UI_STATE: dict[str, Any] = {
-    "session_id": "default",
-    "state_revision": 0,
-    "selected_point_ids": [],
-    "operation": "inspect",
-    "alpha_schedule": [0, 0.25, 0.5, 0.75, 1],
-    "neighbor_count": 4,
-    "viewport": {"x": 0.0, "y": 0.0, "ratio": 1.0},
-}
 
 
 def now_ms() -> int:
@@ -30,13 +18,9 @@ def now_ms() -> int:
     return int(time.time() * 1000)
 
 
-def new_run_id() -> str:
-    return f"run_{now_ms()}_{uuid.uuid4().hex[:8]}"
-
-
 def default_ui_state(session_id: str = "default") -> dict[str, Any]:
     """Returns a fresh UI state dict with default values"""
-    state = copy.deepcopy(DEFAULT_UI_STATE)
+    state = copy.deepcopy(_DEFAULT_UI_STATE)
     state["session_id"] = str(session_id or "default")
     return state
 
@@ -66,12 +50,19 @@ def normalize_ui_state(
         elif isinstance(raw_alpha, Iterable):
             values = [float(v) for v in raw_alpha]
         else:
-            values = DEFAULT_UI_STATE["alpha_schedule"]
+            values = _DEFAULT_UI_STATE["alpha_schedule"]
     except Exception:
-        values = DEFAULT_UI_STATE["alpha_schedule"]
-    # clamp values to valid range
-    normalized["alpha_schedule"] = [float(v) for v in values if float(v) >= 0 and float(v) <= 1]
+        values = _DEFAULT_UI_STATE["alpha_schedule"]
+    op = normalized.get("operation", "")
+    alpha_min, alpha_max = (-2.0, 4.0) if op == "delta_walk" else (0.0, 1.0)
+    normalized["alpha_schedule"] = [float(v) for v in values if alpha_min <= float(v) <= alpha_max]
     normalized["neighbor_count"] = max(1, int(normalized.get("neighbor_count") or 4))
+    normalized["axis_group_a"] = [str(i) for i in (normalized.get("axis_group_a") or [])]
+    normalized["axis_group_b"] = [str(i) for i in (normalized.get("axis_group_b") or [])]
+    normalized["variant_count"] = max(3, int(normalized.get("variant_count") or 5))
+    normalized["variation_strength"] = max(
+        0.0, min(1.0, float(normalized.get("variation_strength") or 0.3))
+    )
     try:
         revision = int(normalized.get("state_revision") or 0)
     except (TypeError, ValueError):
@@ -82,77 +73,42 @@ def normalize_ui_state(
     return normalized
 
 
-def make_operation_request(ui_state: dict[str, Any], *, run_id: str) -> dict[str, Any]:
-    """Build a operation request dict from UI state fields"""
-    return {
-        "session_id": ui_state["session_id"],
-        "run_id": run_id,
-        "state_revision": int(ui_state.get("state_revision") or 0),
-        "operation": str(ui_state.get("operation") or "inspect"),
-        "selected_point_ids": list(ui_state.get("selected_point_ids") or []),
-        "alpha_schedule": ui_state.get("alpha_schedule") or DEFAULT_UI_STATE["alpha_schedule"],
-        "neighbor_count": int(ui_state.get("neighbor_count") or 4),
-        "nearest_sample": bool(ui_state.get("nearest_sample", False)),
-    }
-
-
 def make_session_bundle(
     *,
     embedding_set: dict[str, Any],
     ui_state: dict[str, Any],
     run_id: str | None = None,
-    graph_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build a session bundle dict containing embedding set, UI state, selection, and graph snapshot"""
+    """Build a session bundle dict containing embedding set, UI state, and selection"""
     validate_embedding_set(embedding_set)
-    actual_run_id = run_id or new_run_id()
+    actual_run_id = run_id or _new_run_id()
     selection = {
         "session_id": ui_state["session_id"],
         "run_id": actual_run_id,
         "state_revision": int(ui_state.get("state_revision") or 0),
         "selected_point_ids": list(ui_state.get("selected_point_ids") or []),
     }
-    operation_request = make_operation_request(ui_state, run_id=actual_run_id)
+    operation_request = _make_operation_request(ui_state, run_id=actual_run_id)
     return {
         "type": SESSION_BUNDLE_TYPE,
         "session_id": ui_state["session_id"],
         "run_id": actual_run_id,
         "state_revision": int(ui_state.get("state_revision") or 0),
         "embedding_set": embedding_set,
-        "embedding_snapshot": embedding_set_snapshot(embedding_set),
         "ui_state": copy.deepcopy(ui_state),
         "selection": selection,
         "operation_request": operation_request,
-        "graph_snapshot": copy.deepcopy(graph_snapshot or {}),
-        "operation_result": None,
-        "trajectory": None,
-        "metrics": None,
     }
 
 
 def validate_session_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Validate a session bundle dict and its embedded embedding"""
     if not isinstance(bundle, dict):
         raise ValueError("NELS_SESSION_BUNDLE must be a dict")
     if bundle.get("type") != SESSION_BUNDLE_TYPE:
         raise ValueError("Invalid NELS_SESSION_BUNDLE type")
     validate_embedding_set(bundle.get("embedding_set"))
     return bundle
-
-
-def merge_projected_points(
-    points_2d: list[dict[str, Any]],
-    points_3d: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    """Merge 2D and 3D projected points into snapshot dicts with both coordinate sets."""
-    return [
-        {
-            **p2d,
-            "coords": p2d["coords"],
-            "coords_2d": p2d["coords"],
-            "coords_3d": p3d["coords"],
-        }
-        for p2d, p3d in zip(points_2d, points_3d, strict=True)
-    ]
 
 
 def zip_point_coords(
@@ -166,7 +122,7 @@ def zip_point_coords(
             "id": p["id"],
             "label": p["label"],
             "metadata": p.get("metadata", {}),
-            "coords": c2,
+            "view_coords": c2,
             "coords_2d": c2,
             "coords_3d": c3,
         }
@@ -209,22 +165,60 @@ def source_config_hash(config: dict[str, Any]) -> str:
 
 
 def json_dumps(value: Any) -> str:
+    """Pretty-print value as sorted, indented JSON string"""
     return json.dumps(value, indent=2, sort_keys=True, default=str)
 
 
-__all__ = [
-    "DEFAULT_UI_STATE",
-    "SESSION_BUNDLE_TYPE",
-    "assemble_snapshot",
-    "default_ui_state",
-    "json_dumps",
-    "make_operation_request",
-    "source_config_hash",
-    "make_session_bundle",
-    "merge_projected_points",
-    "new_run_id",
-    "normalize_ui_state",
-    "now_ms",
-    "validate_session_bundle",
-    "zip_point_coords",
-]
+# ---- internals ----
+_DEFAULT_UI_STATE: dict[str, Any] = {
+    "session_id": "default",
+    "state_revision": 0,
+    "selected_point_ids": [],
+    "operation": "inspect",
+    "alpha_schedule": [0, 0.25, 0.5, 0.75, 1],
+    "neighbor_count": 4,
+    "viewport": {"x": 0.0, "y": 0.0, "ratio": 1.0},
+    "axis_group_a": [],
+    "axis_group_b": [],
+    "variant_count": 5,
+    "variation_strength": 0.3,
+    "probe_coords": None,
+    "probe_mode": "2d",
+    "probe_text_recon": False,
+    "probe_recon_max_minutes": 5,
+    "probe_recon_max_iter": 10,
+    "probe_seed_count": 15,
+    "probe_noise_count": 5,
+    "probe_negative_count": 5,
+}
+
+
+def _new_run_id() -> str:
+    """Generate a unique run id: run_<ms>_<8 hex chars>"""
+    return f"run_{now_ms()}_{uuid.uuid4().hex[:8]}"
+
+
+def _make_operation_request(ui_state: dict[str, Any], *, run_id: str) -> dict[str, Any]:
+    """Build an operation request dict from UI state fields"""
+    return {
+        "session_id": ui_state["session_id"],
+        "run_id": run_id,
+        "state_revision": int(ui_state.get("state_revision") or 0),
+        "operation": str(ui_state.get("operation") or "inspect"),
+        "selected_point_ids": list(ui_state.get("selected_point_ids") or []),
+        "alpha_schedule": ui_state.get("alpha_schedule") or _DEFAULT_UI_STATE["alpha_schedule"],
+        "neighbor_count": int(ui_state.get("neighbor_count") or 4),
+        "nearest_sample": bool(ui_state.get("nearest_sample", False)),
+        "axis_group_a": list(ui_state.get("axis_group_a") or []),
+        "axis_group_b": list(ui_state.get("axis_group_b") or []),
+        "variant_count": max(3, min(20, int(ui_state.get("variant_count") or 5))),
+        "variation_strength": max(0.0, min(1.0, float(ui_state.get("variation_strength") or 0.3))),
+        "probe_coords": ui_state.get("probe_coords") or None,
+        "probe_mode": str(ui_state.get("probe_mode") or "2d"),
+        "probe_text_recon": bool(ui_state.get("probe_text_recon", False)),
+        "probe_recon_max_minutes": max(1, int(ui_state.get("probe_recon_max_minutes") or 5)),
+        "probe_recon_max_iter": max(1, int(ui_state.get("probe_recon_max_iter") or 10)),
+        "probe_seed_count": max(1, int(ui_state.get("probe_seed_count") or 15)),
+        "probe_noise_count": max(0, int(ui_state.get("probe_noise_count") or 5)),
+        "probe_negative_count": max(0, int(ui_state.get("probe_negative_count") or 5)),
+    }
