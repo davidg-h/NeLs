@@ -1,6 +1,5 @@
 """Projection helpers for the NELS graph pipeline"""
 
-import json
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -86,96 +85,6 @@ def project_trajectory(
         mat_idx += 1
 
     return overlay, None
-
-
-def inverse_project(
-    coords: list[float],
-    dataset_path: str,
-    *,
-    mode: str = "2d",
-    neighbor_count: int = 5,
-    loaded_points: list[dict[str, Any]] | None = None,
-) -> tuple[list[dict[str, Any]], np.ndarray]:
-    """Inverse-project canvas coords -> estimated embedding & top-k nearest prompts
-
-    Embedding estimation always uses the full dataset for accuracy
-    """
-    path = Path(dataset_path)
-    ref_key = "umap_2d.npy" if mode == "2d" else "umap_3d.npy"
-    ref_path = path / ref_key
-    pooled_path = path / "embeddings.npy"
-    if not ref_path.exists() or not pooled_path.exists():
-        raise FileNotFoundError(f"Dataset files missing in {path}")
-
-    # 1: estimate high-dim embedding from full dataset
-    ref: np.ndarray = np.load(str(ref_path))
-    pooled: np.ndarray = np.load(str(pooled_path), mmap_mode="r")
-    query_raw = _denormalize_canvas_coords(coords, ref, mode)
-    ref_f32 = ref.astype(np.float32)
-    dists = np.linalg.norm(ref_f32 - query_raw, axis=1)
-    k_inv = min(10, len(ref_f32))
-    nn_idx = np.argpartition(dists, k_inv)[:k_inv]
-    weights = 1.0 / (dists[nn_idx] + 1e-8)
-    weights /= weights.sum()
-    q = (np.array(pooled[nn_idx], dtype=np.float32) * weights[:, None]).sum(axis=0)
-
-    # 2: nearest-prompts kNN on loaded points
-    if loaded_points:
-        valid: list[tuple[dict, np.ndarray]] = []
-        for pt in loaded_points:
-            t = pt.get("tensor")
-            if t is not None:
-                emb = (
-                    t.detach().float().cpu().numpy().ravel()
-                    if hasattr(t, "detach")
-                    else np.array(t, dtype=np.float32).ravel()
-                )
-                valid.append((pt, emb))
-        if valid:
-            lp_matrix = np.stack([emb for _, emb in valid]).astype(np.float32)
-            ranked_local = _cosine_knn_numpy(q, lp_matrix, k=min(neighbor_count, len(valid)))
-            results = []
-            for local_idx, score in ranked_local:
-                pt, emb = valid[local_idx]
-                results.append(
-                    {
-                        "id": str(pt.get("id", f"p_{local_idx:06d}")),
-                        "label": str(pt.get("label") or pt.get("id", ""))[:80],
-                        "score": float(score),
-                        "_embedding": emb,
-                        "full_text": pt.get("metadata", {}).get("text"),
-                    }
-                )
-            return results, q
-
-    # Fallback: full dataset search (results may not be selectable in canvas)
-    samples_path = path / "samples.jsonl"
-    if not samples_path.exists():
-        raise FileNotFoundError(f"samples.jsonl missing in {path}")
-    ranked_full = _cosine_knn_numpy(q, pooled, k=neighbor_count)
-    needed = {idx for idx, _ in ranked_full}
-    samples: dict[int, dict] = {}
-    with samples_path.open(encoding="utf-8") as f:
-        for line_no, line in enumerate(f):
-            if line_no in needed:
-                samples[line_no] = json.loads(line)
-            if len(samples) == len(needed):
-                break
-    results = []
-    for idx, score in ranked_full:
-        if idx not in samples:
-            continue
-        s = samples[idx]
-        results.append(
-            {
-                "id": s.get("id", f"p_{idx:06d}"),
-                "label": (s.get("text") or s.get("id", ""))[:80],
-                "score": float(score),
-                "_embedding": pooled[idx],
-                "full_text": s.get("text"),
-            }
-        )
-    return results, q
 
 
 def map_coords_to_range(
@@ -397,24 +306,6 @@ def select_stratified_indices(
 # ---- internals ----
 
 
-def _denormalize_canvas_coords(coords: list[float], ref: np.ndarray, mode: str) -> np.ndarray:
-    """Invert the frontend [-1, 1] isotropic normalization
-
-    Frontend formula: coord = 2 * (raw - midpoint) / iso_span
-    Inverse:          raw   = coord * iso_span / 2 + midpoint
-    2D special case:  Y is negated in Sigma (y_graph = -y_norm) -> undo that too
-    """
-    mins = ref.min(axis=0)
-    maxs = ref.max(axis=0)
-    midpoint = (mins + maxs) / 2.0
-    iso_span = float((maxs - mins).max()) or 1.0
-    q = np.array(coords, dtype=np.float32)
-    if mode == "2d" and len(q) >= 2:
-        q = q.copy()
-        q[1] = -q[1]  # undo Sigma Y-flip
-    return q * (iso_span / 2.0) + midpoint
-
-
 def _stack_flattened_tensors(tensors: Iterable[torch.Tensor]) -> torch.Tensor:
     """Stack tensors as float matrix [points, features] for UMAP ghost node projection"""
     vectors = [flatten_tensor(tensor) for tensor in tensors]
@@ -438,21 +329,3 @@ def _apply_projection_mapping(ghost: np.ndarray, reference: np.ndarray) -> np.nd
     midpoint = (mins + maxs) / 2.0
     iso_span = float((maxs - mins).max()) or 1.0
     return 2.0 * (ghost - midpoint) / iso_span
-
-
-def _cosine_knn_numpy(
-    query: np.ndarray,
-    matrix: np.ndarray,
-    k: int,
-) -> list[tuple[int, float]]:
-    """Cosine kNN for a single query vector against a large matrix"""
-    k = min(k, len(matrix))
-    mat = np.array(matrix, dtype=np.float32)
-    norms = np.linalg.norm(mat, axis=1, keepdims=True)
-    mat /= norms + 1e-8
-    q = query.astype(np.float32)
-    q /= np.linalg.norm(q) + 1e-8
-    sims = mat @ q
-    top = np.argpartition(sims, -k)[-k:]
-    top = top[np.argsort(sims[top])[::-1]]
-    return [(int(i), float(sims[i])) for i in top]

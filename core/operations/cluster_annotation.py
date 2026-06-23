@@ -7,8 +7,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from . import llm_ops
-from .defaults import DEFAULT_LLM_MODEL as DEFAULT_MODEL
+from .. import llm_ops
+from ..defaults import DEFAULT_LLM_MODEL as DEFAULT_MODEL
+from ..text_terms import STOP_WORDS, extract_bigrams, first_line, tokenize_words
 
 ANNOTATION_MODEL = DEFAULT_MODEL
 ANNOTATION_TOP_N = 20
@@ -36,7 +37,7 @@ def generate_frequency_labels(samples: list[dict]) -> dict[str, str]:
         freq: Counter = Counter()
         for text in texts:
             for w in re.findall(r"[a-zA-Z]+", text.lower()):
-                if len(w) > 3 and w not in _STOP_WORDS:
+                if len(w) > 3 and w not in STOP_WORDS:
                     freq[_stem_word(w)] += 1
         labels[cid] = freq.most_common(1)[0][0] if freq else cid
     return labels
@@ -98,11 +99,11 @@ def annotate_clusters(
 
         examples = cluster_map.get(cid, [])[:3]
         if prefix:
-            label = llm_ops.label_cluster_from_profile(
+            label = label_cluster_from_profile(
                 profile, examples=examples, size=size, assigned=assigned, context=context
             )
         else:
-            label = llm_ops.label_cluster(
+            label = label_cluster(
                 cluster_map[cid], profile=profile, size=size, assigned=assigned, context=context
             )
 
@@ -112,7 +113,7 @@ def annotate_clusters(
     # refinement rounds
     for round_i in range(1, refine_rounds):
         print(f"\nRefinement round {round_i}/{refine_rounds - 1}...")
-        cluster_labels = llm_ops.refine_labels(
+        cluster_labels = refine_labels(
             cluster_labels,
             term_profiles,
             context=context,
@@ -128,6 +129,107 @@ def annotate_clusters(
     return cluster_labels
 
 
+def label_cluster(
+    prompts: list[str],
+    *,
+    profile: dict[str, list[str]] | None = None,
+    size: int = 0,
+    assigned: list[str] | None = None,
+    context: str = "",
+) -> str:
+    """Generate a 2-5 word label for a semantic cluster given sample prompts and optional term profile"""
+    ctx = f' from "{context}"' if context else ""
+    size_hint = f" ({size} points total)" if size else ""
+    prompt_block = "\n".join(f"- {p}" for p in prompts)
+    profile_block = _format_profile(profile) if profile else ""
+    user_content = f"Cluster{size_hint}:\n{prompt_block}"
+    if profile_block:
+        user_content += f"\n\n{profile_block}"
+    if assigned:
+        user_content += "\n\nAlready used labels (do not reuse): " + ", ".join(assigned[-40:])
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                f"You label semantic clusters of image generation prompts{ctx}. "
+                "Output a single short label (2-5 words) capturing the shared theme.\n"
+                "Example: 'a sports car racing', 'a blue sedan on a highway' -> Sports Cars\n"
+                "Example: 'a medieval castle at dusk', 'stone fortress walls' -> Medieval Architecture\n"
+                "Output ONLY the label. One line, no punctuation at the end."
+            ),
+        },
+        {"role": "user", "content": user_content},
+    ]
+    return first_line(llm_ops.query(messages, max_new_tokens=48))
+
+
+def label_cluster_from_profile(
+    profile: dict[str, list[str]],
+    *,
+    examples: list[str] | None = None,
+    size: int = 0,
+    assigned: list[str] | None = None,
+    context: str = "",
+) -> str:
+    """Label a cluster from its TF-IDF term profile (common + distinctive + bigrams) and optional raw examples"""
+    ctx = f' from "{context}"' if context else ""
+    size_hint = f" ({size} points total)" if size else ""
+    user_content = f"Cluster{size_hint}:\n{_format_profile(profile)}"
+    if examples:
+        user_content += "\n\nExamples:\n" + "\n".join(f"- {e}" for e in examples)
+    if assigned:
+        user_content += "\n\nAlready used labels (do not reuse): " + ", ".join(assigned[-40:])
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                f"You label semantic clusters{ctx}. "
+                "You are given the most frequent terms, most distinctive terms, key phrases, and a few raw examples.\n"
+                "Use all of them to infer the shared theme and output a single short label (2-5 words).\n"
+                "Example - frequent: tench, goldfish, shark | distinctive: aquatic, marine | phrases: great white, tiger shark -> Aquatic Animals\n"
+                "Example - frequent: tabby, persian, siamese | distinctive: feline, domestic | phrases: persian cat -> Domestic Cats\n"
+                "Output ONLY the label. One line, no punctuation at the end."
+            ),
+        },
+        {"role": "user", "content": user_content},
+    ]
+    return first_line(llm_ops.query(messages, max_new_tokens=48))
+
+
+def refine_labels(
+    cluster_labels: dict[str, str],
+    term_profiles: dict[str, dict[str, list[str]]],
+    *,
+    context: str = "",
+) -> dict[str, str]:
+    """Round-2 refinement: show all labels + full term profile so LLM can improve generic or overlapping ones"""
+    ctx = f' from "{context}"' if context else ""
+    cluster_summary = "\n".join(
+        "- Cluster {cid} | frequent: {common} | distinctive: {distinctive} | label: {label}".format(
+            cid=cid,
+            common=", ".join(term_profiles.get(cid, {}).get("common", [])[:5]),
+            distinctive=", ".join(term_profiles.get(cid, {}).get("distinctive", [])[:4]),
+            label=label,
+        )
+        for cid, label in sorted(cluster_labels.items(), key=lambda x: int(x[0]))
+    )
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                f"You refine semantic cluster labels{ctx}. "
+                "Each line shows a cluster's current label, its most frequent terms, and its most distinctive terms. "
+                "Improve labels that are too generic or overlap with another cluster - use the distinctive terms to differentiate. "
+                "Reply with ONLY the revised labels, one per line, in the same order. "
+                "Format: 'Cluster <id>: <label>'. Do not change labels that are already specific and unique."
+            ),
+        },
+        {"role": "user", "content": cluster_summary},
+    ]
+    raw = llm_ops.query(messages, max_new_tokens=len(cluster_labels) * 20)
+    return _parse_refined_labels(raw, cluster_labels)
+
+
 # ---- internals ----
 
 _KNOWN_PREFIXES = [
@@ -141,102 +243,6 @@ _KNOWN_PREFIXES = [
     "a photograph of ",
 ]
 _PREFIX_THRESHOLD = 0.8
-
-_STOP_WORDS = frozenset(
-    {
-        # English function words
-        "a",
-        "an",
-        "the",
-        "of",
-        "in",
-        "on",
-        "at",
-        "to",
-        "for",
-        "with",
-        "by",
-        "from",
-        "and",
-        "or",
-        "but",
-        "is",
-        "are",
-        "was",
-        "were",
-        "be",
-        "been",
-        "it",
-        "its",
-        "as",
-        "no",
-        "not",
-        "so",
-        "if",
-        "very",
-        "some",
-        "two",
-        "one",
-        "three",
-        "four",
-        "that",
-        "this",
-        "these",
-        "those",
-        "my",
-        "your",
-        "his",
-        "her",
-        "our",
-        "over",
-        "into",
-        "out",
-        "up",
-        "about",
-        "than",
-        "more",
-        "also",
-        "there",
-        "their",
-        # German
-        "ein",
-        "eine",
-        "einer",
-        "eines",
-        "dem",
-        "den",
-        "der",
-        "die",
-        "das",
-        "des",
-        "und",
-        "oder",
-        "mit",
-        "von",
-        "aus",
-        "auf",
-        "bei",
-        "im",
-        "zur",
-        "zum",
-        "sich",
-        "ist",
-        "sind",
-        "hat",
-        "haben",
-        "wird",
-        "werden",
-        # Image-generation boilerplate
-        "photo",
-        "image",
-        "picture",
-        "rendering",
-        "drawing",
-        "painting",
-        "sketch",
-        "photograph",
-    }
-)
 
 _MAX_DEDUP_PASSES = 4
 _DEDUP_BATCH_SIZE = 8
@@ -308,23 +314,6 @@ def _group_by_cluster(
     return result
 
 
-def _tokenize(text: str) -> list[str]:
-    words = re.findall(r"[a-zA-Z]+", text.lower())
-    return [w for w in words if w not in _STOP_WORDS and len(w) > 2]
-
-
-def _extract_bigrams(text: str) -> list[str]:
-    """Extract lowercase adjacent word pairs excluding one-letter tokens and pairs made only of stop words"""
-    words = re.findall(r"[a-zA-Z]+", text.lower())
-    return [
-        f"{words[i]} {words[i + 1]}"
-        for i in range(len(words) - 1)
-        if (words[i] not in _STOP_WORDS or words[i + 1] not in _STOP_WORDS)
-        and len(words[i]) > 1
-        and len(words[i + 1]) > 1
-    ]
-
-
 def _build_term_profiles(
     cluster_all_texts: dict[str, list[str]],
     prefix: str | None,
@@ -351,14 +340,14 @@ def _build_term_profiles(
                 primary = re.split(r"[,(]", stripped)[0].strip().lower()
                 if primary:
                     phrases[primary] += 1
-                for word in _tokenize(primary):
+                for word in tokenize_words(primary):
                     words[word] += 1
-                for bg in _extract_bigrams(primary):
+                for bg in extract_bigrams(primary):
                     bigrams[bg] += 1
             else:
-                for word in _tokenize(text):
+                for word in tokenize_words(text):
                     words[word] += 1
-                for bg in _extract_bigrams(text):
+                for bg in extract_bigrams(text):
                     bigrams[bg] += 1
         cluster_phrases[cid] = phrases
         cluster_words[cid] = words
@@ -543,3 +532,26 @@ def _normalize_label(label: str) -> str:
     }
     words = [w for w in re.sub(r"[^a-z0-9 ]", "", label.lower()).split() if w not in _FILLERS]
     return " ".join(words)
+
+
+def _format_profile(profile: dict[str, list[str]]) -> str:
+    parts = []
+    if profile.get("common"):
+        parts.append("Most frequent: " + ", ".join(profile["common"]))
+    if profile.get("distinctive"):
+        parts.append("Most distinctive: " + ", ".join(profile["distinctive"]))
+    if profile.get("bigrams"):
+        parts.append("Key phrases: " + ", ".join(profile["bigrams"]))
+    return "\n".join(parts)
+
+
+def _parse_refined_labels(raw: str, fallback: dict[str, str]) -> dict[str, str]:
+    """Parse 'Cluster <id>: <label>' lines from LLM refinement output"""
+    result = dict(fallback)
+    for line in raw.splitlines():
+        m = re.match(r"cluster\s+(\d+)\s*:\s*(.+)", line.strip(), re.IGNORECASE)
+        if m:
+            cid, label = m.group(1), m.group(2).strip().strip('"').strip("'")
+            if cid in result and label:
+                result[cid] = label
+    return result

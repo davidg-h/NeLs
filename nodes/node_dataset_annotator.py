@@ -1,6 +1,6 @@
 """NELS Dataset Annotator - generates LLM cluster labels for a pre-encoded dataset"""
 
-from ..core.annotation_ops import ANNOTATION_TOP_N, annotate_clusters
+from ..core.operations.cluster_annotation import ANNOTATION_TOP_N, annotate_clusters
 from ..core.dataset_io import resolve_dataset_path
 from ..core.defaults import DEFAULT_DATASETS, DEFAULT_LLM_MODEL
 

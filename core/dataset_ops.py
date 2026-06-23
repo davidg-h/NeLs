@@ -13,7 +13,6 @@ try:
 except ImportError:
     hf_load = None
 
-from .annotation_ops import generate_frequency_labels
 from .dataset_io import save_dataset
 from .defaults import (
     CLUSTER_MIN_SAMPLES,
@@ -27,6 +26,7 @@ from .defaults import (
     UMAP_SUBSET_MIN_PER_CLUSTER,
     UMAP_SUBSET_THRESHOLD,
 )
+from .operations.cluster_annotation import generate_frequency_labels
 from .projection_ops import (
     compute_cluster_umap,
     compute_umap,
