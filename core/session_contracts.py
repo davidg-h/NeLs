@@ -55,6 +55,7 @@ def normalize_ui_state(
     normalized["neighbor_count"] = max(1, int(normalized.get("neighbor_count") or 4))
     normalized["axis_group_a"] = [str(i) for i in (normalized.get("axis_group_a") or [])]
     normalized["axis_group_b"] = [str(i) for i in (normalized.get("axis_group_b") or [])]
+    normalized["compute_axis_labels"] = bool(normalized.get("compute_axis_labels", False))
     normalized["variant_count"] = max(3, int(normalized.get("variant_count") or 5))
     normalized["variation_strength"] = max(
         0.0, min(1.0, float(normalized.get("variation_strength") or 0.3))
@@ -171,6 +172,7 @@ _DEFAULT_UI_STATE: dict[str, Any] = {
     "viewport": {"x": 0.0, "y": 0.0, "ratio": 1.0},
     "axis_group_a": [],
     "axis_group_b": [],
+    "compute_axis_labels": False,
     "variant_count": 5,
     "variation_strength": 0.3,
     "probe_coords": None,
@@ -202,6 +204,7 @@ def _make_operation_request(ui_state: dict[str, Any], *, run_id: str) -> dict[st
         "nearest_sample": bool(ui_state.get("nearest_sample", False)),
         "axis_group_a": list(ui_state.get("axis_group_a") or []),
         "axis_group_b": list(ui_state.get("axis_group_b") or []),
+        "compute_axis_labels": bool(ui_state.get("compute_axis_labels", False)),
         "variant_count": max(3, min(20, int(ui_state.get("variant_count") or 5))),
         "variation_strength": max(0.0, min(1.0, float(ui_state.get("variation_strength") or 0.3))),
         "probe_coords": ui_state.get("probe_coords") or None,

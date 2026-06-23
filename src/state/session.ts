@@ -345,6 +345,7 @@ async function pushState(): Promise<void> {
     variation_strength: cfg.variation_strength,
     axis_group_a: cfg.axis_group_a,
     axis_group_b: cfg.axis_group_b,
+    compute_axis_labels: cfg.compute_axis_labels,
     probe_coords: cfg.probe_coords ?? null,
     probe_mode: cfg.probe_mode,
     probe_text_recon: cfg.probe_text_recon,
@@ -414,6 +415,9 @@ function applyUiStateFields(
     axis_group_b: Array.isArray(uiState.axis_group_b)
       ? (uiState.axis_group_b as string[]).map(String)
       : operationConfig.value.axis_group_b,
+    compute_axis_labels: Boolean(
+      uiState.compute_axis_labels ?? operationConfig.value.compute_axis_labels,
+    ),
     probe_coords: Array.isArray(uiState.probe_coords)
       ? (uiState.probe_coords as number[]).map(Number)
       : uiState.probe_coords === null

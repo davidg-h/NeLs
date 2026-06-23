@@ -6,7 +6,6 @@ import {
   C_AXIS_A_START_RGB,
   C_AXIS_B_END_RGB,
   C_AXIS_B_START_RGB,
-  extractAxisKeywords,
   gradientFitSideIds,
 } from "../rendering_common.js";
 import {
@@ -78,6 +77,8 @@ function buildAxisVisual(
   scene: THREE.Scene,
   container: HTMLElement,
   scores: AxisProjectionScore[],
+  labelA: string,
+  labelB: string,
   colors: AxisColors,
 ): AxisVisual | null {
   if (!scores.length) return null;
@@ -139,9 +140,6 @@ function buildAxisVisual(
   );
   scene.add(line);
 
-  const labelA = extractAxisKeywords(scores, 8, false);
-  const labelB = extractAxisKeywords(scores, 8, true);
-
   const divA = document.createElement("div");
   divA.style.cssText =
     `position:absolute;pointer-events:none;display:none;color:${colors.labelStartColor};` +
@@ -178,6 +176,8 @@ export function rebuildAxis3D(): void {
     scene,
     container,
     result.axis_projection ?? [],
+    result.axis_keywords_a ?? "A-side",
+    result.axis_keywords_b ?? "B-side",
     {
       lineStart: C_AXIS_A_START_RGB,
       lineEnd: C_AXIS_A_END_RGB,
@@ -190,6 +190,8 @@ export function rebuildAxis3D(): void {
     scene,
     container,
     result.axis_b_projection ?? [],
+    result.axis_b_keywords_a ?? "C-side",
+    result.axis_b_keywords_b ?? "D-side",
     {
       lineStart: C_AXIS_B_START_RGB,
       lineEnd: C_AXIS_B_END_RGB,

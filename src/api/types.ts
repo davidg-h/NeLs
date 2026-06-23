@@ -51,6 +51,7 @@ export interface NelsUiState {
   variation_strength: number;
   axis_group_a: string[];
   axis_group_b: string[];
+  compute_axis_labels: boolean;
   probe_coords: number[] | null;
   probe_mode: "2d" | "3d";
   probe_text_recon: boolean;
@@ -123,8 +124,12 @@ export interface NelsOperationResult {
   trajectory_overlay_warning?: string;
   axis_projection?: AxisProjectionScore[];
   axis_label?: string;
+  axis_keywords_a?: string | null;
+  axis_keywords_b?: string | null;
   axis_b_projection?: AxisProjectionScore[];
   axis_b_label?: string;
+  axis_b_keywords_a?: string | null;
+  axis_b_keywords_b?: string | null;
   axis_b_variance?: number;
   inverse_project?: Array<{ id: string; label: string; score: number }>;
   text_reconstruction?: {

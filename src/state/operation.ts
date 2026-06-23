@@ -11,6 +11,7 @@ export interface OperationConfig {
   variation_strength: number;
   axis_group_a: string[];
   axis_group_b: string[];
+  compute_axis_labels: boolean;
   probe_place_mode: boolean;
   probe_coords: number[] | null;
   probe_cross_coords: number[] | null;
@@ -33,6 +34,7 @@ export const operationConfig = signal<OperationConfig>({
   variation_strength: 0.3,
   axis_group_a: [],
   axis_group_b: [],
+  compute_axis_labels: false,
   probe_place_mode: false,
   probe_coords: null,
   probe_cross_coords: null,
