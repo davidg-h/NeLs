@@ -16,8 +16,6 @@ def selected_points(
     """Resolve selection IDs against an embedding set, skipping missing points"""
     validate_embedding_set(embedding_set)
     selected_ids = (selection or {}).get("selected_point_ids") or []
-    if isinstance(selected_ids, str):
-        selected_ids = [selected_ids]
     points = []
     for point_id in selected_ids:
         try:
@@ -71,13 +69,11 @@ def make_embedding_point(
 def create_embedding_set(
     points: Iterable[dict[str, Any]] | None = None,
     *,
-    embedding_type: str = "unknown",
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a runtime `NELS_EMBEDDING_SET` payload"""
     payload = {
         "type": EMBEDDING_SET_TYPE,
-        "embedding_type": str(embedding_type),
         "points": [],
         "metadata": copy.deepcopy(metadata or {}),
     }
@@ -142,7 +138,6 @@ def validate_embedding_set(embedding_set: dict[str, Any]) -> dict[str, Any]:
             )
 
     embedding_set.setdefault("type", EMBEDDING_SET_TYPE)
-    embedding_set.setdefault("embedding_type", "unknown")
     embedding_set.setdefault("metadata", {})
     if not isinstance(embedding_set["metadata"], dict):
         raise ValueError("NELS_EMBEDDING_SET metadata must be a dict")

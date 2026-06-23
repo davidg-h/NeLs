@@ -5,6 +5,7 @@ import {
   operationResult,
   operationConfig,
   trajectoryOverlayVisible,
+  trajectoryHighlightActive,
 } from "../../state/operation.js";
 import { selectedIds } from "../../state/selection.js";
 import { activeClusterId } from "../../ui/ClusterLegend.js";
@@ -38,6 +39,9 @@ const ringTexture = makeRingTexture();
 const VARIANT_BODY_SIZE = 0.11; // matches real points sphere size
 const VARIANT_RING_SIZE = VARIANT_BODY_SIZE * 1.7;
 const NOISE_RGB: [number, number, number] = hexTo01(dimHex(NOISE_COLOR, 0.28));
+const TRAJECTORY_LINE_OPACITY = 0.75;
+const TRAJECTORY_LINE_OPACITY_PLAIN = 0.6;
+const TRAJECTORY_LINE_OPACITY_HIGHLIGHT = 1.0;
 
 let ghostCloud: THREE.Points | null = null;
 let ghostRingCloud: THREE.Points | null = null;
@@ -157,7 +161,7 @@ export function rebuildGhostNodes(): void {
             map: ghostTexture,
             alphaTest: 0.04,
             transparent: true,
-            opacity: 0.85,
+            opacity: 1.0,
           },
     ),
   );
@@ -202,7 +206,7 @@ export function rebuildGhostNodes(): void {
         new THREE.LineBasicMaterial({
           vertexColors: true,
           transparent: true,
-          opacity: 0.5,
+          opacity: TRAJECTORY_LINE_OPACITY,
         }),
       );
       scene!.add(line);
@@ -240,7 +244,7 @@ export function rebuildGhostNodes(): void {
           new THREE.LineBasicMaterial({
             color: C_GHOST_NUM,
             transparent: true,
-            opacity: 0.35,
+            opacity: TRAJECTORY_LINE_OPACITY_PLAIN,
           }),
         );
         scene.add(ghostTrajectoryLine);
@@ -302,7 +306,7 @@ export function updateGhostAnimation(
     const shimmer = 0.5 + 0.5 * Math.sin(t * 0.5 + 1.3);
     const mat = ghostCloud.material as THREE.PointsMaterial;
     mat.size = 0.1 + breath * 0.04;
-    mat.opacity = 0.7 + shimmer * 0.25;
+    mat.opacity = 0.85 + shimmer * 0.15;
   }
 
   const gPosAttr = ghostCloud.geometry.getAttribute(
@@ -338,6 +342,7 @@ export function updateGhostAnimation(
     ringPosAttr.needsUpdate = true;
   }
 
+  const highlightActive = trajectoryHighlightActive.value;
   if (ghostTrajectoryLine) {
     const splitCount = ghostAxisLineStart2 >= 0 ? ghostAxisLineStart2 : gCount;
     const lPosAttr = ghostTrajectoryLine.geometry.getAttribute(
@@ -347,6 +352,10 @@ export function updateGhostAnimation(
       lPosAttr.setXYZ(g, gPosAttr.getX(g), gPosAttr.getY(g), gPosAttr.getZ(g));
     }
     lPosAttr.needsUpdate = true;
+    (ghostTrajectoryLine.material as THREE.LineBasicMaterial).opacity =
+      highlightActive
+        ? TRAJECTORY_LINE_OPACITY_HIGHLIGHT
+        : TRAJECTORY_LINE_OPACITY;
   }
   if (ghostTrajectoryLine2 && ghostAxisLineStart2 >= 0) {
     const lPosAttr2 = ghostTrajectoryLine2.geometry.getAttribute(
@@ -361,6 +370,10 @@ export function updateGhostAnimation(
       );
     }
     lPosAttr2.needsUpdate = true;
+    (ghostTrajectoryLine2.material as THREE.LineBasicMaterial).opacity =
+      highlightActive
+        ? TRAJECTORY_LINE_OPACITY_HIGHLIGHT
+        : TRAJECTORY_LINE_OPACITY;
   }
 
   // Per-ghost color: highlighted -> yellow, cluster filter -> dim, else -> base

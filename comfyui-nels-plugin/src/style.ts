@@ -832,6 +832,12 @@ export function injectStyle(): void {
       flex-shrink: 0;
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
     }
+    .nels-legend-outside {
+      padding: 4px 10px;
+      font-size: 10px;
+      font-style: italic;
+      color: #64849a;
+    }
 
     .nels-hull-canvas {
       position: absolute;

@@ -130,9 +130,17 @@ export function rebuildOverlayLines(): void {
         basePositions[ti * 3 + 1],
         basePositions[ti * 3 + 2],
       );
-      const arcLine = buildArcLine(p0, p1, 0.15, C_DELTA_WALK_NUM, 0.78);
-      scene.add(arcLine);
-      extraOverlayLines.push(arcLine);
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([p0, p1]);
+      const line = new THREE.Line(
+        lineGeo,
+        new THREE.LineBasicMaterial({
+          color: C_DELTA_WALK_NUM,
+          transparent: true,
+          opacity: 0.78,
+        }),
+      );
+      scene.add(line);
+      extraOverlayLines.push(line);
     }
   }
 }
@@ -206,30 +214,4 @@ function buildGhostCurvePoints(
     }
     return new THREE.Vector3(x, y, z);
   });
-}
-
-function buildArcLine(
-  p0: THREE.Vector3,
-  p1: THREE.Vector3,
-  curvature: number,
-  color: number,
-  opacity: number,
-): THREE.Line {
-  const dir = p1.clone().sub(p0);
-  const len = dir.length();
-  const mid = p0.clone().add(p1).multiplyScalar(0.5);
-  const dirN = dir.clone().normalize();
-  const worldUp = new THREE.Vector3(0, 1, 0);
-  let perp = new THREE.Vector3().crossVectors(dirN, worldUp).normalize();
-  if (perp.length() < 0.01)
-    perp = new THREE.Vector3()
-      .crossVectors(dirN, new THREE.Vector3(1, 0, 0))
-      .normalize();
-  const ctrl = mid.clone().addScaledVector(perp, len * curvature);
-  const pts = new THREE.QuadraticBezierCurve3(p0, ctrl, p1).getPoints(24);
-  const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  return new THREE.Line(
-    geo,
-    new THREE.LineBasicMaterial({ color, transparent: true, opacity }),
-  );
 }

@@ -28,9 +28,9 @@ const OPERATION_DESCRIPTIONS: Record<string, string> = {
   inspect: "View details of selected points. No computation.",
   lerp: "Linearly interpolate between two selected points along the alpha schedule.",
   slerp:
-    "Spherically interpolate between two points along the embedding hypersphere — preserves norm.",
+    "Spherically interpolate between two points along the embedding hypersphere - preserves norm.",
   delta_walk:
-    "Select A (direction from), B (direction to), C (walk start) — extracts A→B direction and walks from C. Supports extrapolation (alpha < 0 or > 1).",
+    "Select A (direction from), B (direction to), C (walk start) - extracts A→B direction and walks from C. Supports extrapolation (alpha < 0 or > 1).",
   axis_projection:
     "Project all dataset points onto the semantic axis A→B. The axis direction is computed from the centroid of Group A vs Group B. Points are colored blue (A-side) to red (B-side).",
   consistency_check:
@@ -294,7 +294,7 @@ export function OperationCard() {
         {cfg.operation === "consistency_check" && (
           <>
             <label>
-              <span>variants (3–20)</span>
+              <span>variants (3-20)</span>
               <input
                 type="number"
                 min={3}
@@ -331,7 +331,7 @@ export function OperationCard() {
             </label>
             <span class="nels-alpha-info">
               How much each variant differs from the seed. Low (&lt;0.35) = word
-              dropout only (safe, stays in same cluster). High (0.7–1.0) = LLM
+              dropout only (safe, stays in same cluster). High (0.7-1.0) = LLM
               paraphrase, aggressive rewording.
             </span>
           </>
@@ -382,8 +382,8 @@ export function OperationCard() {
                 <div class="nels-axis-no-b">
                   No axis 2 available
                   {operationResult.value.axis_b_variance != null
-                    ? ` — after subtracting each point's A→B projection (residuals), PCA on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of residual variance (min. 10%). The dataset's semantic structure is mostly one-dimensional along your A→B axis.`
-                    : " — no independent orthogonal direction found in the residuals."}
+                    ? ` - after subtracting each point's A→B projection (residuals), PCA on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of residual variance (min. 10%). The dataset's semantic structure is mostly one-dimensional along your A→B axis.`
+                    : " - no independent orthogonal direction found in the residuals."}
                 </div>
               )
             )}
@@ -393,7 +393,7 @@ export function OperationCard() {
               {operationResult.value?.axis_b_projection ? "2 axes" : "1 axis"}
               {` = ${alphas.length * (operationResult.value?.axis_b_projection ? 2 : 1)} image${alphas.length * (operationResult.value?.axis_b_projection ? 2 : 1) !== 1 ? "s" : ""}`}
               {operationResult.value?.axis_b_projection
-                ? " — Axis 1 then Axis 2"
+                ? " - Axis 1 then Axis 2"
                 : ""}
             </div>
           </>
@@ -403,13 +403,13 @@ export function OperationCard() {
         <details class="nels-selection-help">
           <summary>Selection controls</summary>
           <div class="nels-alpha-info" style="margin-top:4px">
-            <strong>click</strong> — select one point (clears previous)
+            <strong>click</strong> - select one point (clears previous)
             <br />
-            <strong>ctrl+click</strong> — add / remove a point
+            <strong>ctrl+click</strong> - add / remove a point
             <br />
-            <strong>shift+drag</strong> — area select (replaces selection)
+            <strong>shift+drag</strong> - area select (replaces selection)
             <br />
-            <strong>click empty space</strong> — clear selection
+            <strong>click empty space</strong> - clear selection
           </div>
         </details>
       </div>
@@ -465,7 +465,7 @@ function AxisGroupPanel({
       </div>
       {group.length === 0 ? (
         <span class="nels-axis-group-empty">
-          No points — select and click Add
+          No points - select and click Add
         </span>
       ) : (
         <span class="nels-axis-group-count">
@@ -521,7 +521,7 @@ function LatentProbeControls({ cfg }: { cfg: OperationConfig }) {
 
       {!hasProbe && !cfg.probe_place_mode && (
         <div class="nels-sel-hint">
-          No probe set — click "Place probe" then click the canvas
+          No probe set - click "Place probe" then click the canvas
         </div>
       )}
 
@@ -619,7 +619,7 @@ function LatentProbeControls({ cfg }: { cfg: OperationConfig }) {
 
       {hasProbe && (
         <div class="nels-sel-hint" style="color:#22c55e">
-          Probe set — queue the node to run the lookup
+          Probe set - queue the node to run the lookup
         </div>
       )}
     </>
@@ -694,7 +694,7 @@ function selectionHint(op: string, selCount: number): string | null {
     if (selCount !== 2) return `Select exactly 2 points (${selCount} selected)`;
   } else if (op === "delta_walk") {
     if (selCount !== 3)
-      return `Select exactly 3 points: A (direction from), B (direction to), C (walk start) — ${selCount} selected`;
+      return `Select exactly 3 points: A (direction from), B (direction to), C (walk start) - ${selCount} selected`;
   } else if (op === "consistency_check") {
     if (selCount !== 1)
       return `Select exactly 1 seed point (${selCount} selected)`;
@@ -714,5 +714,5 @@ function nnDescription(): string {
   const base =
     "Find the k closest prompts to your selection in embedding space. Uses FAISS for exact kNN search.";
   if (nNeighbors == null) return base;
-  return `${base} Dataset built with UMAP n_neighbors=${nNeighbors} — setting k higher may return points that appear distant in the layout.`;
+  return `${base} Dataset built with UMAP n_neighbors=${nNeighbors} - setting k higher may return points that appear distant in the layout.`;
 }

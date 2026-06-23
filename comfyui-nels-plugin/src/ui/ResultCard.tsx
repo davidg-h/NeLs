@@ -60,24 +60,6 @@ export function ResultCard() {
       {trajectory && trajectory.length > 0 && (
         <TrajectoryLane steps={trajectory} warning={warning} />
       )}
-      {operation === "axis_projection" &&
-        (nr.trajectory_overlay?.length ?? 0) > 0 && (
-          <div class="nels-trajectory-lane">
-            <div class="nels-trajectory-header">
-              <span>Axis trajectory</span>
-              <button
-                class={`nels-toggle-overlay${trajectoryHighlightActive.value ? " active" : ""}`}
-                onClick={() =>
-                  setTrajectoryHighlightActive(!trajectoryHighlightActive.value)
-                }
-              >
-                {trajectoryHighlightActive.value
-                  ? "Highlight ON"
-                  : "Highlight trajectory"}
-              </button>
-            </div>
-          </div>
-        )}
       {axisScores && axisScores.length > 0 && (
         <AxisProjectionLane
           scores={axisScores}
@@ -131,7 +113,7 @@ export function ResultCard() {
 }
 
 function NearestCell({ topK }: { topK: NearestSample[] | undefined }) {
-  if (!topK?.length) return <span>—</span>;
+  if (!topK?.length) return <span>-</span>;
   const top3 = topK.slice(0, 3);
   return (
     <div class="nels-nearest-stack">
@@ -254,12 +236,12 @@ function AxisProjectionLane({
       : undefined;
   const subtitle = isB
     ? "Green -> orange shows alignment with the orthogonal PCA axis (residuals of axis 1)."
-    : "Blue -> red shows alignment with the A->B direction in embedding space — not screen distance.";
+    : "Blue -> red shows alignment with the A->B direction in embedding space - not screen distance.";
   return (
     <div class="nels-axis-lane">
       <div class="nels-axis-header">
         {isB ? "Axis 2 (PCA)" : "Axis 1"}
-        {axisLabel ? `: ${axisLabel}` : ""} — {scores.length} points ranked
+        {axisLabel ? `: ${axisLabel}` : ""} - {scores.length} points ranked
       </div>
       <div style="font-size:10px;color:#64849a;padding:4px 0 6px;line-height:1.4">
         {subtitle}
@@ -420,7 +402,7 @@ function ConsistencyLane({ result }: { result: NelsOperationResult }) {
   return (
     <div class="nels-axis-lane">
       <div class="nels-axis-header">
-        Consistency Check — {variants.length} variants
+        Consistency Check - {variants.length} variants
       </div>
       {sc != null && (
         <div class="nels-cc-metrics">
@@ -437,12 +419,18 @@ function ConsistencyLane({ result }: { result: NelsOperationResult }) {
         </div>
       )}
       <div style="font-size:10px;color:#64849a;padding:2px 0 6px;line-height:1.5">
-        <strong style="color:#93a4b8">SC score</strong> = intra / inter — lower
+        <strong style="color:#93a4b8">SC score</strong> = intra / inter - lower
         means tighter cluster. <strong style="color:#93a4b8">Intra</strong>: avg
         cosine distance of variants from seed (low = variants stay close to
         seed). <strong style="color:#93a4b8">Inter</strong>: avg cosine distance
         of seed from random dataset points (high = seed is specific). SC &lt;
-        0.2 = tight, 0.2–0.5 = moderate, &gt; 0.5 = loose.
+        0.2 = tight, 0.2-0.5 = moderate, &gt; 0.5 = loose.
+      </div>
+      <div style="font-size:10px;color:#64849a;padding:2px 0 6px;line-height:1.5">
+        Variants are clustered against the{" "}
+        <strong style="color:#93a4b8">full dataset</strong>, not just the
+        currently loaded sample - a variant's cluster may have no points in
+        the loaded view, so it won't always appear in the cluster legend.
       </div>
       {result.seed_prompt && (
         <button

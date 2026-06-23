@@ -68,7 +68,7 @@ export function Header() {
           class="nels-switch"
           role="switch"
           aria-checked={animationEnabled.value}
-          title="Node positions drift slightly when animated — disable for accurate reading"
+          title="Node positions drift slightly when animated - disable for accurate reading"
           onClick={() => {
             animationEnabled.value = !animationEnabled.value;
           }}
@@ -88,8 +88,8 @@ export function Header() {
           class={`nels-llm-chip${llm ? " loaded" : ""}`}
           title={
             llm
-              ? `${llmModelId.value ?? "LLM"} loaded — click to unload and free memory`
-              : "LLM not loaded — loads automatically when needed"
+              ? `${llmModelId.value ?? "LLM"} loaded - click to unload and free memory`
+              : "LLM not loaded - loads automatically when needed"
           }
           onClick={llm ? () => void handleUnloadLlm() : undefined}
         >

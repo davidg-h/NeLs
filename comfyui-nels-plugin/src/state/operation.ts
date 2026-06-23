@@ -55,7 +55,6 @@ export function extractResultPointIds(
   result: NelsOperationResult | null,
 ): string[] {
   const ids: string[] = [];
-  if (result?.source_point_id) ids.push(String(result.source_point_id));
   for (const id of result?.source_point_ids ?? []) ids.push(String(id));
   for (const n of result?.neighbors ?? []) {
     if (n.id) ids.push(String(n.id));

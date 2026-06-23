@@ -36,7 +36,7 @@ def generate_frequency_labels(samples: list[dict]) -> dict[str, str]:
         freq: Counter = Counter()
         for text in texts:
             for w in re.findall(r"[a-zA-Z]+", text.lower()):
-                if len(w) > 3 and w not in _FREQUENCY_STOP_WORDS:
+                if len(w) > 3 and w not in _STOP_WORDS:
                     freq[_stem_word(w)] += 1
         labels[cid] = freq.most_common(1)[0][0] if freq else cid
     return labels
@@ -143,40 +143,6 @@ _KNOWN_PREFIXES = [
 _PREFIX_THRESHOLD = 0.8
 
 _STOP_WORDS = frozenset(
-    {
-        "a",
-        "an",
-        "the",
-        "of",
-        "in",
-        "on",
-        "at",
-        "to",
-        "for",
-        "and",
-        "or",
-        "with",
-        "is",
-        "it",
-        "its",
-        "as",
-        "by",
-        "be",
-        "are",
-        "was",
-        "were",
-        "photo",
-        "image",
-        "picture",
-        "rendering",
-        "drawing",
-        "painting",
-        "sketch",
-        "photograph",
-    }
-)
-
-_FREQUENCY_STOP_WORDS = frozenset(
     {
         # English function words
         "a",

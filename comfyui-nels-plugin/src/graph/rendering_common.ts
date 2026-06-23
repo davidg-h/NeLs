@@ -261,12 +261,9 @@ export function axisBScoreColorRGB(t: number): [number, number, number] {
   return [r, g, b];
 }
 
-/** Resolve the source point id(s) of an operation result, preferring the plural field */
+/** Resolve the source point id(s) of an operation result */
 export function getSourceIds(result: NelsOperationResult): string[] {
-  return (
-    result.source_point_ids?.map(String) ??
-    (result.source_point_id ? [String(result.source_point_id)] : [])
-  );
+  return result.source_point_ids?.map(String) ?? [];
 }
 
 /** Split scores sorted by value into the bottom/top 10% as side A / side B ids */

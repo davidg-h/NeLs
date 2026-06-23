@@ -1,4 +1,5 @@
 import type { NelsPoint } from "../api/types.js";
+import { snapshot } from "../state/graph.js";
 
 let mousePos = { x: 0, y: 0 };
 
@@ -21,17 +22,23 @@ export function buildHoverRows(point: NelsPoint): HoverRows {
   const meta = point.metadata ?? {};
   const rawText = meta.text != null ? String(meta.text) : null;
   const displayText =
-    rawText && rawText.length > 200 ? rawText.slice(0, 200) + "…" : rawText;
+    rawText && rawText.length > 200 ? rawText.slice(0, 200) + "..." : rawText;
+
+  const clusterLabels = snapshot.value?.source?.cluster_labels ?? {};
+  const clusterText = (id: unknown): string => {
+    const label = clusterLabels[String(id)];
+    return label ? `${label} (${id})` : String(id);
+  };
 
   const rows: [string, unknown][] = [["id", point.id]];
   if (displayText) rows.push(["text", displayText]);
   if (meta.ghost_cluster_id != null) {
-    rows.push(["cluster", `#${meta.ghost_cluster_id}`]);
+    rows.push(["cluster", clusterText(meta.ghost_cluster_id)]);
   }
   if (meta.cluster_global != null) {
     rows.push([
       "cluster",
-      meta.is_noise ? "noise" : String(meta.cluster_global),
+      meta.is_noise ? "noise" : clusterText(meta.cluster_global),
     ]);
     rows.push(["strength", Number(meta.membership_strength ?? 1).toFixed(2)]);
   }

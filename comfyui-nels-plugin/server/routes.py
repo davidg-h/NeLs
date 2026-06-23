@@ -100,7 +100,7 @@ def register_routes() -> None:
     _ROUTES_REGISTERED = True
 
 
-# -- internals --
+# ---- internals ----
 
 _ROUTES_REGISTERED = False
 

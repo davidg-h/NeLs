@@ -5,6 +5,7 @@ import re
 import threading
 from typing import Any
 
+import torch
 from transformers import GenerationConfig, pipeline
 from transformers import logging as hf_logging
 
@@ -247,7 +248,15 @@ def label_axis(
         {"role": "user", "content": user_content},
     ]
     raw = query(messages, max_new_tokens=32)
-    return _extract_axis_label(raw)
+    label = _extract_axis_label(raw)
+    if not _has_distinct_sides(label) or _label_reused(label, exclude_label):
+        retry_messages = [
+            *messages,
+            {"role": "assistant", "content": raw.strip()},
+            {"role": "user", "content": _DISTINCT_LABEL_NUDGE},
+        ]
+        label = _pick_valid_label(query(retry_messages, max_new_tokens=64), exclude_label)
+    return label
 
 
 def label_axis_candidate(
@@ -292,7 +301,15 @@ def label_axis_candidate(
         {"role": "user", "content": user_content},
     ]
     raw = query(messages, max_new_tokens=48)
-    return _parse_axis_candidate_response(raw)
+    label, confidence = _parse_axis_candidate_response(raw)
+    if not _has_distinct_sides(label) or _label_reused(label, exclude_label):
+        retry_messages = [
+            *messages,
+            {"role": "assistant", "content": raw.strip()},
+            {"role": "user", "content": _DISTINCT_LABEL_NUDGE},
+        ]
+        label = _pick_valid_label(query(retry_messages, max_new_tokens=96), exclude_label)
+    return label, confidence
 
 
 def probe_synthesize(seed_texts: list[str], negative_texts: list[str], count: int = 3) -> list[str]:
@@ -406,14 +423,51 @@ def _parse_axis_candidate_response(text: str) -> tuple[str, float]:
 def _extract_axis_label(text: str) -> str:
     """Extract 'X to Y' from LLM axis label output, stripping any echoed preamble"""
     line = _first_line(text)
+    # strip leading "1. " / "2) " candidate-list numbering
+    line = re.sub(r"^\d+[.)]\s*", "", line).strip()
     # strip "A-side (...):" or "B-side (...):" prefix the LLM may echo from user content
     line = re.sub(r"^[AB]-side[^:]*:\s*", "", line, flags=re.IGNORECASE).strip()
     # strip "The axis goes/ranges/runs from ..." preamble
     line = re.sub(r"^the\s+axis\s+\w+\s*(?:from)?\s*", "", line, flags=re.IGNORECASE).strip()
     m = re.search(r"(.+?)\s+to\s+(.+)", line)
     if m:
-        return f"{m.group(1).strip()} to {m.group(2).strip()}"
-    return line
+        side_a = m.group(1).strip().rstrip(".,:;!?")
+        side_b = m.group(2).strip().rstrip(".,:;!?")
+        return f"{side_a} to {side_b}"
+    return line.rstrip(".,:;!?")
+
+
+def _has_distinct_sides(label: str) -> bool:
+    """True if label has the 'X to Y' shape with two non-empty, non-identical sides"""
+    m = re.search(r"(.+?)\s+to\s+(.+)", label, flags=re.IGNORECASE)
+    if not m:
+        return False
+    return m.group(1).strip().lower() != m.group(2).strip().lower()
+
+
+_DISTINCT_LABEL_NUDGE = (
+    "That phrase is invalid: either both sides are the same, or it duplicates "
+    "the axis already used for a different axis. Give 3 candidate phrases, "
+    "one per line, each naming a different concept not already used, in the "
+    "same 'X to Y' format."
+)
+
+
+def _label_reused(label: str, exclude_label: str | None) -> bool:
+    """True if label matches a previously used axis label (case/whitespace-insensitive)"""
+    if not exclude_label:
+        return False
+    return label.strip().lower() == exclude_label.strip().lower()
+
+
+def _pick_valid_label(text: str, exclude_label: str | None) -> str:
+    """Parse up to 3 'X to Y' candidates, return the first with distinct sides that isn't reused"""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    for line in lines[:3]:
+        candidate = _extract_axis_label(line)
+        if _has_distinct_sides(candidate) and not _label_reused(candidate, exclude_label):
+            return candidate
+    return ""
 
 
 def _clean_llm_line(line: str) -> str:
@@ -459,25 +513,22 @@ def _unload_nolock() -> None:
         _pipeline = None
         _loaded_model_id = None
         try:
-            import torch
-
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except Exception:
+            # best-effort cache clear
             pass
 
 
 def _load_pipeline(model_name: str) -> Any:
     try:
-        import comfy.model_management as mm
+        import comfy.model_management as mm  # only available in ComfyUI runtime
 
         mm.unload_all_models()
         mm.soft_empty_cache()
         print("Offloaded ComfyUI models to free GPU memory for LLM")
     except Exception:
         pass
-
-    import torch
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Loading LLM: {model_name} on {device} (downloading on first use)")
