@@ -182,11 +182,7 @@ export function drawSigmaHover(
   if (!label) return;
 
   // Dark pill label above node
-  const fontSize =
-    ((settings as unknown as Record<string, unknown>).labelSize as number) ||
-    11;
-  const font =
-    ((settings as unknown as Record<string, unknown>).labelFont as string) ||
-    "ui-monospace, monospace";
+  const fontSize = settings.labelSize || 11;
+  const font = settings.labelFont || "ui-monospace, monospace";
   drawTextPill(context, x, y - nodeR - 10, label, color, fontSize, font);
 }

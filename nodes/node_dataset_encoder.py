@@ -280,7 +280,7 @@ NODE_CLASS_MAPPINGS = {"nels_PromptEncoder": NelsPromptEncoder}
 NODE_DISPLAY_NAME_MAPPINGS = {"nels_PromptEncoder": "NELS Prompt Encoder"}
 
 
-# -- internals --
+# ---- internals ----
 
 _UMAP_INPUTS = {
     "umap_n_neighbors": (

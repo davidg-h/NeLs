@@ -160,7 +160,7 @@ class NelsDatasetLoader:
 NODE_CLASS_MAPPINGS = {"nels_DatasetLoader": NelsDatasetLoader}
 NODE_DISPLAY_NAME_MAPPINGS = {"nels_DatasetLoader": "NELS Dataset Loader"}
 
-# -- internals --
+# ---- internals ----
 
 
 def _build_embedding_set(
@@ -196,7 +196,6 @@ def _build_embedding_set(
 
     return create_embedding_set(
         points,
-        embedding_type=meta.get("type", "prompt_embedding"),
         metadata={
             "dataset_name": meta.get("name", ""),
             "sample_count": len(indices),
@@ -243,14 +242,12 @@ def _build_loader_snapshot(
 
     return assemble_snapshot(
         snapshot_points,
-        [],
         session_id=session_id,
         config=config,
         config_hash=source_config_hash(config),
         source_meta=embedding_set["metadata"],
         state_revision=store.get_revision(session_id),
         projection_method="umap",
-        warnings=[],
     )
 
 

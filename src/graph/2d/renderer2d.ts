@@ -214,7 +214,7 @@ export function highlightGhostStep(stepId: string | null): void {
 }
 
 export function resizeRenderer(): void {
-  (sigma as unknown as { resize?: () => void })?.resize?.();
+  sigma?.resize();
   sigma?.refresh();
 }
 

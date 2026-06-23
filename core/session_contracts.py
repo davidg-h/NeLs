@@ -38,20 +38,16 @@ def normalize_ui_state(
 
     normalized["session_id"] = str(normalized.get("session_id") or session_id or "default")
     selected = normalized.get("selected_point_ids", [])
-    if isinstance(selected, str):
-        selected = [selected]
     normalized["selected_point_ids"] = [str(item) for item in selected if str(item)]
     normalized["operation"] = str(normalized.get("operation") or "inspect")
     raw_alpha = normalized.get("alpha_schedule")
     try:
-        if isinstance(raw_alpha, str):
-            parts = raw_alpha.replace(";", ",").replace(" ", ",").split(",")
-            values = [float(p) for p in parts if p.strip()]
-        elif isinstance(raw_alpha, Iterable):
+        if isinstance(raw_alpha, Iterable):
             values = [float(v) for v in raw_alpha]
         else:
             values = _DEFAULT_UI_STATE["alpha_schedule"]
     except Exception:
+        # wrong alpha_schedule from client -> fall back to default
         values = _DEFAULT_UI_STATE["alpha_schedule"]
     op = normalized.get("operation", "")
     alpha_min, alpha_max = (-2.0, 4.0) if op == "delta_walk" else (0.0, 1.0)
@@ -132,7 +128,6 @@ def zip_point_coords(
 
 def assemble_snapshot(
     points: list[dict[str, Any]],
-    edges: list[dict[str, Any]],
     *,
     session_id: str,
     config: dict[str, Any],
@@ -140,7 +135,6 @@ def assemble_snapshot(
     source_meta: dict[str, Any],
     state_revision: int,
     projection_method: str = "umap",
-    warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build standard graph snapshot shared by all source nodes"""
     return {
@@ -150,11 +144,7 @@ def assemble_snapshot(
         "source_config": config,
         "source_config_hash": config_hash,
         "points": points,
-        "edges": edges,
-        "projection_mode": "both",
         "projection_method": projection_method,
-        "dimensions": 2,
-        "warnings": warnings or [],
     }
 
 
@@ -177,6 +167,7 @@ _DEFAULT_UI_STATE: dict[str, Any] = {
     "operation": "inspect",
     "alpha_schedule": [0, 0.25, 0.5, 0.75, 1],
     "neighbor_count": 4,
+    "nearest_sample": False,
     "viewport": {"x": 0.0, "y": 0.0, "ratio": 1.0},
     "axis_group_a": [],
     "axis_group_b": [],

@@ -126,7 +126,7 @@ function buildHtml(
   mode: "2d" | "3d",
 ): string {
   const ts = new Date().toLocaleString();
-  const label = sess?.label ?? sess?.session_id ?? "—";
+  const label = sess?.label ?? sess?.session_id ?? "-";
   const src = sess?.source_config ?? {};
   const pointCount = graphData.value.points.length;
   const projection = mode === "3d" ? "3d_umap" : "2d_umap";
@@ -141,7 +141,7 @@ function buildHtml(
   const sessionSection = `<h2>Session</h2>
 <table>
 ${tableRow("session", label)}
-${tableRow("dataset", String(src.dataset_path ?? "—"))}
+${tableRow("dataset", String(src.dataset_path ?? "-"))}
 ${tableRow("points", String(pointCount))}
 ${tableRow("projection", projection)}
 ${tableRow("view", mode.toUpperCase())}
@@ -160,7 +160,7 @@ ${legend
       `<tr>` +
       `<td><span class="dot" style="background:${esc(e.color_hex)}"></span> ${esc(e.cluster_id)}</td>` +
       `<td class="num">${e.point_count}</td>` +
-      `<td class="sample">${e.sample_label ? esc(e.sample_label) : "—"}</td>` +
+      `<td class="sample">${e.sample_label ? esc(e.sample_label) : "-"}</td>` +
       `<td class="ids">${esc(e.point_ids.join(", "))}</td>` +
       `</tr>`,
   )
@@ -203,7 +203,7 @@ ${legend
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>NELS Snapshot — ${esc(ts)}</title>
+  <title>NELS Snapshot - ${esc(ts)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {

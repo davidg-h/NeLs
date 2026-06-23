@@ -19,38 +19,49 @@ const collapsed = signal(false);
 export const activeClusterId = signal<string | null>(null);
 export const showClusterHulls = signal(false);
 
-const legend = computed((): LegendEntry[] => {
-  const points = graphData.value.points;
-  const clusterLabels = snapshot.value?.source?.cluster_labels ?? {};
-  const map = groupPointsByCluster(points);
+const legend = computed(
+  (): { entries: LegendEntry[]; outsideVariantCount: number } => {
+    const points = graphData.value.points;
+    const clusterLabels = snapshot.value?.source?.cluster_labels ?? {};
+    const map = groupPointsByCluster(points);
 
-  // Count variants from active consistency check result per cluster
-  const variantMap = new Map<string, number>();
-  const result = operationResult.value;
-  if (result?.operation === "consistency_check") {
-    for (const v of result.consistency_variants ?? []) {
-      if (v.cluster_id != null && v.cluster_id >= 0) {
-        const key = String(v.cluster_id);
-        variantMap.set(key, (variantMap.get(key) ?? 0) + 1);
+    // Count variants from active consistency check result per cluster
+    // Variants are clustered against the full dataset, so a variants cluster may have
+    // no members in the currently loaded sample
+    const variantMap = new Map<string, number>();
+    let outsideVariantCount = 0;
+    const result = operationResult.value;
+    if (result?.operation === "consistency_check") {
+      for (const v of result.consistency_variants ?? []) {
+        if (v.cluster_id != null && v.cluster_id >= 0) {
+          const key = String(v.cluster_id);
+          if (map.has(key)) {
+            variantMap.set(key, (variantMap.get(key) ?? 0) + 1);
+          } else {
+            outsideVariantCount++;
+          }
+        }
       }
     }
-  }
 
-  return [...map.entries()]
-    .map(([id, { count, sample, ids }]) => ({
-      id,
-      name: clusterLabels[id] ?? id,
-      color: clusterColor(id),
-      count,
-      variantCount: variantMap.get(id) ?? 0,
-      sample,
-      pointIds: ids,
-    }))
-    .sort((a, b) => Number(a.id) - Number(b.id));
-});
+    const entries = [...map.entries()]
+      .map(([id, { count, sample, ids }]) => ({
+        id,
+        name: clusterLabels[id] ?? id,
+        color: clusterColor(id),
+        count,
+        variantCount: variantMap.get(id) ?? 0,
+        sample,
+        pointIds: ids,
+      }))
+      .sort((a, b) => Number(a.id) - Number(b.id));
+
+    return { entries, outsideVariantCount };
+  },
+);
 
 export function ClusterLegend() {
-  const entries = legend.value;
+  const { entries, outsideVariantCount } = legend.value;
 
   // Drop selected ids that no longer exist when the point set changes (dataset reload)
   // Temporary ids (ghost nodes, latent probe) are never part of graphData, so they are kept
@@ -138,6 +149,13 @@ export function ClusterLegend() {
               </span>
             </div>
           ))}
+          {outsideVariantCount > 0 && (
+            <div class="nels-legend-outside">
+              +{outsideVariantCount} variant
+              {outsideVariantCount > 1 ? "s" : ""} in clusters outside the
+              loaded sample
+            </div>
+          )}
         </div>
       )}
     </div>

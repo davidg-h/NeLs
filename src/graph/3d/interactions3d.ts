@@ -191,13 +191,11 @@ export function onMouseMove(e: MouseEvent): void {
     }
   }
 
-  if (hoverNodeId.value !== null && hoverNodeId.value !== "probe") {
+  if (hoverNodeId.value !== null) {
     hoverNodeId.value = null;
     hoverPoint.value = null;
-    threeRenderer.domElement.style.cursor = "";
-  } else if (hoverNodeId.value === null) {
-    threeRenderer.domElement.style.cursor = "";
   }
+  threeRenderer.domElement.style.cursor = "";
 }
 
 export function onMouseUp3D(e: MouseEvent): void {

@@ -297,6 +297,7 @@ def finalize_dataset(
             joblib.dump(r2d, output_path / "umap_model_2d.pkl")
             joblib.dump(r3d, output_path / "umap_model_3d.pkl")
     except ImportError:
+        # joblib optional -> skip model persistence if unavailable
         pass
 
     return path

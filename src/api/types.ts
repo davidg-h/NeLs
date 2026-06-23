@@ -39,7 +39,6 @@ export interface NelsGraphSnapshot {
   points: NelsPoint[];
   source_config?: NelsSourceConfig;
   source?: NelsSnapshotSource;
-  projection_mode?: string;
 }
 
 export interface NelsUiState {
@@ -81,7 +80,6 @@ export interface TrajectoryStepTr {
   id: string;
   alpha: number;
   norm?: number;
-  metadata?: Record<string, unknown>;
   nearest_top_k?: NearestSample[];
 }
 
@@ -111,14 +109,10 @@ export interface ConsistencyVariant {
   text: string;
   cosine_sim: number;
   cluster_id?: number | null;
-  coords_2d?: [number, number];
-  coords_3d?: [number, number, number];
 }
 
 export interface NelsOperationResult {
   operation: string;
-  request_id?: string;
-  source_point_id?: string;
   source_point_ids?: string[];
   source_group_a?: string[];
   source_group_b?: string[];

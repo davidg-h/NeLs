@@ -133,7 +133,7 @@ def inverse_project(
                 valid.append((pt, emb))
         if valid:
             lp_matrix = np.stack([emb for _, emb in valid]).astype(np.float32)
-            ranked_local = _faiss_cosine_knn(q, lp_matrix, k=min(neighbor_count, len(valid)))
+            ranked_local = _cosine_knn_numpy(q, lp_matrix, k=min(neighbor_count, len(valid)))
             results = []
             for local_idx, score in ranked_local:
                 pt, emb = valid[local_idx]
@@ -152,7 +152,7 @@ def inverse_project(
     samples_path = path / "samples.jsonl"
     if not samples_path.exists():
         raise FileNotFoundError(f"samples.jsonl missing in {path}")
-    ranked_full = _faiss_cosine_knn(q, pooled, k=neighbor_count)
+    ranked_full = _cosine_knn_numpy(q, pooled, k=neighbor_count)
     needed = {idx for idx, _ in ranked_full}
     samples: dict[int, dict] = {}
     with samples_path.open(encoding="utf-8") as f:
@@ -440,7 +440,7 @@ def _apply_projection_mapping(ghost: np.ndarray, reference: np.ndarray) -> np.nd
     return 2.0 * (ghost - midpoint) / iso_span
 
 
-def _faiss_cosine_knn(
+def _cosine_knn_numpy(
     query: np.ndarray,
     matrix: np.ndarray,
     k: int,

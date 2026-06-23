@@ -89,7 +89,7 @@ def build_axis_projection(
 
     # Axis 1 LLM label (computed first so it can be excluded from Axis 2 candidates)
     axis_1_label: str | None = None
-    with contextlib.suppress(Exception):
+    try:
         from . import llm_ops
 
         top_l = [r["label"] for r in results[:_k1]]
@@ -97,6 +97,8 @@ def build_axis_projection(
         mid = len(results) // 2
         neutral_l = [r["label"] for r in results[max(0, mid - 10) : mid + 10]]
         axis_1_label = llm_ops.label_axis(top_l, bot_l, neutral_labels=neutral_l)
+    except Exception as exc:
+        print(f"[nels] axis_1_label failed: {exc!r}")
 
     # Axis 2: SVD top-3 on residuals (centered on dataset_mean, Axis 1 component removed)
     mean = X.mean(dim=0)
@@ -120,7 +122,7 @@ def build_axis_projection(
         best_label: str | None = None
         best_variance = 0.0
 
-        with contextlib.suppress(Exception):
+        try:
             from . import llm_ops
 
             for comp, var in zip(components, variances, strict=True):
@@ -153,6 +155,8 @@ def build_axis_projection(
                     best_component = comp
                     best_label = cand_label
                     best_variance = var
+        except Exception as exc:
+            print(f"[nels] axis_2_label failed: {exc!r}")
 
         if best_component is not None and best_combined > 0.0:
             axis_2 = best_component
@@ -218,7 +222,8 @@ def generate_variants(
     """Generate text variants; uses word dropout at low strength LLM paraphrase at higher strength"""
     if strength < _LLM_STRENGTH_THRESHOLD:
         return _word_dropout(prompt, count, strength, random_seed=random_seed)
-    try:
+    # LLM may be unavailable/fail -> fall through to word dropout
+    with contextlib.suppress(Exception):
         from . import llm_ops
 
         llm_variants = llm_ops.paraphrase(prompt, count, strength)
@@ -228,8 +233,6 @@ def generate_variants(
         while len(llm_variants) < count:
             llm_variants.append(prompt)
         return llm_variants[:count]
-    except Exception:
-        pass
     return _word_dropout(prompt, count, strength, random_seed=random_seed)
 
 
@@ -288,7 +291,6 @@ def build_interpolation_trajectory(
         raise ValueError(f"{method.upper()} requires two selected points")
 
     start, end = points[0], points[1]
-    embedding_type = embedding_set.get("embedding_type")
     source_texts = [
         start.get("metadata", {}).get("text", "") or start.get("label", ""),
         end.get("metadata", {}).get("text", "") or end.get("label", ""),
@@ -313,7 +315,6 @@ def build_interpolation_trajectory(
         source_texts=source_texts,
         request_id=request_id,
         state_revision=state_revision,
-        embedding_type=embedding_type,
     )
 
 
@@ -332,8 +333,6 @@ def build_delta_walk_trajectory(
         raise ValueError(
             "delta_walk requires exactly 3 points: A (direction from), B (direction to), C (walk start)."
         )
-
-    embedding_type = embedding_set.get("embedding_type")
 
     a_norm = normalize_tensor(_point_embedding(points[0]))
     b_norm = normalize_tensor(_point_embedding(points[1]))
@@ -361,7 +360,6 @@ def build_delta_walk_trajectory(
         source_texts=source_texts,
         request_id=request_id,
         state_revision=state_revision,
-        embedding_type=embedding_type,
     )
 
 
@@ -516,14 +514,6 @@ def build_consistency_check_result(
             pt["label"] = variants[idx]
             pt["cluster_id"] = cv_items[idx].get("cluster_id")
 
-    coords_by_id = {pt["id"]: pt for pt in overlay}
-    for item in cv_items:
-        pt = coords_by_id.get(item["id"], {})
-        if pt.get("coords_2d"):
-            item["coords_2d"] = pt["coords_2d"]
-        if pt.get("coords_3d"):
-            item["coords_3d"] = pt["coords_3d"]
-
     result = {
         "operation": "consistency_check",
         "request_id": request_id,
@@ -570,7 +560,7 @@ def build_text_reconstruction(
     n_iter: int = 10,
     beam_width: int = 8,
     max_minutes: float = 5.0,
-    convergence_threshold: float = 0.002,
+    convergence_threshold: float = 0.0007,
     convergence_patience: int = 4,
     on_iteration: Any | None = None,
 ) -> dict[str, Any]:
@@ -686,8 +676,7 @@ def build_text_reconstruction(
                 stopped_early = True
 
         # Snapshot threshold is independent of (and smaller than) the stop threshold,
-        # so small-but-real movement still shows up on the trajectory without needing
-        # to keep searching longer than the stop logic deems worthwhile.
+        # so small-but-real movement still shows up on the trajectory
         if current_best - last_snapshot_best > _SNAPSHOT_MIN_IMPROVEMENT:
             last_snapshot_best = current_best
             _snapshot(step)
@@ -803,7 +792,7 @@ def build_latent_probe_recon_trajectory(
 
 _LLM_STRENGTH_THRESHOLD = 0.35
 _WORD_DROPOUT_MAX_FRACTION = 0.2
-_SNAPSHOT_MIN_IMPROVEMENT = 0.0005
+_SNAPSHOT_MIN_IMPROVEMENT = 0.0001
 
 
 def _evenly_sample_labels(items: list[dict[str, Any]], n: int) -> list[str]:
@@ -939,7 +928,6 @@ def _trajectory_payload(
     source_texts: list[str],
     request_id: str | None,
     state_revision: int | None,
-    embedding_type: str | None = None,
 ) -> dict[str, Any]:
     """Format the full trajectory payload with metadata and tensor summaries"""
     return {
@@ -950,5 +938,4 @@ def _trajectory_payload(
         "source_point_ids": list(source_point_ids),
         "source_texts": list(source_texts),
         "points": trajectory_points,
-        "embedding_type": embedding_type,
     }

@@ -165,7 +165,7 @@ export function bindSigmaEvents(): void {
         const text = variant?.text ?? (attrs.label as string | undefined) ?? "";
         hoverPoint.value = {
           id: displayId,
-          view_coords: c3 ?? c2,
+          view_coords: c2 ?? c3,
           label: text,
           metadata: {
             text: text || undefined,
