@@ -5,6 +5,8 @@ import re
 import threading
 from typing import Any
 
+import numpy as np
+
 from ..core.session_contracts import (
     default_ui_state,
     normalize_ui_state,
@@ -18,6 +20,7 @@ class NelsSessionStore:
         self._lock = threading.RLock()
         self._sessions: dict[str, dict[str, Any]] = {}
         self._source_cache: dict[str, dict[str, Any]] = {}
+        self._axis_vocab_cache: dict[str, dict[str, Any]] = {}
         self._sequence = 0
 
     def get_session(self, session_id: str = "default") -> dict[str, Any]:
@@ -140,6 +143,37 @@ class NelsSessionStore:
             self._source_cache[cache_key] = {
                 "embedding_set": copy.deepcopy(embedding_set),
                 "snapshot": copy.deepcopy(snapshot),
+                "updated_at": now_ms(),
+            }
+        return cache_key
+
+    def get_cached_axis_vocab(
+        self, config: dict[str, Any]
+    ) -> tuple[list[str], np.ndarray] | None:
+        """Return cached (terms, embeddings) mined from the loaded sample for the given source config
+
+        Same cache key as get_cached_source - the candidate vocabulary only depends on which
+        sample is loaded, not on which axis the user is currently projecting
+        """
+        cache_key = source_config_hash(config)
+        with self._lock:
+            cached = self._axis_vocab_cache.get(cache_key)
+            if cached is None:
+                return None
+            return list(cached["terms"]), cached["embeddings"].copy()
+
+    def set_cached_axis_vocab(
+        self,
+        config: dict[str, Any],
+        terms: list[str],
+        embeddings: np.ndarray,
+    ) -> str:
+        """Store (terms, embeddings) in the axis vocab cache keyed by config hash"""
+        cache_key = source_config_hash(config)
+        with self._lock:
+            self._axis_vocab_cache[cache_key] = {
+                "terms": list(terms),
+                "embeddings": embeddings.copy(),
                 "updated_at": now_ms(),
             }
         return cache_key

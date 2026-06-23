@@ -1,6 +1,7 @@
 """Shared embedding-set contracts and tensor helpers for NELS nodes"""
 
 import copy
+import uuid
 from collections.abc import Iterable
 from typing import Any
 
@@ -284,6 +285,52 @@ def delta_cond(
     direction = b_norm - a_norm
     stepped = c_norm + direction * alpha
     return stepped / stepped.norm().clamp_min(1e-8) * c_mag
+
+
+def point_embedding(point: dict[str, Any]) -> torch.Tensor:
+    """Flattened embedding tensor for one embedding-set point - shared across every operation"""
+    return flatten_tensor(point["tensor"])
+
+
+def trajectory_point(
+    index: int,
+    tensor: torch.Tensor,
+    alpha: float,
+    source_point_ids: list[str],
+    operation: str,
+) -> dict[str, Any]:
+    """Format a trajectory/interpolated point with metadata and tensor summary"""
+    t_float = tensor.detach().float()
+    return {
+        "id": f"{operation}_{index:04d}",
+        "index": int(index),
+        "alpha": float(alpha),
+        "tensor": tensor,
+        "norm": float(t_float.norm().item()),
+        "source_point_ids": list(source_point_ids),
+        **tensor_summary(tensor),
+    }
+
+
+def trajectory_payload(
+    *,
+    operation: str,
+    trajectory_points: list[dict[str, Any]],
+    source_point_ids: list[str],
+    source_texts: list[str],
+    request_id: str | None,
+    state_revision: int | None,
+) -> dict[str, Any]:
+    """Format the full trajectory payload with metadata and tensor summaries"""
+    return {
+        "type": "NELS_TRAJECTORY",
+        "operation": operation,
+        "request_id": request_id or uuid.uuid4().hex,
+        "state_revision": int(state_revision or 0),
+        "source_point_ids": list(source_point_ids),
+        "source_texts": list(source_texts),
+        "points": trajectory_points,
+    }
 
 
 # ---- internals ----

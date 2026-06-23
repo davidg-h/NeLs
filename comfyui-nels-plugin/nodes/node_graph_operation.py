@@ -7,23 +7,22 @@ import numpy as np
 
 from ..core.defaults import DEFAULT_LLM_MODEL
 from ..core.encoding_ops import attach_sequence_conditioning
-from ..core.navigation_ops import (
+from ..core.operations.axis_projection import (
     build_axis_projection,
     build_axis_trajectory,
-    build_consistency_check_result,
-    build_delta_walk_trajectory,
-    build_interpolation_trajectory,
+)
+from ..core.operations.consistency_check import build_consistency_check_result
+from ..core.operations.latent_probe import (
     build_latent_probe_recon_trajectory,
     build_text_reconstruction,
-    nearest_neighbor_result,
-    trajectory_result_summary,
-)
-from ..core.projection_ops import (
     inverse_project,
-    project_trajectory,
 )
+from ..core.operations.nearest_neighbor import nearest_neighbor_result
+from ..core.operations.vector_walks import build_delta_walk_trajectory, build_interpolation_trajectory
+from ..core.projection_ops import project_trajectory
 from ..core.session_contracts import json_dumps, validate_session_bundle
 from ..core.tensor_ops import normalize_tensor
+from ..core.trajectory_summary import trajectory_result_summary
 from ..server.session_store import get_store
 
 
@@ -114,12 +113,14 @@ class NelsGraphOperation:
                     embedding_set if request.get("nearest_sample") else None,
                 )
             elif operation == "axis_projection":
+                compute_labels = bool(request.get("compute_axis_labels", False))
                 result = build_axis_projection(
                     embedding_set,
                     axis_group_a=request.get("axis_group_a") or [],
                     axis_group_b=request.get("axis_group_b") or [],
                     request_id=run_id,
                     state_revision=rev,
+                    compute_labels=compute_labels,
                 )
                 trajectory = build_axis_trajectory(
                     result,
@@ -268,7 +269,6 @@ class NelsGraphOperation:
                         estimated,
                         seed_texts,
                         clip,
-                        llm_ops,
                         noise_texts=noise_texts,
                         negative_texts=negative_texts,
                         n_iter=probe_recon_max_iter,

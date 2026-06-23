@@ -29,7 +29,7 @@ _PLUGIN_ROOT = Path(__file__).parent.parent
 if str(_PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_PLUGIN_ROOT))
 
-from core.annotation_ops import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
+from core.operations.cluster_annotation import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
 from core.dataset_io import (
     load_dataset,
     resolve_dataset_path,
