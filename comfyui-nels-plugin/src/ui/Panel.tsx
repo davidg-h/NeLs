@@ -27,7 +27,6 @@ import { graphData, viewMode } from "../state/graph.js";
 import { hoverPoint } from "../state/selection.js";
 import { dragSelectRect } from "../state/dragSelect.js";
 import { operationResult } from "../state/operation.js";
-import { extractAxisKeywords } from "../graph/rendering_common.js";
 
 const SIDEBAR_KEY = "nels-sidebar-width";
 const DEFAULT_SIDEBAR_W = 360;
@@ -151,16 +150,16 @@ function AxisLegend() {
   if (result?.operation !== "axis_projection") return null;
   const scores = result.axis_projection ?? [];
   if (scores.length < 2) return null;
-  const labelA = extractAxisKeywords(scores, 8, false);
-  const labelB = extractAxisKeywords(scores, 8, true);
+  const labelA = result.axis_keywords_a ?? "A-side";
+  const labelB = result.axis_keywords_b ?? "B-side";
   const bScores = result.axis_b_projection;
   const bLabelA =
     bScores && bScores.length >= 2
-      ? extractAxisKeywords(bScores, 8, false)
+      ? (result.axis_b_keywords_a ?? "C-side")
       : null;
   const bLabelB =
     bScores && bScores.length >= 2
-      ? extractAxisKeywords(bScores, 8, true)
+      ? (result.axis_b_keywords_b ?? "D-side")
       : null;
   const llmLabel = result.axis_label
     ? result.axis_label.split("\n")[0].slice(0, 60)

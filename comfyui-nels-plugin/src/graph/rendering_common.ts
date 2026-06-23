@@ -1,6 +1,6 @@
 // Renderer-agnostic visual state: color constants, pulse helpers, node flag computation
 
-import type { NelsOperationResult, AxisProjectionScore } from "../api/types.js";
+import type { NelsOperationResult } from "../api/types.js";
 import { clusterColor } from "./colors.js";
 
 export interface RendererModule {
@@ -138,29 +138,6 @@ export function computeNodeFlags(
   return { selected, hover, emphasized, dim, pulsing, pulseLife };
 }
 
-/** Extract top-N frequency keywords from top/bottom axis scores - returns "word · word · word" */
-export function extractAxisKeywords(
-  scores: AxisProjectionScore[],
-  n: number,
-  top: boolean,
-): string {
-  const items = top ? scores.slice(0, n) : scores.slice(-n);
-  const freq = new Map<string, number>();
-  for (const item of items) {
-    const words = item.label
-      .toLowerCase()
-      .split(/[\s,.\-_()\[\]\/\\]+/)
-      .filter((w) => w.length > 3 && !AXIS_STOPWORDS.has(w));
-    for (const w of words) freq.set(w, (freq.get(w) ?? 0) + 1);
-  }
-  if (!freq.size) return top ? "B-side" : "A-side";
-  return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([w]) => w)
-    .join(" · ");
-}
-
 /** Smooth curve through all given points (clamped uniform Catmull-Rom, duplicates the endpoints as virtual control points) */
 export function catmullRomSpline2D(
   points: { x: number; y: number }[],
@@ -277,57 +254,6 @@ export function gradientFitSideIds(scores: { id: string }[]): {
     sideB: scores.slice(0, k).map((s) => s.id), // highest scores = B-side
   };
 }
-
-const AXIS_STOPWORDS = new Set([
-  "a",
-  "an",
-  "the",
-  "of",
-  "in",
-  "on",
-  "at",
-  "to",
-  "for",
-  "with",
-  "by",
-  "from",
-  "and",
-  "or",
-  "but",
-  "is",
-  "are",
-  "was",
-  "were",
-  "very",
-  "some",
-  "two",
-  "one",
-  "this",
-  "that",
-  "its",
-  "into",
-  "out",
-  "up",
-  "about",
-  "over",
-  "more",
-  "also",
-  "art",
-  "style",
-  "image",
-  "photo",
-  "render",
-  "detailed",
-  "realistic",
-  "full",
-  "high",
-  "quality",
-  "beautiful",
-  "amazing",
-  "best",
-  "digital",
-  "concept",
-]);
 
 function convexHull(pts: { x: number; y: number }[]): number[] {
   if (pts.length < 3) return pts.map((_, i) => i);

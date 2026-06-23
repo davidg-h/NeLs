@@ -39,6 +39,8 @@ export function ResultCard() {
   const textRecon = nr.text_reconstruction;
   const consistencyVariants = nr.consistency_variants;
   const neighborCount = nr.neighbors?.length;
+  const hasAxisTrajectoryOverlay =
+    operation === "axis_projection" && (nr.trajectory_overlay?.length ?? 0) > 0;
 
   const rows: [string, string][] = [["operation", String(operation ?? "-")]];
   if (operation === "nearest_neighbor" && neighborCount != null) {
@@ -60,6 +62,7 @@ export function ResultCard() {
       {trajectory && trajectory.length > 0 && (
         <TrajectoryLane steps={trajectory} warning={warning} />
       )}
+      {hasAxisTrajectoryOverlay && <AxisTrajectoryHighlightLane />}
       {axisScores && axisScores.length > 0 && (
         <AxisProjectionLane
           scores={axisScores}
@@ -140,16 +143,14 @@ function TrajectoryLane({
   warning?: string;
 }) {
   const showOverlay = trajectoryOverlayVisible.value;
-  const highlightActive = trajectoryHighlightActive.value;
   const snapEp = operationConfig.value.snap_endpoints;
   const op = operationResult.value?.operation;
   const isDeltaWalk = op === "delta_walk";
-  const isAxisProjection = op === "axis_projection";
   return (
     <div class="nels-trajectory-lane">
       <div class="nels-trajectory-header">
         <span>{steps.length} steps</span>
-        {!isDeltaWalk && !isAxisProjection && (
+        {!isDeltaWalk && (
           <button
             class={`nels-toggle-overlay${snapEp ? " active" : ""}`}
             onClick={() => setOperationConfig({ snap_endpoints: !snapEp })}
@@ -157,21 +158,12 @@ function TrajectoryLane({
             {snapEp ? "Snap ON" : "Snap OFF"}
           </button>
         )}
-        {isAxisProjection ? (
-          <button
-            class={`nels-toggle-overlay${highlightActive ? " active" : ""}`}
-            onClick={() => setTrajectoryHighlightActive(!highlightActive)}
-          >
-            {highlightActive ? "Highlight ON" : "Highlight trajectory"}
-          </button>
-        ) : (
-          <button
-            class={`nels-toggle-overlay${showOverlay ? " active" : ""}`}
-            onClick={() => setTrajectoryOverlayVisible(!showOverlay)}
-          >
-            {showOverlay ? "Hide on canvas" : "Show on canvas"}
-          </button>
-        )}
+        <button
+          class={`nels-toggle-overlay${showOverlay ? " active" : ""}`}
+          onClick={() => setTrajectoryOverlayVisible(!showOverlay)}
+        >
+          {showOverlay ? "Hide on canvas" : "Show on canvas"}
+        </button>
       </div>
       {warning && <div class="nels-overlay-warning">{warning}</div>}
       <div class="nels-trajectory-scroll">
@@ -204,6 +196,23 @@ function TrajectoryLane({
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function AxisTrajectoryHighlightLane() {
+  const highlightActive = trajectoryHighlightActive.value;
+  return (
+    <div class="nels-trajectory-lane">
+      <div class="nels-trajectory-header">
+        <span>axis trajectory</span>
+        <button
+          class={`nels-toggle-overlay${highlightActive ? " active" : ""}`}
+          onClick={() => setTrajectoryHighlightActive(!highlightActive)}
+        >
+          {highlightActive ? "Highlight ON" : "Highlight trajectory"}
+        </button>
       </div>
     </div>
   );

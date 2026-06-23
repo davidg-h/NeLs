@@ -358,6 +358,25 @@ export function OperationCard() {
               </div>
             )}
 
+            <label>
+              <span>compute labels</span>
+              <input
+                type="checkbox"
+                checked={cfg.compute_axis_labels}
+                onChange={(e) => {
+                  setOperationConfig({
+                    compute_axis_labels: (e.target as HTMLInputElement).checked,
+                  });
+                  schedulePushState();
+                }}
+              />
+            </label>
+            <span class="nels-alpha-info">
+              Names each axis with an LLM, grounded in concept words mined from
+              your own loaded prompts. Adds extra encode + inference time -
+              leave off to skip naming entirely.
+            </span>
+
             {operationResult.value?.axis_b_projection ? (
               <div class="nels-axis-mode-toggle">
                 <button
