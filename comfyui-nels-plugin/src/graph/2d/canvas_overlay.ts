@@ -232,7 +232,7 @@ export function drawTextPill(
   fontFamily = "ui-monospace, monospace",
 ): void {
   ctx.save();
-  const displayText = text.length > 50 ? text.slice(0, 50) + "…" : text;
+  const displayText = text.length > 50 ? text.slice(0, 50) + "..." : text;
   ctx.font = `${fontSize}px ${fontFamily}`;
   const textW = ctx.measureText(displayText).width;
   const padX = 8;

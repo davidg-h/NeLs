@@ -8,7 +8,6 @@ import type {
   NelsGraphSnapshot,
   NelsOperationResult,
   NelsSourceConfig,
-  NelsEmbeddingMeta,
   CanvasSessionPayload,
 } from "../api/types.js";
 import {
@@ -50,16 +49,6 @@ export const activeSessionId = signal<string>("");
 export const activeSession = computed<NelsSession | null>(
   () =>
     sessions.value.find((s) => s.session_id === activeSessionId.value) ?? null,
-);
-
-// embedding_meta isnt persisted server-side (only returned by source-preview), so its
-// tagged with the session it was fetched for and dropped if the active session changes
-const datasetMetaRaw = signal<NelsEmbeddingMeta | null>(null);
-const datasetMetaSessionId = signal<string>("");
-export const datasetMeta = computed<NelsEmbeddingMeta | null>(() =>
-  datasetMetaSessionId.value === activeSessionId.value
-    ? datasetMetaRaw.value
-    : null,
 );
 
 let lastSequence = 0;
@@ -146,8 +135,6 @@ export async function loadPreview(): Promise<void> {
   try {
     const data = await requestSourcePreview(activeSessionId.value);
     if (data.session) upsertSession(data.session);
-    datasetMetaRaw.value = data.embedding_meta ?? null;
-    datasetMetaSessionId.value = activeSessionId.value;
     setSnapshot(data.graph_snapshot, {
       acceptCoordinates: true,
       forceCoordinates: true,
@@ -220,7 +207,7 @@ export function onSessionEvent(event: NelsEvent): void {
     setReconLiveState(null);
     operationRunning.value = true;
     lockStatus();
-    setStatus(`running ${op}…`, { priority: true });
+    setStatus(`running ${op}...`, { priority: true });
     return;
   }
 
@@ -239,7 +226,7 @@ export function onSessionEvent(event: NelsEvent): void {
       cosine_sim: Number(p.cosine_sim ?? 0),
     });
     lockStatus();
-    setStatus(`reconstructing step ${p.step ?? "?"}/${p.max_step ?? "?"}…`, {
+    setStatus(`reconstructing step ${p.step ?? "?"}/${p.max_step ?? "?"}...`, {
       priority: true,
     });
     return;

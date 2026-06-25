@@ -1,7 +1,7 @@
 // Renderer-agnostic visual state: color constants, pulse helpers, node flag computation
 
 import type { NelsOperationResult } from "../api/types.js";
-import { clusterColor } from "./colors.js";
+import { clusterColor, hslToHex } from "./colors.js";
 
 export interface RendererModule {
   initRenderer(el: HTMLElement): void;
@@ -102,6 +102,11 @@ export function hexTo01(hex: string): [number, number, number] {
     parseInt(hex.slice(3, 5), 16) / 255,
     parseInt(hex.slice(5, 7), 16) / 255,
   ];
+}
+
+/** Hex color for a pulsing node, shared by the 2D and 3D node colorers */
+export function pulseHighlightHex(pulseLife: number): string {
+  return hslToHex(217, 91, Math.round(45 + pulseLife * 20));
 }
 
 /** Write pulse entries into the module-local pulses map */
@@ -241,6 +246,19 @@ export function axisBScoreColorRGB(t: number): [number, number, number] {
 /** Resolve the source point id(s) of an operation result */
 export function getSourceIds(result: NelsOperationResult): string[] {
   return result.source_point_ids?.map(String) ?? [];
+}
+
+/** Which source point id a ghost step at this alpha should snap to, shared by the 2D and 3D renderers */
+export function resolveSnapSourceId(
+  alpha: number,
+  op: string | undefined,
+  sourcePointIds: string[],
+): string | null {
+  const isDeltaWalk = op === "delta_walk";
+  // delta_walk: walk starts at C (index 2), alpha=1 is synthetic
+  if (alpha === 0.0) return (isDeltaWalk ? sourcePointIds[2] : sourcePointIds[0]) ?? null;
+  if (alpha === 1.0 && !isDeltaWalk && sourcePointIds.length >= 2) return sourcePointIds[1];
+  return null;
 }
 
 /** Split scores sorted by value into the bottom/top 10% as side A / side B ids */

@@ -4,7 +4,6 @@ import {
   axisBScoreMap,
   trajectoryHighlightActive,
 } from "../../state/operation.js";
-import { hslToHex } from "../colors.js";
 import {
   C_EMPHASIZED_RGB,
   C_SELECTED_RGB,
@@ -14,6 +13,7 @@ import {
   computeNodeFlags,
   hashString,
   hexTo01,
+  pulseHighlightHex,
 } from "../rendering_common.js";
 
 function blendToward(a: number, b: number, t: number): number {
@@ -32,7 +32,7 @@ export function nodeColor(
     computeNodeFlags(id, rs, pulses);
 
   if (pulsing) {
-    return hexTo01(hslToHex(217, 91, Math.round(45 + pulseLife * 20)));
+    return hexTo01(pulseHighlightHex(pulseLife));
   }
   if (selected) return C_SELECTED_RGB;
   if (trajectoryHighlightActive.value) {

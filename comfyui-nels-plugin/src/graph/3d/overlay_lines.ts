@@ -195,7 +195,9 @@ function buildGhostCurvePoints(
     (pt) => pt.coords_3d,
   );
   if (ghosts3d.length < 2) return null;
-  const snapEp = operationConfig.value.snap_endpoints;
+  const snapEp =
+    operationConfig.value.snap_endpoints &&
+    result.operation !== "axis_projection";
   return ghosts3d.map((pt) => {
     let [x, y, z] = pt.coords_3d!;
     if (snapEp) {

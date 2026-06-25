@@ -1,8 +1,8 @@
+import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import {
   sessions,
   activeSessionId,
-  refreshSessions,
   loadPreview,
   loadSession,
 } from "../state/session.js";
@@ -18,7 +18,13 @@ const llmModelId = signal<string | null>(null);
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 export function Header() {
-  startLlmPoll();
+  useEffect(() => {
+    startLlmPoll();
+    return () => {
+      stopLlmPoll();
+    };
+  }, []);
+
   const is3d = viewMode.value === "3d";
   const llm = llmLoaded.value;
   const modelName = llmModelId.value?.split("/").pop() ?? "LLM";
@@ -93,7 +99,7 @@ export function Header() {
           }
           onClick={llm ? () => void handleUnloadLlm() : undefined}
         >
-          {llm ? `${modelName} ✕` : "LLM"}
+          {llm ? `${modelName} x` : "LLM"}
         </button>
         <button
           disabled={graphData.value.points.length === 0}
@@ -112,8 +118,7 @@ function onSessionChange(e: Event): void {
 }
 
 async function onRefresh(): Promise<void> {
-  await refreshSessions();
-  void loadPreview();
+  await loadPreview();
 }
 
 async function refreshLlmStatus(): Promise<void> {

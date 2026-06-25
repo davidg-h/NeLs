@@ -1,11 +1,11 @@
 import { Fragment } from "preact";
-import { activeSession, datasetMeta } from "../state/session.js";
+import { activeSession } from "../state/session.js";
 import { graphData } from "../state/graph.js";
 import { selectedIds } from "../state/selection.js";
 
 export function SessionCard() {
   const sess = activeSession.value;
-  const meta = datasetMeta.value;
+  const meta = sess?.graph_snapshot?.source ?? null;
   const revision = sess?.ui_state?.state_revision ?? "-";
 
   const rows: [string, string][] = [];
@@ -15,8 +15,11 @@ export function SessionCard() {
     if (meta?.dataset_name) rows.push(["dataset", meta.dataset_name]);
     if (meta?.source_dataset) rows.push(["source", meta.source_dataset]);
     if (meta?.encoder) rows.push(["encoder", meta.encoder]);
-    if (meta?.sample_count != null) {
-      rows.push(["samples", String(meta.sample_count)]);
+    if (meta?.total_sample_count != null) {
+      rows.push(["dataset total", String(meta.total_sample_count)]);
+    }
+    if (meta?.loaded_sample_count != null) {
+      rows.push(["loaded", String(meta.loaded_sample_count)]);
     }
     if (meta?.embedding_dim != null) {
       rows.push(["dim", String(meta.embedding_dim)]);

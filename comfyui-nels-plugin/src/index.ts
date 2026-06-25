@@ -18,17 +18,7 @@ function openNelsGraphPanel(): void {
   const command = app.extensionManager?.command;
   if (command?.execute) {
     command.execute("Workspace.ToggleBottomPanelTab.nels-graph-panel");
-    return;
   }
-  // Fallback: click the tab button by text content
-  const clickable = [
-    ...document.querySelectorAll("button, [role='tab'], .p-tab, .tab"),
-  ] as HTMLElement[];
-  const tab = clickable.find((el) => {
-    const text = (el.textContent ?? "").trim().toLowerCase();
-    return text === "nels graph" || text === "nels graph panel";
-  });
-  tab?.click();
 }
 
 app.registerExtension({

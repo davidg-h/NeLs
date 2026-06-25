@@ -144,7 +144,7 @@ function buildAxisVisual(
   divA.style.cssText =
     `position:absolute;pointer-events:none;display:none;color:${colors.labelStartColor};` +
     "font:10px ui-monospace,monospace;white-space:nowrap;text-shadow:0 0 4px #000;z-index:8;";
-  divA.textContent = "← " + labelA;
+  divA.textContent = "<- " + labelA;
   container.appendChild(divA);
 
   const divB = document.createElement("div");

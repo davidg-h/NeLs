@@ -52,7 +52,7 @@ export const trajectoryOverlayVisible = signal<boolean>(false);
 export const trajectoryHighlightActive = signal<boolean>(false);
 export const axisColorMode = signal<"a" | "b">("a");
 
-/** Collect all point IDs referenced by an operation result (source, neighbors, selection) */
+/** Collect all point IDs referenced by an operation result */
 export function extractResultPointIds(
   result: NelsOperationResult | null,
 ): string[] {
@@ -78,12 +78,12 @@ export function setReconLiveState(s: ReconLiveState | null): void {
   reconLiveState.value = s;
 }
 
-// Normalized [0,1] scores for secondary (orthogonal) axis -> populated only when backend returns axis_b_projection
+// Normalized [0,1] scores for the secondary orthogonal axis
 export const axisBScoreMap = computed<Map<string, number>>(() =>
   normalizeProjectionScores(operationResult.value?.axis_b_projection),
 );
 
-// Normalized [0,1] projection scores by point id -> populated only for axis_projection
+// Normalized [0,1] projection scores by point id for axis_projection
 export const axisScoreMap = computed<Map<string, number>>(() =>
   normalizeProjectionScores(operationResult.value?.axis_projection),
 );

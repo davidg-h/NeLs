@@ -16,6 +16,7 @@ import {
   axisPairColorRGB,
   C_DELTA_WALK_HEX,
   C_GHOST_HEX,
+  resolveSnapSourceId,
   rgbToHex,
 } from "../rendering_common.js";
 
@@ -204,19 +205,8 @@ function addGhostNodes(
     let x = ghostPt.coords_2d![0];
     let y = -ghostPt.coords_2d![1]; // Y-flip to match Sigma convention
 
-    if (snapEndpoints && !isVariant) {
-      const alpha = ghostPt.alpha;
-      let snapId: string | null = null;
-      // delta_walk: walk starts at C (index 2), alpha=1 is synthetic
-      if (alpha === 0.0)
-        snapId =
-          op === "delta_walk" ? sourcePointIds[2] : (sourcePointIds[0] ?? null);
-      else if (
-        alpha === 1.0 &&
-        op !== "delta_walk" &&
-        sourcePointIds.length >= 2
-      )
-        snapId = sourcePointIds[1];
+    if (snapEndpoints && !isVariant && op !== "axis_projection") {
+      const snapId = resolveSnapSourceId(ghostPt.alpha, op, sourcePointIds);
       if (snapId && sigmaGraph.hasNode(snapId)) {
         x = sigmaGraph.getNodeAttribute(snapId, "x") as number;
         y = sigmaGraph.getNodeAttribute(snapId, "y") as number;
