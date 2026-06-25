@@ -4,11 +4,10 @@ from typing import Any
 
 from ..core.dataset_io import resolve_dataset_path
 from ..core.dataset_ops import (
-    build_inline_records,
+    build_dataset_config,
     build_source_loader_meta,
-    finalize_dataset,
-    load_texts_from_source,
-    make_sample_record,
+    collect_prompt_records,
+    create_dataset_from_records,
     normalize_source_inputs,
 )
 from ..core.defaults import (
@@ -17,14 +16,11 @@ from ..core.defaults import (
     CLUSTER_UMAP_DIMS,
     CLUSTER_UMAP_NEIGHBORS,
     DEFAULT_DATASETS,
-    ENCODE_BATCH_SIZE,
     UMAP_MIN_DIST,
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
-    UMAP_SUBSET_FIT_SIZE,
-    UMAP_SUBSET_THRESHOLD,
 )
-from ..core.encoding_ops import encode_prompts_pooled
+from ._dataset_source_inputs import source_input_fields
 
 
 class NelsPromptEncoder:
@@ -52,20 +48,6 @@ class NelsPromptEncoder:
             },
             "optional": {
                 "clip": ("CLIP", {"tooltip": "Connect a Load CLIP node."}),
-                "batch_size": (
-                    "INT",
-                    {
-                        "default": ENCODE_BATCH_SIZE,
-                        "min": 1,
-                        "max": 512,
-                        "step": 1,
-                        "tooltip": f"Prompts per CLIP encoding batch (default: {ENCODE_BATCH_SIZE}). Lower = less VRAM.",
-                    },
-                ),
-                "input_source": (
-                    ["file", "huggingface"],
-                    {"tooltip": "Primary prompt source: a .txt file or a HuggingFace dataset."},
-                ),
                 "prompt_text": (
                     "STRING",
                     {
@@ -74,80 +56,7 @@ class NelsPromptEncoder:
                         "tooltip": "Additional prompts (one per line). Prepended to the source above.",
                     },
                 ),
-                "file_path": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "tooltip": "Path to a .txt file with one prompt per line (input_source='file').",
-                    },
-                ),
-                "hf_dataset_id": (
-                    "STRING",
-                    {
-                        "default": "Gustavosta/Stable-Diffusion-Prompts",
-                        "tooltip": "HuggingFace dataset ID (input_source='huggingface').",
-                    },
-                ),
-                "hf_column": (
-                    "STRING",
-                    {
-                        "default": "Prompt",
-                        "tooltip": "Column name in the HuggingFace dataset.",
-                    },
-                ),
-                "hf_split": (
-                    "STRING",
-                    {
-                        "default": "train",
-                        "tooltip": "HuggingFace dataset split to load (input_source='huggingface').",
-                    },
-                ),
-                "hf_config": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "tooltip": "HuggingFace dataset config/name (e.g. '2m_text_only' for DiffusionDB).",
-                    },
-                ),
-                "text_template": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "tooltip": "Optional template. Use {text} for column value, or {column_name} for other columns. Example: 'A photo of a {text}'.",
-                    },
-                ),
-                "metadata_columns": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "tooltip": "Comma-separated HF column names to store in each sample record.",
-                    },
-                ),
-                "dedupe": (
-                    "BOOLEAN",
-                    {
-                        "default": False,
-                        "tooltip": "Remove duplicate texts before encoding.",
-                    },
-                ),
-                "min_words": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 10000,
-                        "tooltip": "Drop texts with fewer words. 0 = no minimum.",
-                    },
-                ),
-                "max_words": (
-                    "INT",
-                    {
-                        "default": 0,
-                        "min": 0,
-                        "max": 10000,
-                        "tooltip": "Drop texts with more words. 0 = no maximum.",
-                    },
-                ),
+                **source_input_fields(hf_dataset_id_default="Gustavosta/Stable-Diffusion-Prompts"),
                 "save_path": _SAVE_PATH_INPUT,
                 **_UMAP_INPUTS,
                 **_CLUSTER_INPUTS,
@@ -165,7 +74,6 @@ class NelsPromptEncoder:
         dataset_name: str,
         encode_limit: int,
         clip: Any = None,
-        batch_size: int = ENCODE_BATCH_SIZE,
         input_source: str = "file",
         prompt_text: str = "",
         file_path: str = "",
@@ -182,7 +90,6 @@ class NelsPromptEncoder:
         umap_n_neighbors: int = UMAP_N_NEIGHBORS,
         umap_min_dist: float = UMAP_MIN_DIST,
         umap_seed: int = UMAP_SEED,
-        umap_subset_size: int = 0,
         cluster_umap_dims: int = CLUSTER_UMAP_DIMS,
         cluster_umap_neighbors: int = CLUSTER_UMAP_NEIGHBORS,
         cluster_min_size: int = CLUSTER_MIN_SIZE,
@@ -192,48 +99,28 @@ class NelsPromptEncoder:
             raise ValueError("NELS Prompt Encoder: a CLIP node must be connected.")
 
         tmpl, meta_cols, cfg = normalize_source_inputs(text_template, metadata_columns, hf_config)
-
-        extra_records = build_inline_records(prompt_text, tmpl)
-        source_limit = max(0, encode_limit - len(extra_records)) if encode_limit > 0 else 0
-
-        if input_source == "file":
-            source_records, source_id = load_texts_from_source(
-                file_path,
-                limit=source_limit,
-                text_template=tmpl,
-                dedupe=dedupe,
-                min_words=min_words,
-                max_words=max_words,
-            )
-        else:
-            source_records, source_id = load_texts_from_source(
-                hf_dataset_id,
-                column=hf_column,
-                limit=source_limit,
-                hf_split=hf_split,
-                hf_config=cfg,
-                text_template=tmpl,
-                metadata_columns=meta_cols,
-                dedupe=dedupe,
-                min_words=min_words,
-                max_words=max_words,
-            )
-
-        records = extra_records + source_records
-        if encode_limit > 0:
-            records = records[:encode_limit]
+        records, source_id = collect_prompt_records(
+            source_input=file_path if input_source == "file" else hf_dataset_id,
+            input_source=input_source,
+            prompt_text=prompt_text,
+            encode_limit=encode_limit,
+            hf_column=hf_column,
+            hf_split=hf_split,
+            hf_config=cfg,
+            text_template=tmpl,
+            metadata_columns=meta_cols,
+            dedupe=dedupe,
+            min_words=min_words,
+            max_words=max_words,
+        )
 
         if not records:
             raise ValueError("NELS Prompt Encoder: no prompts to encode.")
 
-        prompts = [r["text"] for r in records]
-        vectors = encode_prompts_pooled(clip, prompts, batch_size=batch_size)
-        samples = [make_sample_record(f"pt_{i:06d}", r, source_id) for i, r in enumerate(records)]
         umap_params = {
             "n_neighbors": umap_n_neighbors,
             "min_dist": umap_min_dist,
             "random_state": umap_seed,
-            "subset_size": umap_subset_size if umap_subset_size > 0 else None,
         }
         cluster_params = {
             "umap_dims": cluster_umap_dims,
@@ -241,14 +128,12 @@ class NelsPromptEncoder:
             "min_size": cluster_min_size,
             "min_samples": cluster_min_samples,
         }
-        config = {
-            "name": dataset_name,
-            "type": "prompt_embedding",
-            "encoder": "comfyui_clip",
-            "source_dataset": source_id,
-            "batch_size": batch_size,
-            "umap_params": umap_params,
-            "source_loader": build_source_loader_meta(
+        config = build_dataset_config(
+            name=dataset_name,
+            encoder="comfyui_clip",
+            source_id=source_id,
+            umap_params=umap_params,
+            source_loader=build_source_loader_meta(
                 source_input=file_path if input_source == "file" else hf_dataset_id,
                 hf_config=cfg,
                 hf_split=hf_split,
@@ -259,21 +144,21 @@ class NelsPromptEncoder:
                 min_words=min_words,
                 max_words=max_words,
             ),
-        }
+        )
 
         root = save_path.strip() or str(DEFAULT_DATASETS)
         output_path = resolve_dataset_path(dataset_name.strip(), datasets_root=root)
 
-        return (
-            finalize_dataset(
-                vectors,
-                samples,
-                config,
-                output_path,
-                umap_params=umap_params,
-                cluster_params=cluster_params,
-            ),
+        saved_path, _vectors = create_dataset_from_records(
+            clip,
+            records,
+            source_id,
+            config=config,
+            output_path=output_path,
+            umap_params=umap_params,
+            cluster_params=cluster_params,
         )
+        return (saved_path,)
 
 
 NODE_CLASS_MAPPINGS = {"nels_PromptEncoder": NelsPromptEncoder}
@@ -311,16 +196,6 @@ _UMAP_INPUTS = {
             "max": 2147483647,
             "step": 1,
             "tooltip": "Random seed for reproducible UMAP layout.",
-        },
-    ),
-    "umap_subset_size": (
-        "INT",
-        {
-            "default": 0,
-            "min": 0,
-            "max": 1_000_000,
-            "step": 1000,
-            "tooltip": f"Points to fit UMAP on when N > {UMAP_SUBSET_THRESHOLD:,}. 0 = use default ({UMAP_SUBSET_FIT_SIZE:,}).",
         },
     ),
 }

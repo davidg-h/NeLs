@@ -1,5 +1,7 @@
-"""NELS Dataset Loader - loads a pre-encoded dataset from disk into the session pipeline"""
+"""NELS Dataset Loader - load a pre-encoded dataset from disk into the session pipeline"""
 
+import hashlib
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -37,19 +39,13 @@ def preview_dataset_source(
         "random_seed": random_seed,
     }
     store = get_store()
-    cached = store.get_cached_source(config)
-    if cached is None:
-        embedding_set, snapshot = _load_and_build(
-            session_id=session_id,
-            dataset_path=dataset_path,
-            load_mode=load_mode,
-            count=count,
-            window_start=window_start,
-            random_seed=random_seed,
-        )
-        store.set_cached_source(config, embedding_set, snapshot)
-    else:
-        embedding_set, snapshot = cached
+    cache_config = _cache_config(config)
+    embedding_set, snapshot, from_cache = _get_cached_or_build_source(
+        config,
+        cache_config=cache_config,
+        session_id=session_id,
+    )
+    if from_cache:
         snapshot = {
             **snapshot,
             "session_id": str(session_id or "default"),
@@ -122,7 +118,6 @@ class NelsDatasetLoader:
         window_start: int = 0,
         random_seed: int = UMAP_SEED,
     ):
-        store = get_store()
         config = {
             "dataset_path": str(dataset_path).strip(),
             "load_mode": str(load_mode),
@@ -130,28 +125,21 @@ class NelsDatasetLoader:
             "window_start": int(window_start),
             "random_seed": int(random_seed),
         }
-        cached = store.get_cached_source(config)
-        if cached is None:
-            embedding_set, snapshot = _load_and_build(
-                session_id="loader",
-                dataset_path=config["dataset_path"],
-                load_mode=config["load_mode"],
-                count=config["count"],
-                window_start=config["window_start"],
-                random_seed=config["random_seed"],
-            )
-            store.set_cached_source(config, embedding_set, snapshot)
-        else:
-            embedding_set, snapshot = cached
+        cache_config = _cache_config(config)
+        embedding_set, snapshot, _from_cache = _get_cached_or_build_source(
+            config,
+            cache_config=cache_config,
+            session_id="loader",
+        )
 
-        # Inject the full loader config so NelsSession can sync it to the store
+        # Inject full loader config so NelsSession can sync it to the store
         embedding_set["_source_config"] = config
 
         info = {
             "node": "NELS Dataset Loader",
             "dataset": embedding_set.get("metadata", {}),
             "config": config,
-            "source_config_hash": source_config_hash(config),
+            "source_config_hash": source_config_hash(cache_config),
             "graph_snapshot": snapshot,
         }
         return (embedding_set, json_dumps(info))
@@ -198,7 +186,8 @@ def _build_embedding_set(
         points,
         metadata={
             "dataset_name": meta.get("name", ""),
-            "sample_count": len(indices),
+            "loaded_sample_count": len(indices),
+            "total_sample_count": meta.get("sample_count", len(indices)),
             "embedding_dim": int(pooled.shape[1]) if pooled.ndim > 1 else int(pooled.shape[0]),
             "encoder": meta.get("encoder", ""),
             "source_dataset": meta.get("source_dataset", ""),
@@ -216,7 +205,7 @@ def _build_loader_snapshot(
     dataset: dict[str, Any],
     indices: list[int],
 ) -> dict[str, Any]:
-    """Build graph snapshot from pre-computed projections; raises if npy files are missing"""
+    """Build graph snapshot from pre-computed projections, raise if npy files are missing"""
     store = get_store()
     points = embedding_set["points"]
 
@@ -244,10 +233,8 @@ def _build_loader_snapshot(
         snapshot_points,
         session_id=session_id,
         config=config,
-        config_hash=source_config_hash(config),
         source_meta=embedding_set["metadata"],
         state_revision=store.get_revision(session_id),
-        projection_method="umap",
     )
 
 
@@ -327,3 +314,62 @@ def _load_and_build(
         indices=indices,
     )
     return embedding_set, snapshot
+
+
+def _get_cached_or_build_source(
+    config: dict[str, Any],
+    *,
+    cache_config: dict[str, Any],
+    session_id: str,
+) -> tuple[dict[str, Any], dict[str, Any], bool]:
+    """Get cached loader output or build and cache it"""
+    store = get_store()
+    cached = store.get_cached_source(cache_config)
+    if cached is not None:
+        embedding_set, snapshot = cached
+        return embedding_set, snapshot, True
+
+    embedding_set, snapshot = _load_and_build(
+        session_id=session_id,
+        dataset_path=config["dataset_path"],
+        load_mode=config["load_mode"],
+        count=config["count"],
+        window_start=config["window_start"],
+        random_seed=config["random_seed"],
+    )
+    store.set_cached_source(cache_config, embedding_set, snapshot)
+    return embedding_set, snapshot, False
+
+
+def _cache_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Normalize loader config and include dataset file state for cache invalidation"""
+    if not str(config.get("dataset_path", "")).strip():
+        return dict(config)
+
+    resolved = resolve_dataset_path(config["dataset_path"], datasets_root=DEFAULT_DATASETS)
+    return {
+        **config,
+        "dataset_path": str(resolved),
+        "dataset_version": _dataset_version(resolved),
+    }
+
+
+def _dataset_version(dataset_path: Path) -> str:
+    """Hash sizes and mtimes of dataset files that affect loader output"""
+    tracked = (
+        "dataset.json",
+        "samples.jsonl",
+        "compact_embeddings.npy",
+        "umap_2d.npy",
+        "umap_3d.npy",
+    )
+    parts: list[str] = []
+    for name in tracked:
+        path = dataset_path / name
+        if not path.exists():
+            parts.append(f"{name}:missing")
+            continue
+        stat = path.stat()
+        parts.append(f"{name}:{stat.st_size}:{stat.st_mtime_ns}")
+    stable = "|".join(parts).encode("utf-8")
+    return hashlib.sha256(stable).hexdigest()[:16]

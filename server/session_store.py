@@ -5,8 +5,6 @@ import re
 import threading
 from typing import Any
 
-import numpy as np
-
 from ..core.session_contracts import (
     default_ui_state,
     normalize_ui_state,
@@ -20,7 +18,6 @@ class NelsSessionStore:
         self._lock = threading.RLock()
         self._sessions: dict[str, dict[str, Any]] = {}
         self._source_cache: dict[str, dict[str, Any]] = {}
-        self._axis_vocab_cache: dict[str, dict[str, Any]] = {}
         self._sequence = 0
 
     def get_session(self, session_id: str = "default") -> dict[str, Any]:
@@ -42,7 +39,6 @@ class NelsSessionStore:
                     "label": session.get("label") or session["session_id"],
                     "session_node_id": session.get("session_node_id"),
                     "state_revision": session["ui_state"].get("state_revision", 0),
-                    "updated_at": session.get("updated_at"),
                 }
                 for session in self._sessions.values()
                 if session.get("active_session_node") and session.get("session_node_id") is not None
@@ -65,7 +61,6 @@ class NelsSessionStore:
             active_session_node_ids.add(session_node_key)
 
         with self._lock:
-            changed_at = now_ms()
             for session in self._sessions.values():
                 session_node_key = session.get("session_node_id")
                 if (
@@ -73,7 +68,6 @@ class NelsSessionStore:
                     and str(session_node_key) not in active_session_node_ids
                 ):
                     session["active_session_node"] = False
-                    session["updated_at"] = changed_at
 
         return self.list_sessions()
 
@@ -102,7 +96,6 @@ class NelsSessionStore:
             session["session_node_id"] = None if session_node_id is None else str(session_node_id)
             session["active_session_node"] = session_node_id is not None
             session["ui_state"]["session_id"] = session_id
-            session["updated_at"] = now_ms()
         return session_id
 
     def sync_source_config(self, session_id: str, config: dict[str, Any]) -> dict[str, Any]:
@@ -114,7 +107,6 @@ class NelsSessionStore:
             merged = copy.deepcopy(session["ui_state"])
             merged["session_id"] = session_key
             session["ui_state"] = normalize_ui_state(merged, session_id=session_key)
-            session["updated_at"] = now_ms()
             return copy.deepcopy(session["ui_state"])
 
     def get_cached_source(
@@ -143,38 +135,6 @@ class NelsSessionStore:
             self._source_cache[cache_key] = {
                 "embedding_set": copy.deepcopy(embedding_set),
                 "snapshot": copy.deepcopy(snapshot),
-                "updated_at": now_ms(),
-            }
-        return cache_key
-
-    def get_cached_axis_vocab(
-        self, config: dict[str, Any]
-    ) -> tuple[list[str], np.ndarray] | None:
-        """Return cached (terms, embeddings) mined from the loaded sample for the given source config
-
-        Same cache key as get_cached_source - the candidate vocabulary only depends on which
-        sample is loaded, not on which axis the user is currently projecting
-        """
-        cache_key = source_config_hash(config)
-        with self._lock:
-            cached = self._axis_vocab_cache.get(cache_key)
-            if cached is None:
-                return None
-            return list(cached["terms"]), cached["embeddings"].copy()
-
-    def set_cached_axis_vocab(
-        self,
-        config: dict[str, Any],
-        terms: list[str],
-        embeddings: np.ndarray,
-    ) -> str:
-        """Store (terms, embeddings) in the axis vocab cache keyed by config hash"""
-        cache_key = source_config_hash(config)
-        with self._lock:
-            self._axis_vocab_cache[cache_key] = {
-                "terms": list(terms),
-                "embeddings": embeddings.copy(),
-                "updated_at": now_ms(),
             }
         return cache_key
 
@@ -191,7 +151,6 @@ class NelsSessionStore:
                 session_id=session_key,
                 increment_revision=True,
             )
-            session["updated_at"] = now_ms()
             stored = self._append_event_locked(
                 session,
                 {
@@ -228,7 +187,6 @@ class NelsSessionStore:
                 session["graph_snapshot"] = copy.deepcopy(payload)
             elif event_type == "operation_result":
                 session["operation_result"] = copy.deepcopy(payload)
-            session["updated_at"] = now_ms()
         self._broadcast(stored)
         return stored
 
@@ -266,7 +224,7 @@ class NelsSessionStore:
         *,
         run_id: str | None = None,
         state_revision: int | None = None,
-        node_name: str = "NELS Data Source Preview",
+        node_name: str,
         message: str | None = None,
     ) -> dict[str, Any]:
         """Wrapper for source/graph snapshot events"""
@@ -317,8 +275,11 @@ class NelsSessionStore:
             from server import PromptServer
 
             PromptServer.instance.send_sync("nels.session_event", event)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(
+                "[nels] session event broadcast failed "
+                f"(session={event.get('session_id')!r}, event_type={event.get('event_type')!r}): {exc}"
+            )
 
     @staticmethod
     def _slug(value: str) -> str:
@@ -336,8 +297,6 @@ class NelsSessionStore:
             "graph_snapshot": None,
             "operation_result": None,
             "events": [],
-            "created_at": now_ms(),
-            "updated_at": now_ms(),
         }
 
 
