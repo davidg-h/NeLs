@@ -24,7 +24,8 @@ export interface NelsSourceConfig {
 
 export interface NelsEmbeddingMeta {
   dataset_name?: string;
-  sample_count?: number;
+  loaded_sample_count?: number;
+  total_sample_count?: number;
   embedding_dim?: number;
   encoder?: string;
   source_dataset?: string;
@@ -121,7 +122,6 @@ export interface NelsOperationResult {
   selection?: { selected_point_ids: string[] };
   trajectory?: TrajectoryStepTr[];
   trajectory_overlay?: TrajectoryOverlayPoint[];
-  trajectory_overlay_warning?: string;
   axis_projection?: AxisProjectionScore[];
   axis_label?: string;
   axis_keywords_a?: string | null;
@@ -132,6 +132,11 @@ export interface NelsOperationResult {
   axis_b_keywords_b?: string | null;
   axis_b_variance?: number;
   inverse_project?: Array<{ id: string; label: string; score: number }>;
+  probe_cluster?: {
+    cluster_id: number | null;
+    is_noise: boolean;
+    membership_strength: number;
+  };
   text_reconstruction?: {
     text: string;
     cosine_sim: number;

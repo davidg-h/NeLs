@@ -7,7 +7,7 @@ import {
   trajectoryHighlightActive,
 } from "../../state/operation.js";
 import { activeClusterId } from "../../ui/ClusterLegend.js";
-import { hslToHex, dimHex, hexToRgb, mixHex } from "../colors.js";
+import { dimHex, hexToRgb, mixHex } from "../colors.js";
 import {
   C_SELECTED,
   C_EMPHASIZED,
@@ -16,6 +16,7 @@ import {
   axisScoreColorRGB,
   axisBScoreColorRGB,
   computeNodeFlags,
+  pulseHighlightHex,
   rgbToHex,
 } from "../rendering_common.js";
 import { drawTextPill } from "./canvas_overlay.js";
@@ -149,7 +150,7 @@ export function createNodeReducer(
 
     if (pulsing) {
       res.size = ((res.size as number) || baseSize) * (1 + pulseLife * 0.65);
-      res.color = hslToHex(217, 91, Math.round(45 + pulseLife * 20));
+      res.color = pulseHighlightHex(pulseLife);
       res.zIndex = 4;
     }
     return res;

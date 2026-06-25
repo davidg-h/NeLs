@@ -386,10 +386,10 @@ export function injectStyle(): void {
       padding: 2px 0;
     }
     .nels-selection-help > summary::before {
-      content: "▸ ";
+      content: "> ";
     }
     .nels-selection-help[open] > summary::before {
-      content: "▾ ";
+      content: "v ";
     }
     .nels-sel-hint {
       padding: 4px 8px;
@@ -485,14 +485,6 @@ export function injectStyle(): void {
       border-color: rgba(251, 146, 60, 0.6);
       color: #fb923c;
       background: rgba(251, 146, 60, 0.08);
-    }
-    .nels-overlay-warning {
-      font-size: 10px;
-      color: #fb7185;
-      background: rgba(251, 113, 133, 0.08);
-      border: 1px solid rgba(251, 113, 133, 0.2);
-      border-radius: 3px;
-      padding: 3px 6px;
     }
     .nels-trajectory-scroll { max-height: 180px; overflow-y: auto; scrollbar-gutter: stable; }
     .nels-trajectory-table {

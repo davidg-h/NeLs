@@ -4,7 +4,6 @@ import type {
   NelsSession,
   NelsUiState,
   NelsGraphSnapshot,
-  NelsEmbeddingMeta,
 } from "./types.js";
 
 // POST /nels/api/canvas-sessions/sync
@@ -34,7 +33,6 @@ export function pushUiState(
 export function requestSourcePreview(sessionId: string): Promise<{
   session: NelsSession;
   graph_snapshot: NelsGraphSnapshot;
-  embedding_meta: NelsEmbeddingMeta;
 }> {
   return postJson(
     `/nels/api/session/${encodeURIComponent(sessionId)}/source-preview`,

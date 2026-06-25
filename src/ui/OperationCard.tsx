@@ -30,9 +30,9 @@ const OPERATION_DESCRIPTIONS: Record<string, string> = {
   slerp:
     "Spherically interpolate between two points along the embedding hypersphere - preserves norm.",
   delta_walk:
-    "Select A (direction from), B (direction to), C (walk start) - extracts A→B direction and walks from C. Supports extrapolation (alpha < 0 or > 1).",
+    "Select A (direction from), B (direction to), C (walk start) - extracts A->B direction and walks from C. Supports extrapolation (alpha < 0 or > 1).",
   axis_projection:
-    "Project all dataset points onto the semantic axis A→B. The axis direction is computed from the centroid of Group A vs Group B. Points are colored blue (A-side) to red (B-side).",
+    "Project all dataset points onto the semantic axis A->B. The axis direction is computed from the centroid of Group A vs Group B. Points are colored blue (A-side) to red (B-side).",
   consistency_check:
     "Select 1 seed point and run to test if text variants land close together in embedding space. Ghost nodes appear at variant positions. Lower SC score = tighter semantic cluster.",
   latent_probe:
@@ -192,7 +192,7 @@ export function OperationCard() {
                     <span class="nels-delta-role-badge">{role}</span>
                     <span class="nels-delta-role-label" title={label(ids[i])}>
                       {label(ids[i]).slice(0, 40)}
-                      {label(ids[i]).length > 40 ? "…" : ""}
+                      {label(ids[i]).length > 40 ? "..." : ""}
                     </span>
                     <span class="nels-delta-role-desc">{desc}</span>
                   </div>
@@ -238,7 +238,7 @@ export function OperationCard() {
                 class="nels-alpha-preset-btn nels-alpha-sort-btn"
                 onClick={sortAlphas}
               >
-                Sort ↑
+                Sort up
               </button>
             </div>
             <div class="nels-alpha-list">
@@ -264,7 +264,7 @@ export function OperationCard() {
                     class="nels-alpha-remove"
                     onClick={() => removeAlpha(i)}
                   >
-                    ×
+                    x
                   </button>
                 </div>
               ))}
@@ -401,14 +401,14 @@ export function OperationCard() {
                 <div class="nels-axis-no-b">
                   No axis 2 available
                   {operationResult.value.axis_b_variance != null
-                    ? ` - after subtracting each point's A→B projection (residuals), PCA on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of residual variance (min. 10%). The dataset's semantic structure is mostly one-dimensional along your A→B axis.`
+                    ? ` - after subtracting each point's A->B projection (residuals), PCA on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of residual variance (min. 5%). The dataset's semantic structure is mostly one-dimensional along your A->B axis.`
                     : " - no independent orthogonal direction found in the residuals."}
                 </div>
               )
             )}
 
             <div class="nels-alpha-info" style="margin-top:4px">
-              {`Trajectory: ${alphas.length} step${alphas.length !== 1 ? "s" : ""} × `}
+              {`Trajectory: ${alphas.length} step${alphas.length !== 1 ? "s" : ""} x `}
               {operationResult.value?.axis_b_projection ? "2 axes" : "1 axis"}
               {` = ${alphas.length * (operationResult.value?.axis_b_projection ? 2 : 1)} image${alphas.length * (operationResult.value?.axis_b_projection ? 2 : 1) !== 1 ? "s" : ""}`}
               {operationResult.value?.axis_b_projection
@@ -509,7 +509,7 @@ function LatentProbeControls({ cfg }: { cfg: OperationConfig }) {
             schedulePushState();
           }}
         >
-          {cfg.probe_place_mode ? "Placing probe…" : "Place probe"}
+          {cfg.probe_place_mode ? "Placing probe..." : "Place probe"}
         </button>
         {hasProbe && (
           <button

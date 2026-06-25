@@ -115,7 +115,7 @@ export function ClusterLegend() {
         >
           <span>Clusters</span>
           <span class="nels-cluster-toggle-icon">
-            {isCollapsed ? "▶" : "▼"}
+            {isCollapsed ? "+" : "-"}
           </span>
         </button>
         <button
@@ -126,7 +126,7 @@ export function ClusterLegend() {
             showClusterHulls.value = !showClusterHulls.value;
           }}
         >
-          ⬡ Hulls
+          Hulls
         </button>
       </div>
       {!isCollapsed && (

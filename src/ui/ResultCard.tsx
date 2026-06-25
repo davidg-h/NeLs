@@ -16,6 +16,7 @@ import {
   highlightGhostStepOnCanvas,
 } from "../state/rendererBridge.js";
 import { graphData } from "../state/graph.js";
+import { clusterColor } from "../graph/colors.js";
 import type {
   AxisProjectionScore,
   ConsistencyVariant,
@@ -28,7 +29,6 @@ import type {
 export function ResultCard() {
   const nr = (operationResult.value ?? {}) as NelsOperationResult;
   const trajectory = nr.trajectory;
-  const warning = nr.trajectory_overlay_warning;
   const operation = nr.operation;
   const useAxisB =
     axisColorMode.value === "b" && !!nr.axis_b_projection?.length;
@@ -36,6 +36,7 @@ export function ResultCard() {
   const rawLabel = useAxisB ? nr.axis_b_label : nr.axis_label;
   const axisLabel = rawLabel ? rawLabel.split("\n")[0].slice(0, 40) : undefined;
   const inverseHits = nr.inverse_project;
+  const probeCluster = nr.probe_cluster;
   const textRecon = nr.text_reconstruction;
   const consistencyVariants = nr.consistency_variants;
   const neighborCount = nr.neighbors?.length;
@@ -60,7 +61,7 @@ export function ResultCard() {
       </dl>
       {operation === "delta_walk" && <DeltaWalkSourceLane result={nr} />}
       {trajectory && trajectory.length > 0 && (
-        <TrajectoryLane steps={trajectory} warning={warning} />
+        <TrajectoryLane steps={trajectory} />
       )}
       {hasAxisTrajectoryOverlay && <AxisTrajectoryHighlightLane />}
       {axisScores && axisScores.length > 0 && (
@@ -74,6 +75,16 @@ export function ResultCard() {
       {inverseHits && inverseHits.length > 0 && (
         <div class="nels-axis-lane">
           <div class="nels-axis-header">Nearest prompts at probe position</div>
+          {probeCluster && (
+            <div style="font-size:10px;color:#64849a;margin-bottom:4px">
+              <span
+                style={`display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;background:${clusterColor(probeCluster.cluster_id)}`}
+              />
+              {probeCluster.is_noise
+                ? "cluster: noise"
+                : `cluster: ${probeCluster.cluster_id} (strength ${probeCluster.membership_strength.toFixed(2)})`}
+            </div>
+          )}
           {inverseHits.slice(0, 5).map((h) => (
             <button
               key={h.id}
@@ -81,7 +92,7 @@ export function ResultCard() {
               onClick={() => onClickNearest(h.id)}
             >
               {h.label.slice(0, 60)}
-              {h.label.length > 60 ? "…" : ""}
+              {h.label.length > 60 ? "..." : ""}
               <span class="nels-nearest-dist"> ({h.score.toFixed(3)})</span>
             </button>
           ))}
@@ -135,13 +146,7 @@ function NearestCell({ topK }: { topK: NearestSample[] | undefined }) {
   );
 }
 
-function TrajectoryLane({
-  steps,
-  warning,
-}: {
-  steps: TrajectoryStepTr[];
-  warning?: string;
-}) {
+function TrajectoryLane({ steps }: { steps: TrajectoryStepTr[] }) {
   const showOverlay = trajectoryOverlayVisible.value;
   const snapEp = operationConfig.value.snap_endpoints;
   const op = operationResult.value?.operation;
@@ -165,7 +170,6 @@ function TrajectoryLane({
           {showOverlay ? "Hide on canvas" : "Show on canvas"}
         </button>
       </div>
-      {warning && <div class="nels-overlay-warning">{warning}</div>}
       <div class="nels-trajectory-scroll">
         <table class="nels-trajectory-table">
           <thead>
@@ -311,7 +315,7 @@ function AxisProjectionSide({
             style={`width:${((Math.abs(s.projection_score) / maxAbs) * 60).toFixed(1)}px;background:${color}`}
           />
           {s.label.slice(0, 50)}
-          {s.label.length > 50 ? "…" : ""}
+          {s.label.length > 50 ? "..." : ""}
           <span class="nels-nearest-dist">
             {" "}
             ({s.projection_score.toFixed(3)})
@@ -328,7 +332,7 @@ function ReconLiveLane() {
   return (
     <div class="nels-axis-lane nels-recon-live">
       <div class="nels-axis-header">
-        Reconstructing… step {live.step} / {live.maxStep}
+        Reconstructing... step {live.step} / {live.maxStep}
       </div>
       <div class="nels-recon-live-score">
         <span>Score</span>
@@ -344,7 +348,7 @@ function ReconLiveLane() {
       </div>
       <div class="nels-recon-live-text">
         {live.bestText.slice(0, 120)}
-        {live.bestText.length > 120 ? "…" : ""}
+        {live.bestText.length > 120 ? "..." : ""}
       </div>
     </div>
   );
@@ -374,7 +378,7 @@ function InitialContextGroup({
           >
             <span class="nels-ctx-dot" style={`background:${color}`} />
             {item.label.slice(0, 60)}
-            {item.label.length > 60 ? "…" : ""}
+            {item.label.length > 60 ? "..." : ""}
           </button>
         ))}
       </div>
@@ -449,7 +453,7 @@ function ConsistencyLane({ result }: { result: NelsOperationResult }) {
           }}
         >
           seed: {result.seed_prompt.slice(0, 60)}
-          {result.seed_prompt.length > 60 ? "…" : ""}
+          {result.seed_prompt.length > 60 ? "..." : ""}
         </button>
       )}
       <div class="nels-axis-col">
@@ -465,7 +469,7 @@ function ConsistencyLane({ result }: { result: NelsOperationResult }) {
               style={`width:${(v.cosine_sim * 60).toFixed(1)}px;background:#22c55e`}
             />
             {v.text.slice(0, 60)}
-            {v.text.length > 60 ? "…" : ""}
+            {v.text.length > 60 ? "..." : ""}
             <span class="nels-nearest-dist"> ({v.cosine_sim.toFixed(3)})</span>
           </button>
         ))}
@@ -500,7 +504,7 @@ function DeltaWalkSourceLane({ result }: { result: NelsOperationResult }) {
                 {badge}
               </span>
               {label.slice(0, 50)}
-              {label.length > 50 ? "…" : ""}
+              {label.length > 50 ? "..." : ""}
               <span class="nels-nearest-dist" style="color:#64849a">
                 {" "}
                 {desc}

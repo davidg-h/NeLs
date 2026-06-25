@@ -191,7 +191,7 @@ ${legend
       );
     if (pairs.length > 0) {
       const items = pairs
-        .map((p) => `<li>α=${p.alpha.toFixed(3)} → ${p.dist.toFixed(4)}</li>`)
+        .map((p) => `<li>a=${p.alpha.toFixed(3)} -> ${p.dist.toFixed(4)}</li>`)
         .join("\n");
       distSection = `\n<h2>Nearest Dataset Distance per Step</h2>\n<ul class="dist">\n${items}\n</ul>`;
     }
@@ -250,7 +250,7 @@ ${legend
 </head>
 <body>
   <h1>NELS Graph Snapshot</h1>
-  <p class="meta">${esc(ts)} · ${esc(label)} · ${pointCount} points · ${esc(mode.toUpperCase())}</p>
+  <p class="meta">${esc(ts)} | ${esc(label)} | ${pointCount} points | ${esc(mode.toUpperCase())}</p>
   ${viewportRow}
   ${sessionSection}${opSection}${distSection}
 </body>

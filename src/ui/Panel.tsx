@@ -107,7 +107,7 @@ export function Panel() {
           )}
           {pointCount > 0 && <ClusterLegend />}
           {animationEnabled.value && pointCount > 0 && (
-            <div class="nels-anim-badge">animate ON · positions not exact</div>
+            <div class="nels-anim-badge">animate ON - positions not exact</div>
           )}
           {pointCount === 0 && (
             <div class="nels-panel-empty">
@@ -137,7 +137,7 @@ export function Panel() {
       </div>
       <div class={`nels-panel-logs-view${isGraph ? " hidden" : ""}`}>
         <button class="nels-view-logs-btn" onClick={() => setView("graph")}>
-          ← Graph
+          &lt; Graph
         </button>
         <EventLog />
       </div>
@@ -201,9 +201,9 @@ function AxisLegendRow({
   return (
     <div class={className}>
       <div class="nels-axis-legend-row">
-        <span class="nels-axis-legend-side nels-axis-legend-a">← {labelA}</span>
+        <span class="nels-axis-legend-side nels-axis-legend-a">&lt;- {labelA}</span>
         <div class="nels-axis-legend-bar" />
-        <span class="nels-axis-legend-side nels-axis-legend-b">{labelB} →</span>
+        <span class="nels-axis-legend-side nels-axis-legend-b">{labelB} -&gt;</span>
       </div>
       {llmLabel && <div class="nels-axis-legend-llm">({llmLabel})</div>}
     </div>

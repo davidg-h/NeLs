@@ -16,6 +16,7 @@ import {
   C_GHOST_RGB,
   C_SELECTED_RGB,
   hexTo01,
+  resolveSnapSourceId,
 } from "../rendering_common.js";
 import {
   sharedCircleTexture,
@@ -112,14 +113,8 @@ export function rebuildGhostNodes(): void {
     ghostBaseColors[g * 3 + 1] = rgb[1];
     ghostBaseColors[g * 3 + 2] = rgb[2];
 
-    if (snapEp) {
-      const alpha = validPts[g].alpha;
-      let snapId: string | null = null;
-      const isDeltaWalk = result?.operation === "delta_walk";
-      if (alpha === 0.0)
-        snapId = isDeltaWalk ? sourceIds[2] : (sourceIds[0] ?? null);
-      else if (alpha === 1.0 && !isDeltaWalk && sourceIds.length >= 2)
-        snapId = sourceIds[1];
+    if (snapEp && result?.operation !== "axis_projection") {
+      const snapId = resolveSnapSourceId(validPts[g].alpha, result?.operation, sourceIds);
       if (snapId) {
         const anchorIdx = idxMap.get(snapId);
         if (anchorIdx !== undefined) ghostSnapLinks.set(g, anchorIdx);
