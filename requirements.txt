@@ -2,7 +2,7 @@
 --extra-index-url https://download.pytorch.org/whl/cu126
 numpy
 safetensors
-umap-learn
+umap-learn[parametric_umap]  # pulls tensorflow (CPU-only version) for Parametric UMAP
 scikit-learn
 hdbscan
 joblib
@@ -20,4 +20,5 @@ Pillow
 # HuggingFace (dataset loading + model downloads)
 huggingface_hub
 datasets
+pyarrow>=21.0.0,<24.0.0  # 24.0.0 crashes with "import torch" due to a bug in pyarrow 24.0.0
 

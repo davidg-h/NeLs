@@ -20,13 +20,5 @@ CLUSTER_UMAP_NEIGHBORS: int = 30
 CLUSTER_MIN_SIZE: int = 30
 CLUSTER_MIN_SAMPLES: int = 10
 
-# Subset UMAP fitting for large datasets
-UMAP_SUBSET_THRESHOLD: int = 100000  # gate: use subset fitting only when N > this
-UMAP_SUBSET_FIT_SIZE: int = 75000  # default subset size when user passes 0/None
-UMAP_SUBSET_MIN_PER_CLUSTER: int = 50  # guaranteed seats per cluster in stratified draw
-
-# Encoding
-ENCODE_BATCH_SIZE: int = 32
-
 # LLM inference
 DEFAULT_LLM_MODEL: str = "Qwen/Qwen2.5-7B-Instruct"

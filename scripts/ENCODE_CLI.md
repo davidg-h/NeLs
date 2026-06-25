@@ -2,8 +2,15 @@
 
 Standalone CLI for creating and extending NELS prompt datasets using ComfyUI model classes directly.  
 Using [comfyui models](https://huggingface.co/Comfy-Org/models) directly: loaded straight from `.safetensors` files.  
-Embeddings are **byte-for-byte identical** to those produced by the ComfyUI encoder nodes,  
+The saved compact embeddings are **byte-for-byte identical** to those produced by the current NELS encoder pipeline,  
 so datasets created here are fully interchangeable with node-created datasets.
+
+Important distinction:
+
+- the CLI does **not** save the full sequence conditioning tensor for each prompt
+- it saves one compact vector per prompt, using the same rule as the plugin:
+  - native pooled output when the encoder provides one
+  - otherwise mean pooling over sequence conditioning
 
 ---
 
@@ -13,7 +20,7 @@ so datasets created here are fully interchangeable with node-created datasets.
 - **Performance**: Skips ComfyUI’s server stack, node scheduling, and WebSocket overhead.
 - **Automation**: Scriptable, composable with other shell tools.
 
-Encoding runs on **GPU** (via ComfyUI model management). UMAP and kNN run on **CPU**.
+Encoding runs on **GPU** (via ComfyUI model management). UMAP, clustering, and dataset I/O run on **CPU** — including Parametric UMAP's neural-network training, which is forced CPU-only on purpose (see Installation) to avoid contending with ComfyUI's own GPU usage.
 
 > **Use ComfyUI’s embedded Python, for best consistency**
 >
@@ -40,7 +47,19 @@ Then install NELS dependencies into **ComfyUI’s Python**:
 path\to\python_embeded\python.exe -m pip install -r requirements.txt
 ```
 
-`requirements.txt` includes everything: `numpy`, `safetensors`, `torch`, `umap-learn`, `scikit-learn`, `hdbscan`, `joblib`, `faiss-cpu` (kNN acceleration), `transformers` (LLM cluster annotation), `Pillow` (image saving), `huggingface_hub`, and `datasets` (HuggingFace dataset loading).
+`requirements.txt` includes everything: `numpy`, `safetensors`, `torch`, `umap-learn[parametric_umap]` (pulls TensorFlow for Parametric UMAP), `scikit-learn`, `hdbscan`, `joblib`, `faiss-cpu`, `transformers` (LLM cluster annotation), `Pillow` (image saving), `huggingface_hub`, `datasets` (HuggingFace dataset loading), and a pinned `pyarrow` (see "Known import-order crash" below).
+
+---
+
+## Known import-order crash: `torch` before `pyarrow`/`datasets`
+
+Importing `torch` and then `pyarrow` (or anything that imports it, like the `datasets` package)
+in the same process can crash with a native access violation on Windows -> this is a
+long-standing, documented upstream incompatibility (`apache/arrow#2637`), not specific to this
+plugin.
+`requirements.txt` pins `pyarrow>=21.0.0,<24.0.0` for this reason -> don't loosen this
+pin without re-verifying against the exact crash scenario (`import torch` followed by
+`from datasets import load_dataset`)
 
 ---
 
@@ -63,26 +82,56 @@ When a HuggingFace model is downloaded via `--clip owner/repo/file.safetensors`,
 
 Every dataset is a folder:
 
-```
+```text
 my_dataset/
-├── dataset.json              # Metadata, CLIP encoder, and source loader configuration
+├── dataset.json              # Metadata
 ├── samples.jsonl             # One JSON record per sample
-├── embeddings.npy            # Shape: (N, hidden_dim), float32 pooled CLIP embeddings
+├── compact_embeddings.npy    # Shape: (N, compact_dim), float32 compact prompt embeddings
 ├── umap_2d.npy               # Shape: (N, 2), 2D UMAP projection for visualization
 ├── umap_3d.npy               # Shape: (N, 3), 3D UMAP projection for visualization
-├── umap_cluster.npy          # Shape: (N, D), low-dimensional UMAP projection used for HDBSCAN clustering
-├── umap_model_2d.pkl         # Saved UMAP reducer used by `add` to project new samples into 2D space
-├── umap_model_3d.pkl         # Saved UMAP reducer used by `add` to project new samples into 3D space
-├── umap_model_cluster.pkl    # Saved cluster UMAP reducer used by `add` to transform new samples
-└── hdbscan_model.pkl         # Saved HDBSCAN model used by `add` to assign cluster labels to new samples
+├── umap_model_2d/            # Parametric 2D UMAP reducer directory
+├── umap_model_3d/            # Parametric 3D UMAP reducer directory
+├── umap_model_cluster/       # Parametric UMAP cluster-space reducer directory
+└── hdbscan_model.pkl         # joblib-pickled HDBSCAN clusterer model
 ```
+
+> `umap_model_2d/3d/cluster` are directories, not files, because Parametric UMAP saves a Keras
+> model bundle rather than a single pickle
+
+### Compact embedding semantics
+
+`compact_embeddings.npy` stores one compact vector per prompt.
+
+Per prompt, the encoder computes real conditioning first:
+
+- full sequence conditioning tensor `cond`
+- optional pooled output
+
+Then the saved compact vector is derived as:
+
+1. use native pooled output when available
+2. otherwise use `mean(seq_cond, dim=tokens)`
+
+Dataset creation enforces one consistent strategy across the whole dataset:
+
+- `native_pooled`
+- `mean_seq_fallback`
+
+That strategy is recorded in `dataset.json` as `embedding_strategy`.
+
+### Metadata fields that matter
+
+Important `dataset.json` fields:
+
+- `full_dim`: the real full conditioning shape seen during encoding, for example `[1, 512, 7680]`
+- `embedding_shape`: the saved per-prompt compact shape, for example `[7680]`
+- `embedding_strategy`: `native_pooled` or `mean_seq_fallback`
 
 Each sample record in `samples.jsonl`:
 
 ```json
 {
   "id": "pt_000001",
-  "type": "prompt_embedding",
   "text": "a red fox in a snowy forest",
   "raw_text": "red fox",
   "source": "some/bird-dataset",
@@ -121,7 +170,6 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 | `--name`         | output folder name | Human-readable name stored in `dataset.json`.                                           |
 | `--clip-type`    | `FLUX2`            | ComfyUI CLIPType. Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
 | `--encode-limit` | `0` (all)          | Max texts to encode (applied before cleaning).                                          |
-| `--batch-size`   | `32`               | Texts per encoding batch.                                                               |
 
 **HuggingFace source options**
 
@@ -148,14 +196,13 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 
 **UMAP options**
 
-| Flag                 | Default       | Description                                                                                                             |
-| -------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `--umap-n-neighbors` | `15`          | Controls local vs. global structure.                                                                                    |
-| `--umap-min-dist`    | `0.1`         | Min distance between points in layout.                                                                                  |
-| `--umap-seed`        | `42`          | Random seed for reproducible layout.                                                                                    |
-| `--umap-subset-size` | none (75,000) | Points to fit UMAP on when N > 100,000. All N points are still transformed and saved. Omit to use the built-in default. |
+| Flag                 | Default | Description                            |
+| -------------------- | ------- | -------------------------------------- |
+| `--umap-n-neighbors` | `15`    | Controls local vs. global structure.   |
+| `--umap-min-dist`    | `0.1`   | Min distance between points in layout. |
+| `--umap-seed`        | `42`    | Random seed for reproducible layout.   |
 
-> When N exceeds 100,000, UMAP models are fit on a subset of points and then applied to all N — output files (`umap_2d.npy`, `umap_3d.npy`, `umap_cluster.npy`) always contain all N rows. The cluster UMAP uses a random subset (labels not yet available at that stage); the 2D/3D UMAP uses a stratified subset drawn after HDBSCAN so every cluster is represented. When N ≤ 100,000 all points are used for fitting (current behavior).
+`create` always fits all three Parametric UMAP models on the full dataset. There is no subset-fit mode anymore: if you encode 500,000 prompts, the reducers train on all 500,000 prompts before `umap_2d.npy`, `umap_3d.npy`, and the saved `umap_model_*` directories are written.
 
 **Cluster options**
 
@@ -168,11 +215,10 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 
 **Annotation options**
 
-| Flag               | Default                    | Description                                                                                  |
-| ------------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
-| `--annotate`       | off                        | Run LLM cluster annotation after dataset creation.                                           |
-| `--annotate-model` | `Qwen/Qwen2.5-7B-Instruct` | HuggingFace model ID used to generate cluster labels. Downloaded automatically on first use. |
-| `--annotate-top-n` | `20`                       | Number of top prompts per cluster (by membership strength) sent to the LLM.                  |
+| Flag               | Default | Description                                                                                                                                        |
+| ------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--annotate`       | off     | Run LLM cluster annotation after dataset creation. Optionally pass a model ID, e.g. `--annotate Qwen/Qwen2.5-7B-Instruct` (default model if bare). |
+| `--annotate-top-n` | `20`    | Number of top prompts per cluster (by membership strength) sent to the LLM.                                                                        |
 
 ---
 
@@ -182,9 +228,7 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 python encode_cli.py annotate --dataset <folder> [options]
 ```
 
-Reads `samples.jsonl`, groups prompts by cluster, calls a small HF instruction model once per cluster, and writes `cluster_labels` back into `dataset.json`. Noise points (`is_noise: true`) are excluded. Prompts are ranked by `membership_strength` and the top-N are sent to the LLM.
-
-The model is downloaded to the HuggingFace cache (`~/.cache/huggingface/hub/`) on first use. On Slurm or quota-restricted systems, set `HF_HOME` to redirect the cache.
+Reads `samples.jsonl`, groups prompts by cluster, generates one label per cluster, and writes `cluster_labels` back into `dataset.json`. Noise points (`is_noise: true`) are excluded. Prompts are ranked by `membership_strength` and the top-N are sent to the LLM.
 
 **Required flags**
 
@@ -204,43 +248,59 @@ The model is downloaded to the HuggingFace cache (`~/.cache/huggingface/hub/`) o
 ### `add` — append prompts to an existing dataset
 
 ```bash
-python encode_cli.py add --dataset <folder> --input <source> [options]
+python encode_cli.py add --dataset <folder> --input <source> --clip <path> [options]
 ```
 
 **Required flags**
 
-| Flag        | Description                                        |
-| ----------- | -------------------------------------------------- |
-| `--dataset` | Path to the existing dataset folder.               |
-| `--input`   | New data source (same format as `create --input`). |
+| Flag          | Description                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `--dataset`   | Path to the existing dataset folder.                                                                                      |
+| `--input`     | New data source (same format as `create --input`).                                                                        |
+| `--clip PATH` | CLIP `.safetensors` file, or HF path `owner/repo/file.safetensors` (downloaded automatically). Always required for `add`. |
 
-**Model flags**
+**Other options**
 
-- If the dataset was **created via CLI**: the CLIP path is auto-loaded from the `encoder` and `clip_type` fields recorded in `dataset.json`. `--clip` can be omitted unless you want to override.
-- If the dataset was **created via a ComfyUI node**: model path was not recorded. You must specify `--clip` explicitly.
+| Flag                 | Description                                                                                                |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `--clip-type`        | ComfyUI CLIPType (default: `FLUX2`). Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
+| `--encode-limit`     | Max new texts. 0 = all.                                                                                    |
+| `--hf-column`        | Column name when `--input` is a HF dataset (default: `Prompt`).                                            |
+| `--hf-split`         | HF dataset split to load (default: `train`).                                                               |
+| `--hf-config`        | HF dataset config/name.                                                                                    |
+| `--text-template`    | Template string (same as `create`).                                                                        |
+| `--metadata-columns` | Columns to store per sample (same as `create`).                                                            |
+| `--dedupe`           | Remove duplicates.                                                                                         |
+| `--min-words`        | Drop short texts.                                                                                          |
+| `--max-words`        | Drop long texts.                                                                                           |
 
-| Flag                 | Description                                                                                                       |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `--clip PATH`        | CLIP `.safetensors` or HF path. Auto-resolved from the dataset's recorded `encoder` field, or required if absent. |
-| `--clip-type`        | ComfyUI CLIPType. Auto-resolved from the dataset's recorded `clip_type` field, or required with `--clip`.         |
-| `--encode-limit`     | Max new texts. 0 = all.                                                                                           |
-| `--batch-size`       | Batch size (default: 32).                                                                                         |
-| `--hf-column`        | Column name when `--input` is a HF dataset (default: `Prompt`).                                                   |
-| `--hf-split`         | HF dataset split to load (default: `train`).                                                                      |
-| `--hf-config`        | HF dataset config/name.                                                                                           |
-| `--text-template`    | Template string (same as `create`).                                                                               |
-| `--metadata-columns` | Columns to store per sample (same as `create`).                                                                   |
-| `--dedupe`           | Remove duplicates.                                                                                                |
-| `--min-words`        | Drop short texts.                                                                                                 |
-| `--max-words`        | Drop long texts.                                                                                                  |
+**Annotation options**
 
-UMAP: new points are projected into the existing space using the saved reducer models.  
-If the models are missing, UMAP is refit on all merged vectors.
+| Flag               | Default | Description                                                                                                                                                 |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--annotate`       | off     | Run LLM cluster annotation after appending (recommended, since cluster IDs are renumbered on every add). Optionally pass a model ID; bare uses the default. |
+| `--annotate-top-n` | `20`    | Number of top prompts per cluster (by membership strength) sent to the LLM.                                                                                 |
 
-Cluster: predicted using the saved UMAP + HDBSCAN cluster models. Falls back to noise labels  
-(`cluster_global: -1`, `is_noise: true`) if the cluster models are missing.
+`add` is a ground-truth operation like `create`, not an approximation: every `add` fully refits
+all three Parametric UMAP networks (2D, 3D, cluster) **and** HDBSCAN on the complete dataset (old + new points together) — it does not transform new points through the old frozen models.
 
-kNN: not computed by the CLI — computed at load time by the NELS plugin in ComfyUI.
+### Cluster relabeling on `add`
+
+Because HDBSCAN is fully refit on every `add` (old + new points together), cluster IDs are not
+stable across an add - for example cluster 3 before the add is not guaranteed to be the same group as cluster
+3 after. As a result:
+
+- `cluster_global`, `is_noise`, and `membership_strength` are rewritten for every sample in
+  `samples.jsonl`, not just the newly appended ones.
+- Any existing `cluster_labels` in `dataset.json` (whether from a prior `--annotate` run or from
+  the default frequency labels) is no longer valid after the relabeling and is cleared, then
+  immediately replaced with fresh frequency-based labels (the same cheap, non-LLM labeling
+  `create` always runs) — the dataset is never left without labels after an add.
+- To get LLM-quality labels again after an add, either pass `--annotate` to `add` (see above) or
+  run the standalone `annotate` subcommand afterward.
+
+The `NelsAddToDataset` ComfyUI node has no annotation inputs of its own — chain the standalone
+`NELS Dataset Annotator` node after it in your graph if you want LLM cluster labels after an add.
 
 ---
 
@@ -315,7 +375,6 @@ python encode_cli.py create \
   --clip-type FLUX2 \
   --input prompts.txt \
   --encode-limit 1000 \
-  --batch-size 32 \
   --output datasets/my_prompts
 ```
 
@@ -368,17 +427,20 @@ python encode_cli.py create \
 ### Add to an existing dataset
 
 ```bash
-# CLI-created dataset: model auto-resolved from the dataset's recorded encoder/clip_type
+# --clip is always required for add
 python encode_cli.py add \
   --dataset datasets/my_prompts \
-  --input more_prompts.txt
-
-# Node-created dataset: must supply --clip explicitly
-python encode_cli.py add \
-  --dataset datasets/node_created_prompts \
-  --input extra_prompts.txt \
+  --input more_prompts.txt \
   --clip models/text_encoders/qwen_3_4b_fp4_flux2.safetensors \
   --clip-type FLUX2
+
+# Re-annotate with the LLM right after adding (clusters are renumbered on every add)
+python encode_cli.py add \
+  --dataset datasets/my_prompts \
+  --input more_prompts.txt \
+  --clip models/text_encoders/qwen_3_4b_fp4_flux2.safetensors \
+  --clip-type FLUX2 \
+  --annotate
 ```
 
 ---
@@ -387,11 +449,6 @@ python encode_cli.py add \
 
 **Use `--encode-limit 100` first** to verify your setup before encoding a large dataset.
 
-**`--batch-size`**: Default is 32. Increase to 64–128 on GPUs with ample VRAM; reduce if you hit OOM errors.
-
 **`--dedupe`** runs after `--encode-limit`, so you may get fewer samples than the limit if duplicates are removed.
 
 **`--text-template`** supports any column from the HF row as `{column_name}`. If a placeholder is missing from the row, the CLI raises a clear error listing available columns.
-
-**UMAP models are saved automatically** (`umap_model_2d.pkl`, `umap_model_3d.pkl`).  
-The `add` subcommand uses them to project new points into the existing layout without refitting.
