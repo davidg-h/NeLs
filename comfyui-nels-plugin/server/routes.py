@@ -60,7 +60,7 @@ def register_routes() -> None:
             "window_start": int(source.get("window_start", 0)),
             "random_seed": int(source.get("random_seed", 42)),
         }
-        embedding_set, snapshot = await loop.run_in_executor(
+        _embedding_set, snapshot = await loop.run_in_executor(
             None, lambda: preview_dataset_source(**kwargs)
         )
         node_name = "NELS Dataset Loader Preview"
@@ -77,7 +77,6 @@ def register_routes() -> None:
         )
         return web.json_response(
             {
-                "embedding_meta": embedding_set.get("metadata", {}),
                 "graph_snapshot": snapshot,
                 "session": store.get_session(session_id),
             }
