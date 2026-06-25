@@ -232,7 +232,6 @@ def make_sample_record(sample_id: str, record: dict, source_id: str) -> dict:
 def collect_prompt_records(
     *,
     source_input: str | None,
-    input_source: str = "file",
     prompt_text: str = "",
     encode_limit: int = 0,
     hf_column: str = "Prompt",
@@ -248,7 +247,7 @@ def collect_prompt_records(
     extra_records = build_inline_records(prompt_text, text_template)
     source_limit = max(0, encode_limit - len(extra_records)) if encode_limit > 0 else 0
 
-    if input_source == "huggingface" and source_input:
+    if source_input:
         source_records, source_id = load_texts_from_source(
             source_input,
             column=hf_column,
@@ -257,15 +256,6 @@ def collect_prompt_records(
             hf_config=hf_config,
             text_template=text_template,
             metadata_columns=metadata_columns,
-            dedupe=dedupe,
-            min_words=min_words,
-            max_words=max_words,
-        )
-    elif source_input:
-        source_records, source_id = load_texts_from_source(
-            source_input,
-            limit=source_limit,
-            text_template=text_template,
             dedupe=dedupe,
             min_words=min_words,
             max_words=max_words,

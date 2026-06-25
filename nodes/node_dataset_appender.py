@@ -87,7 +87,6 @@ class NelsAddToDataset:
             source_input=(
                 hf_dataset_id.strip() if input_source == "huggingface" else file_path.strip()
             ),
-            input_source=input_source,
             prompt_text=prompt_text,
             encode_limit=encode_limit,
             hf_column=hf_column,

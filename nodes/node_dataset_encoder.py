@@ -101,7 +101,6 @@ class NelsPromptEncoder:
         tmpl, meta_cols, cfg = normalize_source_inputs(text_template, metadata_columns, hf_config)
         records, source_id = collect_prompt_records(
             source_input=file_path if input_source == "file" else hf_dataset_id,
-            input_source=input_source,
             prompt_text=prompt_text,
             encode_limit=encode_limit,
             hf_column=hf_column,
