@@ -1,6 +1,7 @@
 """Dataset serialization I/O for NELS: save and load"""
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -22,27 +23,30 @@ def resolve_dataset_path(
 
 
 def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
-    """Write dataset dict to disk: dataset.json, samples.jsonl, embeddings + umap npy files"""
+    """Write dataset dict to disk: dataset.json, samples.jsonl, compact embeddings + umap npy files
+
+    Write each file to a temp sibling, then atomically replace
+    Avoids truncated files on crashes
+    Callers holding mmap'd np.load(..., mmap_mode="r") handles on these paths must release them
+    """
     path = Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
 
-    (path / "dataset.json").write_text(
+    _atomic_write_text(
+        path / "dataset.json",
         json.dumps(dataset["metadata"], indent=2, ensure_ascii=False),
-        encoding="utf-8",
     )
 
-    with (path / "samples.jsonl").open("w", encoding="utf-8") as f:
-        for sample in dataset["samples"]:
-            f.write(json.dumps(sample, ensure_ascii=False) + "\n")
+    samples_text = "".join(
+        json.dumps(sample, ensure_ascii=False) + "\n" for sample in dataset["samples"]
+    )
+    _atomic_write_text(path / "samples.jsonl", samples_text)
 
-    np.save(str(path / "embeddings.npy"), dataset["pooled"])
-
-    if dataset.get("umap_cluster") is not None:
-        np.save(str(path / "umap_cluster.npy"), dataset["umap_cluster"])
+    _atomic_save_npy(path / "compact_embeddings.npy", dataset["pooled"])
     if dataset.get("umap_2d") is not None:
-        np.save(str(path / "umap_2d.npy"), dataset["umap_2d"])
+        _atomic_save_npy(path / "umap_2d.npy", dataset["umap_2d"])
     if dataset.get("umap_3d") is not None:
-        np.save(str(path / "umap_3d.npy"), dataset["umap_3d"])
+        _atomic_save_npy(path / "umap_3d.npy", dataset["umap_3d"])
 
     return str(path)
 
@@ -67,9 +71,9 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
             if line:
                 samples.append(json.loads(line))
 
-    embeddings_path = path / "embeddings.npy"
+    embeddings_path = path / "compact_embeddings.npy"
     if not embeddings_path.exists():
-        raise FileNotFoundError(f"embeddings.npy not found in {path}")
+        raise FileNotFoundError(f"{'compact_embeddings.npy'} not found in {path}")
     pooled = np.load(str(embeddings_path), mmap_mode="r")
 
     def _load_npy(name: str) -> np.ndarray | None:
@@ -80,7 +84,24 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
         "metadata": metadata,
         "samples": samples,
         "pooled": pooled,
-        "umap_cluster": _load_npy("umap_cluster.npy"),
         "umap_2d": _load_npy("umap_2d.npy"),
         "umap_3d": _load_npy("umap_3d.npy"),
     }
+
+
+# ---- internals ----
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Write text to a temp sibling then atomically replace path"""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _atomic_save_npy(path: Path, array: np.ndarray) -> None:
+    """Save array to a temp sibling then atomically replace path"""
+    tmp = path.with_name(path.name + ".tmp")
+    with tmp.open("wb") as f:
+        np.save(f, array)
+    os.replace(tmp, path)

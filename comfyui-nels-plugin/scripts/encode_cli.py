@@ -19,6 +19,7 @@ Usage: Read the ENCODE_CLI.md documentation for detailed instructions
 """
 
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
@@ -29,17 +30,17 @@ _PLUGIN_ROOT = Path(__file__).parent.parent
 if str(_PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_PLUGIN_ROOT))
 
-from core.operations.cluster_annotation import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
 from core.dataset_io import (
     load_dataset,
     resolve_dataset_path,
 )
 from core.dataset_ops import (
-    append_to_dataset,
+    append_records_to_dataset,
+    build_dataset_config,
     build_source_loader_meta,
-    finalize_dataset,
-    load_texts_from_source,
-    make_sample_record,
+    collect_prompt_records,
+    create_dataset_from_records,
+    split_comma_list,
 )
 from core.defaults import (
     CLUSTER_MIN_SAMPLES,
@@ -47,14 +48,11 @@ from core.defaults import (
     CLUSTER_UMAP_DIMS,
     CLUSTER_UMAP_NEIGHBORS,
     DEFAULT_DATASETS,
-    ENCODE_BATCH_SIZE,
     UMAP_MIN_DIST,
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
-    UMAP_SUBSET_FIT_SIZE,
-    UMAP_SUBSET_THRESHOLD,
 )
-from core.encoding_ops import encode_prompts_pooled
+from core.operations.cluster_annotation import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
 
 # ---------------------------------------------------------------------------
 # CLI entry point
@@ -147,20 +145,13 @@ def main() -> None:
         help="Max samples to encode. 0 = all (default: 0).",
     )
     cp.add_argument(
-        "--batch-size",
-        type=int,
-        default=ENCODE_BATCH_SIZE,
-        help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).",
-    )
-    cp.add_argument(
         "--annotate",
-        action="store_true",
-        help="Run LLM cluster annotation after dataset creation.",
-    )
-    cp.add_argument(
-        "--annotate-model",
-        default=ANNOTATION_MODEL,
-        help=f"HuggingFace model for annotation (default: {ANNOTATION_MODEL}).",
+        nargs="?",
+        const=ANNOTATION_MODEL,
+        default=None,
+        metavar="MODEL",
+        help="Run LLM cluster annotation after dataset creation. "
+        f"Optionally pass a HuggingFace model ID (default: {ANNOTATION_MODEL}).",
     )
     cp.add_argument(
         "--annotate-top-n",
@@ -171,13 +162,6 @@ def main() -> None:
     cp.add_argument("--umap-n-neighbors", type=int, default=UMAP_N_NEIGHBORS)
     cp.add_argument("--umap-min-dist", type=float, default=UMAP_MIN_DIST)
     cp.add_argument("--umap-seed", type=int, default=UMAP_SEED)
-    cp.add_argument(
-        "--umap-subset-size",
-        type=int,
-        default=None,
-        metavar="N",
-        help=f"Points to fit UMAP on when N > {UMAP_SUBSET_THRESHOLD:,}. Omit to use default ({UMAP_SUBSET_FIT_SIZE:,}).",
-    )
     cp.add_argument(
         "--cluster-umap-dims",
         type=int,
@@ -230,15 +214,13 @@ def main() -> None:
     )
     ap.add_argument(
         "--clip",
-        default=None,
-        help="Path to CLIP .safetensors. "
-        "Auto-loaded from the dataset's recorded encoder path if it was created via CLI. "
-        "Required if dataset was created via ComfyUI node.",
+        required=True,
+        help="Path to CLIP .safetensors, or HF path owner/repo/file.safetensors (downloaded automatically).",
     )
     ap.add_argument(
         "--clip-type",
-        default=None,
-        help="ComfyUI CLIPType. Required alongside --clip when the dataset has no recorded clip_type.",
+        default="FLUX2",
+        help="ComfyUI CLIPType (default: FLUX2). Others: FLUX, STABLE_DIFFUSION, SD3.",
     )
     ap.add_argument(
         "--hf-column",
@@ -271,10 +253,19 @@ def main() -> None:
         help="Max new samples to encode. 0 = all (default: 0).",
     )
     ap.add_argument(
-        "--batch-size",
+        "--annotate",
+        nargs="?",
+        const=ANNOTATION_MODEL,
+        default=None,
+        metavar="MODEL",
+        help="Run LLM cluster annotation after appending (clusters are renumbered on every add). "
+        f"Optionally pass a HuggingFace model ID (default: {ANNOTATION_MODEL}).",
+    )
+    ap.add_argument(
+        "--annotate-top-n",
         type=int,
-        default=ENCODE_BATCH_SIZE,
-        help=f"Encoding batch size (default: {ENCODE_BATCH_SIZE}).",
+        default=ANNOTATION_TOP_N,
+        help=f"Prompts per cluster sent to the LLM (default: {ANNOTATION_TOP_N}).",
     )
 
     args = parser.parse_args()
@@ -288,16 +279,18 @@ def main() -> None:
             cmd_add(args)
     finally:
         try:
-            import gc
-
             import comfy.model_management
-            import comfy.model_patcher as _mp
 
             comfy.model_management.unload_all_models()
-            _mp.ModelPatcher.__del__ = lambda _: None
+        except Exception as exc:
+            logging.warning("Failed to unload ComfyUI models during CLI cleanup: %s", exc)
+
+        try:
+            import gc
+
             gc.collect()
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.warning("Failed to run garbage collection during CLI cleanup: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -315,7 +308,6 @@ def cmd_create(args: argparse.Namespace) -> None:
         "n_neighbors": args.umap_n_neighbors,
         "min_dist": args.umap_min_dist,
         "random_state": args.umap_seed,
-        "subset_size": args.umap_subset_size,
     }
     cluster_params = {
         "umap_dims": args.cluster_umap_dims,
@@ -326,13 +318,13 @@ def cmd_create(args: argparse.Namespace) -> None:
 
     resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
 
-    metadata_cols = _parse_metadata_columns(args)
+    metadata_cols = split_comma_list(args.metadata_columns)
 
     print(f"Loading texts from: {args.input}")
-    records, source_id = load_texts_from_source(
-        args.input,
-        column=args.hf_column or "Prompt",
-        limit=args.encode_limit,
+    records, source_id = collect_prompt_records(
+        source_input=args.input,
+        encode_limit=args.encode_limit,
+        hf_column=args.hf_column or "Prompt",
         hf_split=args.hf_split,
         hf_config=args.hf_config,
         text_template=args.text_template,
@@ -344,21 +336,15 @@ def cmd_create(args: argparse.Namespace) -> None:
     if not records:
         raise SystemExit("No texts found: check --input, --hf-column, --encode-limit.")
 
-    prompts = [r["text"] for r in records]
     clip = _load_clip(resolved_clip, args.clip_type, comfyui_root)
-    print(f"Encoding {len(prompts)} prompts...")
-    vectors = encode_prompts_pooled(clip, prompts, batch_size=args.batch_size)
-
-    samples = [make_sample_record(f"pt_{i:06d}", r, source_id) for i, r in enumerate(records)]
-    config: dict[str, Any] = {
-        "name": name,
-        "type": "prompt_embedding",
-        "encoder": _to_rel(str(resolved_clip), comfyui_root),
-        "source_dataset": source_id,
-        "batch_size": args.batch_size,
-        "umap_params": umap_params,
-        "clip_type": args.clip_type,
-        "source_loader": build_source_loader_meta(
+    print(f"Encoding {len(records)} prompts...")
+    config = build_dataset_config(
+        name=name,
+        encoder=_to_rel(str(resolved_clip), comfyui_root),
+        source_id=source_id,
+        umap_params=umap_params,
+        clip_type=args.clip_type,
+        source_loader=build_source_loader_meta(
             source_input=args.input,
             hf_config=args.hf_config,
             hf_split=args.hf_split,
@@ -369,13 +355,14 @@ def cmd_create(args: argparse.Namespace) -> None:
             min_words=args.min_words,
             max_words=args.max_words,
         ),
-    }
+    )
 
-    out = finalize_dataset(
-        vectors,
-        samples,
-        config,
-        output_path,
+    out, vectors = create_dataset_from_records(
+        clip,
+        records,
+        source_id,
+        config=config,
+        output_path=output_path,
         umap_params=umap_params,
         cluster_params=cluster_params,
     )
@@ -387,7 +374,7 @@ def cmd_create(args: argparse.Namespace) -> None:
 
     if args.annotate:
         print("\nRunning cluster annotation...")
-        annotate_clusters(Path(out), model_name=args.annotate_model, top_n=args.annotate_top_n)
+        annotate_clusters(Path(out), model_name=args.annotate, top_n=args.annotate_top_n)
 
 
 # ---------------------------------------------------------------------------
@@ -416,35 +403,17 @@ def cmd_add(args: argparse.Namespace) -> None:
         raise SystemExit(f"Dataset folder not found: {args.dataset}")
 
     ds = load_dataset(path_obj)
-    meta = ds["metadata"]
-    offset = len(ds["samples"])
 
-    # clip_type is only ever recorded for CLI-created datasets, so its presence
-    # signals that "encoder" holds a resolvable local path rather than a node placeholder
-    clip_path = args.clip
-    if not clip_path and meta.get("clip_type"):
-        rel = meta.get("encoder")
-        clip_path = str(comfyui_root / rel) if rel else None
-    clip_type_str = args.clip_type or meta.get("clip_type") or "FLUX2"
+    resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
+    clip = _load_clip(resolved_clip, args.clip_type, comfyui_root)
 
-    if not clip_path:
-        raise SystemExit(
-            "Cannot determine CLIP model path.\n"
-            "Dataset was created via ComfyUI node - model paths were not recorded.\n"
-            "Specify: --clip /path/to/clip.safetensors --clip-type FLUX2"
-        )
-
-    # user-supplied --clip may be an HF path; recorded encoder paths are already local
-    resolved_clip = _resolve_clip_path(args.clip, comfyui_root) if args.clip else Path(clip_path)
-    clip = _load_clip(resolved_clip, clip_type_str, comfyui_root)
-
-    metadata_cols = _parse_metadata_columns(args)
+    metadata_cols = split_comma_list(args.metadata_columns)
 
     print(f"Loading texts from: {args.input}")
-    records, source_id = load_texts_from_source(
-        args.input,
-        column=args.hf_column or "Prompt",
-        limit=args.encode_limit,
+    records, source_id = collect_prompt_records(
+        source_input=args.input,
+        encode_limit=args.encode_limit,
+        hf_column=args.hf_column or "Prompt",
         hf_split=args.hf_split,
         hf_config=args.hf_config,
         text_template=args.text_template,
@@ -456,16 +425,17 @@ def cmd_add(args: argparse.Namespace) -> None:
     if not records:
         raise SystemExit("No texts found - check --input and --encode-limit.")
 
-    prompts = [r["text"] for r in records]
-    print(f"Encoding {len(prompts)} new prompts...")
-    new_vectors = encode_prompts_pooled(clip, prompts, batch_size=args.batch_size)
-    new_samples = [
-        make_sample_record(f"pt_{offset + i:06d}", r, source_id) for i, r in enumerate(records)
-    ]
+    print(f"Encoding {len(records)} new prompts...")
 
     before = _snapshot_mtimes(path_obj)
     try:
-        updated_meta = append_to_dataset(path_obj, ds, new_vectors, new_samples)
+        updated_meta, new_vectors = append_records_to_dataset(
+            path_obj,
+            ds,
+            clip,
+            records,
+            source_id,
+        )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
@@ -474,9 +444,10 @@ def cmd_add(args: argparse.Namespace) -> None:
     print(f"  total: {updated_meta['sample_count']} samples  |  dim: {new_vectors.shape[1]}")
     _print_updated_files(path_obj, before)
 
+    if args.annotate:
+        print("\nRunning cluster annotation...")
+        annotate_clusters(path_obj, model_name=args.annotate, top_n=args.annotate_top_n)
 
-if __name__ == "__main__":
-    main()
 
 # ---------------------------------------------------------------------------
 # Helper functions for CLI commands
@@ -635,11 +606,5 @@ def _to_rel(path_str: str, comfyui_root: Path) -> str:
         return path_str
 
 
-# ---- Shared helpers for create / add ----
-
-
-def _parse_metadata_columns(args: Any) -> list[str] | None:
-    val = args.metadata_columns
-    if not val:
-        return None
-    return [c.strip() for c in val.split(",") if c.strip()]
+if __name__ == "__main__":
+    main()

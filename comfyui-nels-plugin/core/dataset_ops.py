@@ -1,11 +1,14 @@
 """Dataset computation and orchestration for NELS: build, UMAP, finalize, loaders"""
 
+import gc
 import random
 import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import hdbscan
+import joblib
 import numpy as np
 
 try:
@@ -22,17 +25,14 @@ from .defaults import (
     UMAP_MIN_DIST,
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
-    UMAP_SUBSET_FIT_SIZE,
-    UMAP_SUBSET_MIN_PER_CLUSTER,
-    UMAP_SUBSET_THRESHOLD,
 )
+from .encoding_ops import encode_prompts_dataset_embeddings
 from .operations.cluster_annotation import generate_frequency_labels
 from .projection_ops import (
     compute_cluster_umap,
     compute_umap,
-    extend_umap_with_models_or_refit,
-    select_random_indices,
-    select_stratified_indices,
+    load_parametric_umap,
+    save_parametric_umap,
 )
 
 
@@ -48,7 +48,7 @@ def load_texts_from_source(
     min_words: int = 0,
     max_words: int = 0,
 ) -> tuple[list[dict], str]:
-    """Load texts from a .txt file or HuggingFace dataset - returns (records, source_id)"""
+    """Load texts from a .txt file or HuggingFace dataset, return (records, source_id)"""
     path = Path(source)
 
     # ---- local file ----
@@ -152,6 +152,13 @@ def build_source_loader_meta(
     }
 
 
+def split_comma_list(value: str | None) -> list[str] | None:
+    """Split a comma-separated string into a trimmed, non-empty list, or None"""
+    if not value:
+        return None
+    return [c.strip() for c in value.split(",") if c.strip()] or None
+
+
 def normalize_source_inputs(
     text_template: str,
     metadata_columns: str,
@@ -159,13 +166,35 @@ def normalize_source_inputs(
 ) -> tuple[str | None, list[str] | None, str | None]:
     """Normalize raw text_template/metadata_columns/hf_config UI strings to None-able values"""
     tmpl = text_template.strip() or None
-    meta_cols = [c.strip() for c in metadata_columns.split(",") if c.strip()] or None
+    meta_cols = split_comma_list(metadata_columns)
     cfg = hf_config.strip() or None
     return tmpl, meta_cols, cfg
 
 
+def build_dataset_config(
+    *,
+    name: str,
+    encoder: str,
+    source_id: str,
+    umap_params: dict[str, Any],
+    source_loader: dict[str, Any],
+    clip_type: str | None = None,
+) -> dict[str, Any]:
+    """Assemble the dataset config dict shared by node and CLI dataset creation"""
+    config: dict[str, Any] = {
+        "name": name,
+        "encoder": encoder,
+        "source_dataset": source_id,
+        "umap_params": umap_params,
+        "source_loader": source_loader,
+    }
+    if clip_type:
+        config["clip_type"] = clip_type
+    return config
+
+
 def build_inline_records(prompt_text: str, text_template: str | None) -> list[dict]:
-    """Build record dicts from inline prompt_text lines (one prompt per line, no metadata columns)"""
+    """Build record dicts from inline prompt_text lines with no metadata columns"""
     records = []
     for line in prompt_text.splitlines():
         raw = line.strip()
@@ -186,10 +215,9 @@ def build_inline_records(prompt_text: str, text_template: str | None) -> list[di
 
 
 def make_sample_record(sample_id: str, record: dict, source_id: str) -> dict:
-    """Build one sample dict for samples.jsonl from a loaded/inline record"""
+    """Build one sample dict for samples.jsonl from a loaded or inline record"""
     sample: dict = {
         "id": sample_id,
-        "type": "prompt_embedding",
         "text": record["text"],
         "raw_text": record.get("raw_text", record["text"]),
         "source": source_id,
@@ -201,6 +229,98 @@ def make_sample_record(sample_id: str, record: dict, source_id: str) -> dict:
     return sample
 
 
+def collect_prompt_records(
+    *,
+    source_input: str | None,
+    input_source: str = "file",
+    prompt_text: str = "",
+    encode_limit: int = 0,
+    hf_column: str = "Prompt",
+    hf_split: str = "train",
+    hf_config: str | None = None,
+    text_template: str | None = None,
+    metadata_columns: list[str] | None = None,
+    dedupe: bool = False,
+    min_words: int = 0,
+    max_words: int = 0,
+) -> tuple[list[dict], str]:
+    """Collect inline and external prompt records into one ordered list"""
+    extra_records = build_inline_records(prompt_text, text_template)
+    source_limit = max(0, encode_limit - len(extra_records)) if encode_limit > 0 else 0
+
+    if input_source == "huggingface" and source_input:
+        source_records, source_id = load_texts_from_source(
+            source_input,
+            column=hf_column,
+            limit=source_limit,
+            hf_split=hf_split,
+            hf_config=hf_config,
+            text_template=text_template,
+            metadata_columns=metadata_columns,
+            dedupe=dedupe,
+            min_words=min_words,
+            max_words=max_words,
+        )
+    elif source_input:
+        source_records, source_id = load_texts_from_source(
+            source_input,
+            limit=source_limit,
+            text_template=text_template,
+            dedupe=dedupe,
+            min_words=min_words,
+            max_words=max_words,
+        )
+    else:
+        source_records, source_id = [], "inline"
+
+    records = extra_records + source_records
+    if encode_limit > 0:
+        records = records[:encode_limit]
+
+    return records, source_id
+
+
+def encode_prompt_records(
+    clip: Any,
+    records: list[dict[str, Any]],
+    source_id: str,
+    *,
+    id_offset: int = 0,
+) -> tuple[np.ndarray, list[dict[str, Any]], dict[str, Any]]:
+    """Encode records and build sample rows with stable pt_<index> ids"""
+    prompts = [record["text"] for record in records]
+    vectors, embedding_info = encode_prompts_dataset_embeddings(clip, prompts)
+    samples = [
+        make_sample_record(f"pt_{id_offset + i:06d}", record, source_id)
+        for i, record in enumerate(records)
+    ]
+    return vectors, samples, embedding_info
+
+
+def create_dataset_from_records(
+    clip: Any,
+    records: list[dict[str, Any]],
+    source_id: str,
+    *,
+    config: dict[str, Any],
+    output_path: str | Path,
+    umap_params: dict[str, Any] | None = None,
+    cluster_params: dict[str, Any] | None = None,
+) -> tuple[str, np.ndarray]:
+    """Encode records, finalize dataset, return saved path plus vectors"""
+    vectors, samples, embedding_info = encode_prompt_records(clip, records, source_id)
+    saved_path = finalize_dataset(
+        vectors,
+        samples,
+        config,
+        output_path,
+        umap_params=umap_params,
+        cluster_params=cluster_params,
+        embedding_info=embedding_info,
+    )
+    return saved_path, vectors
+
+
 def finalize_dataset(
     vectors: np.ndarray,
     samples: list[dict[str, Any]],
@@ -209,98 +329,31 @@ def finalize_dataset(
     *,
     umap_params: dict[str, Any] | None = None,
     cluster_params: dict[str, Any] | None = None,
+    embedding_info: dict[str, Any] | None = None,
 ) -> str:
-    """Build, compute cluster UMAP + HDBSCAN + viz UMAP, and save"""
+    """Build dataset, compute projections and clusters, then save"""
     output_path = Path(output_path)
-    dataset = _build_dataset(vectors, samples, config)
-
-    up = umap_params or {}
     cp = cluster_params or {}
-    random_state = int(up.get("random_state", UMAP_SEED))
-    r2d = r3d = r_cluster = hdbscan_model = None
+    dataset = _build_dataset(vectors, samples, config, embedding_info=embedding_info)
+    dataset["metadata"]["cluster_params"] = cp
 
-    n = vectors.shape[0]
-    use_subset = n > UMAP_SUBSET_THRESHOLD
-    subset_size = int(up.get("subset_size") or UMAP_SUBSET_FIT_SIZE)
+    umap_2d, umap_3d, fitted_samples = _fit_and_save_projection_models(
+        vectors,
+        dataset["samples"],
+        output_path,
+        umap_params=umap_params or {},
+        cluster_params=cp,
+    )
+    dataset["samples"] = fitted_samples
+    dataset["umap_2d"] = umap_2d
+    dataset["umap_3d"] = umap_3d
 
-    try:
-        n_dims = int(cp.get("umap_dims", CLUSTER_UMAP_DIMS))
-        cluster_fit_indices = (
-            select_random_indices(n, subset_size, random_state) if use_subset else None
-        )
-        subset_info = (
-            f" [subset={len(cluster_fit_indices)}]" if cluster_fit_indices is not None else ""
-        )
-        print(f"Computing cluster UMAP ({n_dims}D) + HDBSCAN{subset_info}...")
-        cluster_coords, r_cluster = compute_cluster_umap(
-            vectors,
-            n_components=n_dims,
-            n_neighbors=int(cp.get("umap_neighbors", CLUSTER_UMAP_NEIGHBORS)),
-            random_state=random_state,
-            fit_indices=cluster_fit_indices,
-        )
-        dataset["umap_cluster"] = cluster_coords
-        hdbscan_model, cluster_results = _fit_and_cluster(
-            cluster_coords,
-            min_cluster_size=int(cp.get("min_size", CLUSTER_MIN_SIZE)),
-            min_samples=int(cp.get("min_samples", CLUSTER_MIN_SAMPLES)),
-        )
-        for sample, result in zip(dataset["samples"], cluster_results, strict=False):
-            sample["cluster_global"] = result["cluster_global"]
-            sample["is_noise"] = result["is_noise"]
-            sample["membership_strength"] = result["membership_strength"]
-
-        freq_labels = generate_frequency_labels(dataset["samples"])
-        if freq_labels:
-            dataset["metadata"]["cluster_labels"] = freq_labels
-
-        if use_subset:
-            cluster_labels = np.array(
-                [s["cluster_global"] for s in dataset["samples"]], dtype=np.int64
-            )
-            viz_fit_indices = select_stratified_indices(
-                n, subset_size, cluster_labels, UMAP_SUBSET_MIN_PER_CLUSTER, random_state
-            )
-        else:
-            viz_fit_indices = None
-
-        subset_info = f" [subset={len(viz_fit_indices)}]" if viz_fit_indices is not None else ""
-        print(f"Computing UMAP 2D + 3D projections{subset_info}...")
-        umap_2d, umap_3d, r2d, r3d = compute_umap(
-            vectors,
-            n_neighbors=int(up.get("n_neighbors", UMAP_N_NEIGHBORS)),
-            min_dist=float(up.get("min_dist", UMAP_MIN_DIST)),
-            random_state=random_state,
-            fit_indices=viz_fit_indices,
-        )
-        dataset["umap_2d"] = umap_2d
-        dataset["umap_3d"] = umap_3d
-    except ImportError:
-        print("  Skipped: umap-learn not installed.")
-
-    dataset["metadata"]["subset_used"] = use_subset
-    if use_subset:
-        dataset["metadata"]["subset_size_used"] = subset_size
+    freq_labels = generate_frequency_labels(dataset["samples"])
+    if freq_labels:
+        dataset["metadata"]["cluster_labels"] = freq_labels
 
     print("Saving dataset...")
-    path = save_dataset(dataset, output_path)
-
-    # save fitted models for reuse
-    try:
-        import joblib
-
-        if r_cluster is not None:
-            joblib.dump(r_cluster, output_path / "umap_model_cluster.pkl")
-        if hdbscan_model is not None:
-            joblib.dump(hdbscan_model, output_path / "hdbscan_model.pkl")
-        if r2d is not None:
-            joblib.dump(r2d, output_path / "umap_model_2d.pkl")
-            joblib.dump(r3d, output_path / "umap_model_3d.pkl")
-    except ImportError:
-        # joblib optional -> skip model persistence if unavailable
-        pass
-
-    return path
+    return save_dataset(dataset, output_path)
 
 
 def select_sample_indices(
@@ -311,7 +364,7 @@ def select_sample_indices(
     window_start: int,
     random_seed: int,
 ) -> list[int]:
-    """Select sample indices based on mode for loader"""
+    """Select sample indices based on loader mode"""
     if mode == "all":
         return list(range(total))
     if count <= 0:
@@ -338,52 +391,27 @@ def select_sample_indices(
 def predict_cluster_for_new(
     path: Path,
     new_vectors: np.ndarray,
-) -> tuple[list[dict[str, Any]], str | None]:
-    """Predict cluster labels for new vectors using saved UMAP + HDBSCAN models
-
-    Falls back to noise labels if models are missing or hdbscan is unavailable
-    """
-    noise = [
-        {"cluster_global": -1, "is_noise": True, "membership_strength": 0.0}
-        for _ in range(len(new_vectors))
-    ]
-
-    try:
-        import joblib
-    except ImportError:
-        return (
-            noise,
-            "Cluster prediction fallback: 'joblib' is not installed, so new samples were marked as noise.",
-        )
-
-    umap_pkl = Path(path) / "umap_model_cluster.pkl"
+) -> list[dict[str, Any]]:
+    """Predict cluster labels for new vectors using saved UMAP and HDBSCAN models at runtime"""
+    umap_dir = Path(path) / "umap_model_cluster"
     hdbscan_pkl = Path(path) / "hdbscan_model.pkl"
-    if not umap_pkl.exists() or not hdbscan_pkl.exists():
-        return (
-            noise,
-            "Cluster prediction fallback: saved cluster models are missing, so new samples were marked as noise.",
+    if not umap_dir.exists() or not hdbscan_pkl.exists():
+        raise FileNotFoundError(
+            f"Dataset is missing runtime cluster models: {umap_dir.name}, {hdbscan_pkl.name}"
         )
 
-    try:
-        import hdbscan
-
-        r_cluster = joblib.load(umap_pkl)
-        clusterer = joblib.load(hdbscan_pkl)
-        cluster_coords = r_cluster.transform(new_vectors).astype(np.float32)
-        labels, strengths = hdbscan.approximate_predict(clusterer, cluster_coords)
-        return [
-            {
-                "cluster_global": int(lbl),
-                "is_noise": lbl == -1,
-                "membership_strength": float(s),
-            }
-            for lbl, s in zip(labels.tolist(), strengths.tolist(), strict=True)
-        ], None
-    except Exception as exc:
-        return (
-            noise,
-            f"Cluster prediction fallback: saved cluster models could not be used ({exc}); new samples were marked as noise.",
-        )
+    r_cluster = load_parametric_umap(umap_dir)
+    clusterer = joblib.load(hdbscan_pkl)
+    cluster_coords = r_cluster.transform(new_vectors).astype(np.float32)
+    labels, strengths = hdbscan.approximate_predict(clusterer, cluster_coords)
+    return [
+        {
+            "cluster_global": int(lbl),
+            "is_noise": lbl == -1,
+            "membership_strength": float(s),
+        }
+        for lbl, s in zip(labels.tolist(), strengths.tolist(), strict=True)
+    ]
 
 
 def append_to_dataset(
@@ -391,8 +419,10 @@ def append_to_dataset(
     ds: dict[str, Any],
     new_vectors: np.ndarray,
     new_samples: list[dict[str, Any]],
+    embedding_info: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Merge new vectors/samples into a loaded dataset, predict clusters, extend UMAP, and save
+    """Merge new vectors/samples into a loaded dataset, fully refit cluster/viz UMAP +
+    HDBSCAN on the merged data and save -> add is a ground-truth operation like create
 
     Raises ValueError on embedding-dimension mismatch
     Returns the updated metadata dict
@@ -411,37 +441,61 @@ def append_to_dataset(
     merged_vectors = np.concatenate([existing_vectors, new_vectors], axis=0)
     merged_samples = existing_samples + new_samples
 
-    umap_2d, umap_3d = extend_umap_with_models_or_refit(
-        path=path,
-        merged_vectors=merged_vectors,
-        new_vectors=new_vectors,
-        existing_umap_2d=ds.get("umap_2d"),
-        existing_umap_3d=ds.get("umap_3d"),
+    # Release mmap'd arrays before overwriting the same files on Windows
+    del existing_vectors
+    ds.clear()
+    gc.collect()
+
+    umap_2d, umap_3d, merged_samples = _fit_and_save_projection_models(
+        merged_vectors,
+        merged_samples,
+        path,
         umap_params=meta.get("umap_params") or {},
+        cluster_params=meta.get("cluster_params") or {},
     )
 
-    cluster_results, cluster_warning = predict_cluster_for_new(path, new_vectors)
-    for sample, result in zip(new_samples, cluster_results, strict=True):
-        sample["cluster_global"] = result["cluster_global"]
-        sample["is_noise"] = result["is_noise"]
-        sample["membership_strength"] = result["membership_strength"]
-
-    if cluster_warning:
-        print(cluster_warning)
-
-    updated_meta = {**meta, "sample_count": len(merged_samples)}
+    freq_labels = generate_frequency_labels(merged_samples)
+    updated_meta = {
+        **meta,
+        "sample_count": len(merged_samples),
+        "cluster_labels": freq_labels or {},
+    }
+    if embedding_info:
+        updated_meta["full_dim"] = embedding_info.get("full_embedding_shape", [])
+        updated_meta["embedding_shape"] = [int(merged_vectors.shape[1])]
+        updated_meta["embedding_strategy"] = embedding_info.get("embedding_strategy", "unknown")
     save_dataset(
         {
             "metadata": updated_meta,
             "samples": merged_samples,
             "pooled": merged_vectors,
-            "umap_cluster": ds.get("umap_cluster"),
             "umap_2d": umap_2d,
             "umap_3d": umap_3d,
         },
         path,
     )
     return updated_meta
+
+
+def append_records_to_dataset(
+    path: Path,
+    ds: dict[str, Any],
+    clip: Any,
+    records: list[dict[str, Any]],
+    source_id: str,
+) -> tuple[dict[str, Any], np.ndarray]:
+    """Encode records, append them to dataset, return metadata plus new vectors"""
+    offset = len(ds["samples"])
+    new_vectors, new_samples, embedding_info = encode_prompt_records(
+        clip,
+        records,
+        source_id,
+        id_offset=offset,
+    )
+    updated_meta = append_to_dataset(
+        path, ds, new_vectors, new_samples, embedding_info=embedding_info
+    )
+    return updated_meta, new_vectors
 
 
 # ---- internals ----
@@ -451,7 +505,10 @@ def _build_dataset(
     vectors: np.ndarray,
     samples: list[dict[str, Any]],
     config: dict[str, Any],
+    *,
+    embedding_info: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Build the internal dataset dict shape used by save_dataset"""
     vectors = np.asarray(vectors, dtype=np.float32)
     n, d = vectors.shape
     if len(samples) != n:
@@ -459,14 +516,14 @@ def _build_dataset(
 
     metadata: dict[str, Any] = {
         "name": str(config.get("name") or "dataset"),
-        "type": str(config.get("type") or "prompt_embedding"),
         "sample_count": n,
-        "pooled_dim": d,
+        "full_dim": (embedding_info or {}).get("full_embedding_shape", []),
+        "embedding_shape": [d],
         "encoder": str(config.get("encoder") or "unknown"),
         "source_dataset": str(config.get("source_dataset") or ""),
         "created": datetime.now(UTC).isoformat(),
-        "batch_size": config.get("batch_size"),
         "umap_params": config.get("umap_params") or {},
+        "embedding_strategy": (embedding_info or {}).get("embedding_strategy", "unknown"),
     }
     if config.get("clip_type"):
         metadata["clip_type"] = config["clip_type"]
@@ -519,7 +576,7 @@ def _clean_records(
     min_words: int,
     max_words: int,
 ) -> list[dict]:
-    """Deduplicate and word-count-filter records"""
+    """Deduplicate and word-count filter records"""
     seen: set[str] = set()
     out = []
     for r in records:
@@ -541,68 +598,75 @@ def _fit_and_cluster(
     min_cluster_size: int,
     min_samples: int,
 ) -> tuple[Any, list[dict[str, Any]]]:
-    """Fit HDBSCAN on nD cluster UMAP coords
-
-    Tries standalone hdbscan (prediction_data=True), then sklearn HDBSCAN, then KMeans
-    Result dicts: cluster_global, is_noise, membership_strength
-    """
-    n = coords_nd.shape[0]
-    if n < 4:
-        return None, [
-            {"cluster_global": i, "is_noise": False, "membership_strength": 1.0} for i in range(n)
-        ]
-
-    # Standalone hdbscan: supports prediction_data for approximate_predict on new points
-    try:
-        import hdbscan
-
-        clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=min_cluster_size,
-            min_samples=min_samples,
-            prediction_data=True,
-        ).fit(coords_nd)
-        labels = clusterer.labels_.tolist()
-        strengths = clusterer.probabilities_.tolist()
-        return clusterer, [
-            {
-                "cluster_global": int(lbl),
-                "is_noise": lbl == -1,
-                "membership_strength": float(s),
-            }
-            for lbl, s in zip(labels, strengths, strict=True)
-        ]
-    except ImportError:
-        pass
-
-    # sklearn HDBSCAN: no prediction_data but still returns probabilities
-    try:
-        from sklearn.cluster import HDBSCAN
-
-        clusterer = HDBSCAN(
-            min_cluster_size=min_cluster_size,
-            min_samples=min_samples,
-        ).fit(coords_nd)
-        labels = clusterer.labels_.tolist()
-        strengths = (
-            clusterer.probabilities_.tolist() if hasattr(clusterer, "probabilities_") else [1.0] * n
-        )
-        return None, [
-            {
-                "cluster_global": int(lbl),
-                "is_noise": lbl == -1,
-                "membership_strength": float(s),
-            }
-            for lbl, s in zip(labels, strengths, strict=True)
-        ]
-    except (ImportError, AttributeError):
-        pass
-
-    # KMeans fallback: no noise concept, strength always 1.0
-    from sklearn.cluster import KMeans
-
-    k = max(2, min(12, round((n / 2) ** 0.5)))
-    labels = KMeans(n_clusters=k, random_state=42, n_init=10).fit_predict(coords_nd).tolist()
-    return None, [
-        {"cluster_global": int(lbl), "is_noise": False, "membership_strength": 1.0}
-        for lbl in labels
+    """Fit HDBSCAN on cluster-space UMAP coords"""
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=min_cluster_size,
+        min_samples=min_samples,
+        prediction_data=True,
+    ).fit(coords_nd)
+    labels = clusterer.labels_.tolist()
+    strengths = clusterer.probabilities_.tolist()
+    return clusterer, [
+        {
+            "cluster_global": int(lbl),
+            "is_noise": lbl == -1,
+            "membership_strength": float(s),
+        }
+        for lbl, s in zip(labels, strengths, strict=True)
     ]
+
+
+def _fit_and_save_projection_models(
+    vectors: np.ndarray,
+    samples: list[dict[str, Any]],
+    output_path: Path,
+    *,
+    umap_params: dict[str, Any],
+    cluster_params: dict[str, Any],
+) -> tuple[np.ndarray, np.ndarray, list[dict[str, Any]]]:
+    """Fit cluster/viz UMAP models, cluster with HDBSCAN, persist all artifacts"""
+    samples = [dict(s) for s in samples]
+    random_state = int(umap_params.get("random_state", UMAP_SEED))
+    sample_count = int(vectors.shape[0])
+    min_cluster_size = int(cluster_params.get("min_size", CLUSTER_MIN_SIZE))
+    min_required_samples = max(4, min_cluster_size)
+    if sample_count < min_required_samples:
+        raise ValueError(
+            "Dataset needs at least "
+            f"{min_required_samples} samples for the current HDBSCAN min_cluster_size setting, "
+            f"got {sample_count}"
+        )
+
+    n_dims = int(cluster_params.get("umap_dims", CLUSTER_UMAP_DIMS))
+    print(f"Computing cluster UMAP ({n_dims}D) + HDBSCAN...")
+    umap_cluster, r_cluster = compute_cluster_umap(
+        vectors,
+        n_components=n_dims,
+        n_neighbors=int(cluster_params.get("umap_neighbors", CLUSTER_UMAP_NEIGHBORS)),
+        random_state=random_state,
+    )
+    hdbscan_model, cluster_results = _fit_and_cluster(
+        umap_cluster,
+        min_cluster_size=min_cluster_size,
+        min_samples=int(cluster_params.get("min_samples", CLUSTER_MIN_SAMPLES)),
+    )
+    for sample, result in zip(samples, cluster_results, strict=True):
+        sample["cluster_global"] = result["cluster_global"]
+        sample["is_noise"] = result["is_noise"]
+        sample["membership_strength"] = result["membership_strength"]
+
+    print("Computing UMAP 2D + 3D projections...")
+    umap_2d, umap_3d, r2d, r3d = compute_umap(
+        vectors,
+        n_neighbors=int(umap_params.get("n_neighbors", UMAP_N_NEIGHBORS)),
+        min_dist=float(umap_params.get("min_dist", UMAP_MIN_DIST)),
+        random_state=random_state,
+    )
+
+    print("Saving projection models...")
+    save_parametric_umap(r_cluster, output_path / "umap_model_cluster")
+    save_parametric_umap(r2d, output_path / "umap_model_2d")
+    save_parametric_umap(r3d, output_path / "umap_model_3d")
+    joblib.dump(hdbscan_model, output_path / "hdbscan_model.pkl")
+
+    return umap_2d, umap_3d, samples
