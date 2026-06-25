@@ -131,4 +131,4 @@ def first_line(text: str) -> str:
 
 def clean_llm_line(line: str) -> str:
     """Strip leading bullet/number markers from one line of raw LLM text output"""
-    return line.strip().lstrip("-•·1234567890.) ").strip()
+    return line.strip().lstrip("-\u2022\u00b71234567890.) ").strip()

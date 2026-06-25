@@ -39,8 +39,6 @@ def tensor_summary(value: torch.Tensor) -> dict[str, Any]:
         raise ValueError("Expected a torch.Tensor")
     return {
         "tensor_shape": list(value.shape),
-        "dtype": str(value.dtype).replace("torch.", ""),
-        "device": str(value.device),
     }
 
 
@@ -270,6 +268,23 @@ def mean_cond(tensors: list[torch.Tensor]) -> torch.Tensor:
     return torch.stack([_pad_cond(t, max_len) for t in tensors]).mean(dim=0)
 
 
+def delta_walk_step(
+    a_norm: torch.Tensor,
+    b_norm: torch.Tensor,
+    c_norm: torch.Tensor,
+    alpha: float,
+    eps: float = 1e-8,
+) -> torch.Tensor:
+    """Step c_norm along the a_norm->b_norm direction by alpha, renormalized to unit length
+
+    Shared core of every delta-walk variant (seq cond, pooled, compact embedding)
+    normalize their own inputs and rescale the result to whatever magnitude they need
+    """
+    direction = b_norm - a_norm
+    stepped = c_norm + direction * float(alpha)
+    return stepped / stepped.norm().clamp_min(eps)
+
+
 def delta_cond(
     cond_a: torch.Tensor, cond_b: torch.Tensor, cond_c: torch.Tensor, alpha: float
 ) -> torch.Tensor:
@@ -282,9 +297,7 @@ def delta_cond(
     a_norm = a / a.norm().clamp_min(1e-8)
     b_norm = b / b.norm().clamp_min(1e-8)
     c_norm = c / c_mag
-    direction = b_norm - a_norm
-    stepped = c_norm + direction * alpha
-    return stepped / stepped.norm().clamp_min(1e-8) * c_mag
+    return delta_walk_step(a_norm, b_norm, c_norm, alpha) * c_mag
 
 
 def point_embedding(point: dict[str, Any]) -> torch.Tensor:
@@ -296,7 +309,6 @@ def trajectory_point(
     index: int,
     tensor: torch.Tensor,
     alpha: float,
-    source_point_ids: list[str],
     operation: str,
 ) -> dict[str, Any]:
     """Format a trajectory/interpolated point with metadata and tensor summary"""
@@ -307,7 +319,6 @@ def trajectory_point(
         "alpha": float(alpha),
         "tensor": tensor,
         "norm": float(t_float.norm().item()),
-        "source_point_ids": list(source_point_ids),
         **tensor_summary(tensor),
     }
 
@@ -389,10 +400,8 @@ def _refresh_embedding_set_summary(embedding_set: dict[str, Any]) -> None:
     if points:
         first = points[0]
         embedding_set["tensor_shape"] = list(first.get("tensor_shape", []))
-        embedding_set["dtype"] = first.get("dtype")
     else:
         embedding_set["tensor_shape"] = []
-        embedding_set["dtype"] = None
 
 
 def _validate_point_shape_compatible(

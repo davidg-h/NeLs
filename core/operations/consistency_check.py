@@ -8,7 +8,7 @@ from typing import Any
 import torch
 
 from ..dataset_ops import predict_cluster_for_new
-from ..encoding_ops import encode_prompts_pooled
+from ..encoding_ops import encode_prompts_real_conditioning
 from ..projection_ops import project_trajectory
 from ..tensor_ops import (
     cosine_similarity,
@@ -72,7 +72,7 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
             {"role": "user", "content": text},
         ]
         raw = llm_ops.query(messages, max_new_tokens=tokens_per_variant)
-        line = first_line(raw).lstrip("-•·1234567890.) ").strip()
+        line = first_line(raw).lstrip("-\u2022\u00b71234567890.) ").strip()
         if line and line not in seen:
             seen.add(line)
             result.append(line)
@@ -117,16 +117,18 @@ def build_consistency_check_result(
     """Generate variants, encode with CLIP, compute SC metrics, and project to UMAP coords
 
     Returns (result, trajectory) - trajectory has one step per variant (+ seed at index 0),
-    each with source_text_index for per-step conditioning in NelsPromptConditioningBatch
+    each carrying real conditioning plus a compact display embedding derived from it
     """
     variants = generate_variants(
         seed_prompt, variant_count, variation_strength, random_seed=random_seed
     )
     all_texts = [seed_prompt] + variants
-    encoded = encode_prompts_pooled(clip_obj, all_texts)
+    encoded = encode_prompts_real_conditioning(clip_obj, all_texts)
+    compact_vecs = [item["embedding"] for item in encoded]
+    compact_matrix = torch.stack([vec.detach().float() for vec in compact_vecs]).cpu().numpy()
 
-    seed_vec = torch.from_numpy(encoded[0]).float()
-    variant_vecs = [torch.from_numpy(encoded[i + 1]).float() for i in range(len(variants))]
+    seed_vec = compact_vecs[0].detach().float()
+    variant_vecs = [compact_vecs[i + 1].detach().float() for i in range(len(variants))]
     dataset_vecs = [
         flatten_tensor(point_embedding(p)).float() for p in embedding_set.get("points", [])
     ]
@@ -135,13 +137,10 @@ def build_consistency_check_result(
         seed_vec, variant_vecs, dataset_vecs, random_seed=random_seed
     )
 
-    cluster_results, _ = (
-        predict_cluster_for_new(Path(dataset_path), encoded[1:])
+    cluster_results = (
+        predict_cluster_for_new(Path(dataset_path), compact_matrix[1:])
         if dataset_path
-        else (
-            [{"cluster_global": -1, "is_noise": True, "membership_strength": 0.0}] * len(variants),
-            None,
-        )
+        else [{"cluster_global": -1, "is_noise": True, "membership_strength": 0.0}] * len(variants)
     )
 
     cv_items = [
@@ -160,7 +159,7 @@ def build_consistency_check_result(
         {"id": f"cv_{i:04d}", "alpha": i / max(len(variants) - 1, 1), "tensor": variant_vecs[i]}
         for i in range(len(variants))
     ]
-    overlay, _ = project_trajectory(traj_pts, dataset_path)
+    overlay = project_trajectory(traj_pts, dataset_path)
     for pt in overlay:
         idx_str = pt["id"].split("_")[-1]
         idx = int(idx_str) if idx_str.isdigit() else -1
@@ -181,14 +180,13 @@ def build_consistency_check_result(
         "trajectory_overlay": overlay,
     }
 
-    # Trajectory: seed at step 0, then each variant -> per-step text via source_text_index
+    # Trajectory: seed at step 0, then each variant with real conditioning attached in-place
     all_vecs = [seed_vec] + variant_vecs
     traj_points = []
     for i, vec in enumerate(all_vecs):
-        pt = trajectory_point(
-            i, vec, i / max(len(all_vecs) - 1, 1), [seed_point_id], "consistency_check"
-        )
-        pt["source_text_index"] = i
+        pt = trajectory_point(i, vec, i / max(len(all_vecs) - 1, 1), "consistency_check")
+        pt["cond"] = encoded[i]["cond"]
+        pt["pooled_output"] = encoded[i]["pooled_output"]
         traj_points.append(pt)
 
     trajectory = trajectory_payload(

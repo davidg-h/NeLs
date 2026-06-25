@@ -81,6 +81,7 @@ def query(
     raw = result[0]["generated_text"][-1]["content"]
     return raw.strip()
 
+
 # ---- internals ----
 
 

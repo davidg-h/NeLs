@@ -44,7 +44,6 @@ def nearest_neighbor_result(
                     "id": candidate["id"],
                     "label": candidate["label"],
                     "score": float(score),
-                    "metadata": candidate.get("metadata", {}),
                     "query_id": query_id,
                 }
             )

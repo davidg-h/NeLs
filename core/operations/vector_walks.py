@@ -6,6 +6,7 @@ from typing import Any
 import torch
 
 from ..tensor_ops import (
+    delta_walk_step,
     flatten_tensor,
     normalize_tensor,
     point_embedding,
@@ -64,7 +65,7 @@ def build_interpolation_trajectory(
             tensor = slerp(point_embedding(start), point_embedding(end), alpha)
         else:
             raise ValueError(f"Unsupported interpolation method: {method}")
-        step = trajectory_point(index, tensor, alpha, [start["id"], end["id"]], method)
+        step = trajectory_point(index, tensor, alpha, method)
         trajectory_points.append(step)
 
     return trajectory_payload(
@@ -95,7 +96,6 @@ def build_delta_walk_trajectory(
 
     a_norm = normalize_tensor(point_embedding(points[0]))
     b_norm = normalize_tensor(point_embedding(points[1]))
-    direction = b_norm - a_norm
     start = points[2]
     start_raw = point_embedding(start)
     start_mag = float(torch.linalg.vector_norm(flatten_tensor(start_raw)))
@@ -107,9 +107,9 @@ def build_delta_walk_trajectory(
     for index, scale in enumerate(
         validate_alpha_schedule(alpha_schedule, min_val=-2.0, max_val=4.0)
     ):
-        stepped = normalize_tensor(c_norm + direction * float(scale))
+        stepped = delta_walk_step(a_norm, b_norm, c_norm, scale, eps=1e-12)
         tensor = stepped * start_mag
-        step = trajectory_point(index, tensor, scale, source_ids, "delta_walk")
+        step = trajectory_point(index, tensor, scale, "delta_walk")
         trajectory_points.append(step)
 
     return trajectory_payload(
