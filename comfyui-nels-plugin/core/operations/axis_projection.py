@@ -21,6 +21,7 @@ _AXIS_SUPPORT_RATIO = 0.10
 _AXIS_SUPPORT_MIN = 24
 _AXIS_SUPPORT_MAX = 80
 _AXIS_TRAJECTORY_EXAMPLES = 5
+_AXIS_TRAJECTORY_ANCHORS = 8
 _AXIS_NEUTRAL_EXAMPLES = 10
 _AXIS_KEYWORD_TERMS = 3
 _AXIS_LABEL_SIDE_MAX_WORDS = 4
@@ -86,6 +87,23 @@ def build_axis_projection(
     axis_1_clean_a = _coherent_axis_subset(axis_1_support_a, x_norm, id_to_idx)
     axis_1_labels_b = _evenly_sample_labels(axis_1_clean_b, _AXIS_TRAJECTORY_EXAMPLES)
     axis_1_labels_a = _evenly_sample_labels(axis_1_clean_a, _AXIS_TRAJECTORY_EXAMPLES)
+    axis_1_anchor_points_a = _select_point_anchors(
+        group_a,
+        raw_centroid_a,
+        id_to_idx=id_to_idx,
+        all_raw=all_raw,
+        target_k=_AXIS_TRAJECTORY_ANCHORS,
+    )
+    axis_1_anchor_points_b = _select_point_anchors(
+        group_b,
+        raw_centroid_b,
+        id_to_idx=id_to_idx,
+        all_raw=all_raw,
+        target_k=_AXIS_TRAJECTORY_ANCHORS,
+    )
+    axis_1_anchor_count = min(len(axis_1_anchor_points_a), len(axis_1_anchor_points_b))
+    axis_1_anchor_points_a = axis_1_anchor_points_a[:axis_1_anchor_count]
+    axis_1_anchor_points_b = axis_1_anchor_points_b[:axis_1_anchor_count]
     mid = len(results) // 2
     axis_1_neutral = [
         r["label"]
@@ -120,7 +138,7 @@ def build_axis_projection(
     proj1 = torch.mv(centered, axis_1)
     residuals = centered - proj1.unsqueeze(1) * axis_1.unsqueeze(0)
 
-    components, variances, _ = _svd_top_k_components(residuals, k=5)
+    components, variances = _svd_top_k_components(residuals, k=5)
 
     axis_2: torch.Tensor | None = None
     axis_2_variance: float = 0.0
@@ -131,6 +149,8 @@ def build_axis_projection(
     axis_2_distance: float = 1.0
     axis_2_keywords_neg: list[str] = []
     axis_2_keywords_pos: list[str] = []
+    axis_2_anchor_points_neg: list[dict[str, Any]] = []
+    axis_2_anchor_points_pos: list[dict[str, Any]] = []
 
     if components and variances[0] >= 0.05:
         best_component, best_variance = _select_axis_2_component(components, variances, axis_1)
@@ -165,14 +185,45 @@ def build_axis_projection(
             axis_2_clean_neg = _coherent_axis_subset(axis_2_support_neg, x_norm, id_to_idx)
             axis_2_labels_pos = _evenly_sample_labels(axis_2_clean_pos, _AXIS_TRAJECTORY_EXAMPLES)
             axis_2_labels_neg = _evenly_sample_labels(axis_2_clean_neg, _AXIS_TRAJECTORY_EXAMPLES)
+            axis_2_clean_pos_points = _entries_to_points(axis_2_clean_pos, id_to_point)
+            axis_2_clean_neg_points = _entries_to_points(axis_2_clean_neg, id_to_point)
+            axis_2_raw_centroid_pos = _mean_raw_point_embedding(
+                axis_2_clean_pos_points,
+                id_to_idx=id_to_idx,
+                all_raw=all_raw,
+            )
+            axis_2_raw_centroid_neg = _mean_raw_point_embedding(
+                axis_2_clean_neg_points,
+                id_to_idx=id_to_idx,
+                all_raw=all_raw,
+            )
+            if axis_2_raw_centroid_pos is not None and axis_2_raw_centroid_neg is not None:
+                axis_2_anchor_points_pos = _select_point_anchors(
+                    axis_2_clean_pos_points,
+                    axis_2_raw_centroid_pos,
+                    id_to_idx=id_to_idx,
+                    all_raw=all_raw,
+                    target_k=_AXIS_TRAJECTORY_ANCHORS,
+                )
+                axis_2_anchor_points_neg = _select_point_anchors(
+                    axis_2_clean_neg_points,
+                    axis_2_raw_centroid_neg,
+                    id_to_idx=id_to_idx,
+                    all_raw=all_raw,
+                    target_k=_AXIS_TRAJECTORY_ANCHORS,
+                )
+                axis_2_anchor_count = min(
+                    len(axis_2_anchor_points_neg),
+                    len(axis_2_anchor_points_pos),
+                )
+                axis_2_anchor_points_neg = axis_2_anchor_points_neg[:axis_2_anchor_count]
+                axis_2_anchor_points_pos = axis_2_anchor_points_pos[:axis_2_anchor_count]
 
             order = sorted(range(len(raw_scores)), key=lambda i: raw_scores[i])
             mid = len(order) // 2
             axis_2_neutral = [
                 embedding_set["points"][i]["label"]
-                for i in order[
-                    max(0, mid - _AXIS_NEUTRAL_EXAMPLES) : mid + _AXIS_NEUTRAL_EXAMPLES
-                ]
+                for i in order[max(0, mid - _AXIS_NEUTRAL_EXAMPLES) : mid + _AXIS_NEUTRAL_EXAMPLES]
             ]
             axis_2_keywords_neg, axis_2_keywords_pos = _extract_axis_keyword_sides(
                 [r["label"] for r in axis_2_support_neg],
@@ -206,12 +257,12 @@ def build_axis_projection(
         "source_group_b": [str(p["id"]) for p in group_b],
         "axis_projection": results,
         "axis_label": axis_1_label,
-        "axis_keywords_a": " · ".join(axis_1_keywords_a) if axis_1_keywords_a else None,
-        "axis_keywords_b": " · ".join(axis_1_keywords_b) if axis_1_keywords_b else None,
+        "axis_keywords_a": " | ".join(axis_1_keywords_a) if axis_1_keywords_a else None,
+        "axis_keywords_b": " | ".join(axis_1_keywords_b) if axis_1_keywords_b else None,
         "axis_b_projection": axis_2_results,
         "axis_b_label": axis_2_label,
-        "axis_b_keywords_a": " · ".join(axis_2_keywords_neg) if axis_2_keywords_neg else None,
-        "axis_b_keywords_b": " · ".join(axis_2_keywords_pos) if axis_2_keywords_pos else None,
+        "axis_b_keywords_a": " | ".join(axis_2_keywords_neg) if axis_2_keywords_neg else None,
+        "axis_b_keywords_b": " | ".join(axis_2_keywords_pos) if axis_2_keywords_pos else None,
         "axis_b_variance": axis_2_variance if axis_2 is not None else None,
         "_raw_centroid_a": raw_centroid_a,
         "_raw_centroid_b": raw_centroid_b,
@@ -223,6 +274,10 @@ def build_axis_projection(
         "_axis_1_labels_b": axis_1_labels_b,
         "_axis_2_labels_neg": axis_2_labels_neg,
         "_axis_2_labels_pos": axis_2_labels_pos,
+        "_axis_1_anchor_texts_a": [_point_text(point) for point in axis_1_anchor_points_a],
+        "_axis_1_anchor_texts_b": [_point_text(point) for point in axis_1_anchor_points_b],
+        "_axis_2_anchor_texts_neg": [_point_text(point) for point in axis_2_anchor_points_neg],
+        "_axis_2_anchor_texts_pos": [_point_text(point) for point in axis_2_anchor_points_pos],
     }
 
 
@@ -239,32 +294,34 @@ def build_axis_trajectory(
     raw_origin: torch.Tensor = axis_projection_result["_raw_origin"]
     axis_2: torch.Tensor | None = axis_projection_result.get("_axis_2")
     axis_2_distance: float = axis_projection_result.get("_axis_2_distance", 1.0)
-    axis_1_labels_a: list[str] = axis_projection_result.get("_axis_1_labels_a", [])
-    axis_1_labels_b: list[str] = axis_projection_result.get("_axis_1_labels_b", [])
-    axis_2_labels_neg: list[str] = axis_projection_result.get("_axis_2_labels_neg", [])
-    axis_2_labels_pos: list[str] = axis_projection_result.get("_axis_2_labels_pos", [])
+    axis_1_anchor_texts_a: list[str] = axis_projection_result.get("_axis_1_anchor_texts_a", [])
+    axis_1_anchor_texts_b: list[str] = axis_projection_result.get("_axis_1_anchor_texts_b", [])
+    axis_2_anchor_texts_neg: list[str] = axis_projection_result.get("_axis_2_anchor_texts_neg", [])
+    axis_2_anchor_texts_pos: list[str] = axis_projection_result.get("_axis_2_anchor_texts_pos", [])
 
     alphas = alpha_schedule if alpha_schedule is not None else [0.0, 0.25, 0.5, 0.75, 1.0]
-    group_size = len(axis_1_labels_a)
+    pair_sizes: list[int] = []
 
     points = []
     for i, alpha in enumerate(alphas):
         tensor = torch.lerp(raw_centroid_a, raw_centroid_b, float(alpha))
-        pt = trajectory_point(i, tensor, float(alpha), [], "axis_projection")
+        pt = trajectory_point(i, tensor, float(alpha), "axis_projection")
         pt["source_text_pair"] = 0
         points.append(pt)
 
-    source_texts = axis_1_labels_a + axis_1_labels_b
+    source_texts = axis_1_anchor_texts_a + axis_1_anchor_texts_b
+    pair_sizes.append(len(axis_1_anchor_texts_a))
 
-    if axis_2 is not None:
+    if axis_2 is not None and axis_2_anchor_texts_neg and axis_2_anchor_texts_pos:
         offset = len(points)
         for j, alpha in enumerate(alphas):
             scale = 2.0 * float(alpha) - 1.0
             tensor = raw_origin + scale * axis_2 * axis_2_distance
-            pt = trajectory_point(offset + j, tensor, float(alpha), [], "axis_orth")
+            pt = trajectory_point(offset + j, tensor, float(alpha), "axis_orth")
             pt["source_text_pair"] = 1
             points.append(pt)
-        source_texts += axis_2_labels_neg + axis_2_labels_pos
+        source_texts += axis_2_anchor_texts_neg + axis_2_anchor_texts_pos
+        pair_sizes.append(len(axis_2_anchor_texts_neg))
 
     payload = trajectory_payload(
         operation="axis_projection",
@@ -275,7 +332,9 @@ def build_axis_trajectory(
         request_id=request_id,
         state_revision=state_revision,
     )
-    payload["seq_cond_group_size"] = group_size
+    if pair_sizes:
+        payload["seq_cond_group_size"] = pair_sizes[0]
+        payload["seq_cond_group_sizes"] = pair_sizes
     return payload
 
 
@@ -291,7 +350,7 @@ def generate_axis_label_candidates(
     temperature: float = 0.9,
 ) -> list[str]:
     """Generate n candidate 'X to Y' axis labels from one LLM call"""
-    from .. import llm_ops
+    from .. import llm_ops  # heavy transformers dependency - only load when labeling runs
 
     user_content = (
         "Contrastive keywords measured from the support-band prompts:\n"
@@ -345,11 +404,13 @@ def critique_and_refine_axis_label(
     if len(candidates) == 1:
         return candidates[0]
 
-    from .. import llm_ops
+    from .. import llm_ops  # heavy transformers dependency - only load when labeling runs
 
     candidate_block = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(candidates))
     exclude_hint = (
-        f"\n\nAlready used for a different axis (do not reuse): {exclude_label}" if exclude_label else ""
+        f"\n\nAlready used for a different axis (do not reuse): {exclude_label}"
+        if exclude_label
+        else ""
     )
     messages = [
         {
@@ -378,11 +439,68 @@ def critique_and_refine_axis_label(
     return candidates[0]
 
 
+# ---- internals ----
+
+
 def _evenly_sample_labels(items: list[dict[str, Any]], n: int) -> list[str]:
     if len(items) <= n:
         return [r["label"] for r in items]
     indices = [round(i * (len(items) - 1) / (n - 1)) for i in range(n)]
     return [items[idx]["label"] for idx in indices]
+
+
+def _point_text(point: dict[str, Any]) -> str:
+    return str(point.get("metadata", {}).get("text", "") or point.get("label", "")).strip()
+
+
+def _entries_to_points(
+    entries: list[dict[str, Any]],
+    id_to_point: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [id_to_point[str(entry["id"])] for entry in entries if str(entry["id"]) in id_to_point]
+
+
+def _mean_raw_point_embedding(
+    points: list[dict[str, Any]],
+    *,
+    id_to_idx: dict[str, int],
+    all_raw: torch.Tensor,
+) -> torch.Tensor | None:
+    if not points:
+        return None
+    indices = [id_to_idx[str(point["id"])] for point in points if str(point["id"]) in id_to_idx]
+    if not indices:
+        return None
+    return all_raw[indices].mean(dim=0)
+
+
+def _select_point_anchors(
+    points: list[dict[str, Any]],
+    centroid: torch.Tensor,
+    *,
+    id_to_idx: dict[str, int],
+    all_raw: torch.Tensor,
+    target_k: int,
+) -> list[dict[str, Any]]:
+    if not points:
+        return []
+
+    valid_points = [
+        point for point in points if str(point["id"]) in id_to_idx and _point_text(point)
+    ]
+    if not valid_points:
+        return []
+
+    k = max(1, min(int(target_k), len(valid_points)))
+    centroid_unit = centroid / torch.linalg.vector_norm(centroid).clamp_min(1e-12)
+    scored: list[tuple[float, dict[str, Any]]] = []
+    for point in valid_points:
+        vector = all_raw[id_to_idx[str(point["id"])]]
+        vector_unit = vector / torch.linalg.vector_norm(vector).clamp_min(1e-12)
+        similarity = float(torch.dot(vector_unit, centroid_unit).item())
+        scored.append((similarity, point))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [point for _, point in scored[:k]]
 
 
 def _support_band_size(total: int) -> int:
@@ -429,21 +547,20 @@ def _coherent_axis_subset(
 def _svd_top_k_components(
     matrix: torch.Tensor,
     k: int = 3,
-) -> tuple[list[torch.Tensor], list[float], float]:
+) -> tuple[list[torch.Tensor], list[float]]:
     if matrix.shape[0] < 2:
-        return [], [], 0.0
+        return [], []
     try:
         _, s, vh = torch.linalg.svd(matrix, full_matrices=False)
         total = float((s**2).sum())
         if total < 1e-12:
-            return [], [], 0.0
+            return [], []
         n = min(k, len(s))
-        stability = float(s[0] / s[1]) if len(s) > 1 else float("inf")
         components = [vh[i] for i in range(n)]
         variances = [float(s[i] ** 2) / total for i in range(n)]
-        return components, variances, stability
+        return components, variances
     except Exception:
-        return [], [], 0.0
+        return [], []
 
 
 def _select_axis_2_component(
@@ -493,7 +610,7 @@ def _extract_axis_label(text: str) -> str:
     line = re.sub(r"^(candidate|label|axis)\s*[:\-]\s*", "", line, flags=re.IGNORECASE)
     line = re.sub(r"^[AB]-side[^:]*:\s*", "", line, flags=re.IGNORECASE).strip()
     line = re.sub(r"^the\s+axis\s+\w+\s*(?:from)?\s*", "", line, flags=re.IGNORECASE).strip()
-    line = line.replace("->", " to ").replace("→", " to ").replace("↔", " to ")
+    line = line.replace("->", " to ").replace("\u2192", " to ").replace("\u2194", " to ")
     line = re.split(r"\s[\-\u2013\u2014]\s|[;|()]", line, maxsplit=1)[0].strip()
     line = re.sub(r"\s+", " ", line).strip(" .,:;!?-")
 
@@ -538,11 +655,7 @@ def _extract_axis_label_candidates(
 
     if not candidates:
         label = _extract_axis_label(text)
-        if (
-            label
-            and _is_valid_axis_label(label)
-            and not _label_reused(label, exclude_label)
-        ):
+        if label and _is_valid_axis_label(label) and not _label_reused(label, exclude_label):
             candidates.append(label)
 
     return candidates

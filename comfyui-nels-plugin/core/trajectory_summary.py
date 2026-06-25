@@ -21,7 +21,6 @@ def trajectory_result_summary(
             "alpha": point.get("alpha"),
             "norm": point.get("norm"),
             "tensor_shape": point.get("tensor_shape", []),
-            "dtype": point.get("dtype"),
         }
         if embedding_set is not None and point.get("tensor") is not None:
             step["nearest_top_k"] = _nearest_real_samples(point["tensor"], embedding_set, k=3)

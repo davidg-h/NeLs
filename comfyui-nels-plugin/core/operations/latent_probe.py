@@ -9,7 +9,9 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..encoding_ops import encode_prompts_pooled
+from ..dataset_ops import predict_cluster_for_new
+from ..encoding_ops import encode_prompts_real_conditioning
+from ..projection_ops import compute_iso_bounds
 from ..tensor_ops import trajectory_payload, trajectory_point
 from ..text_terms import clean_llm_line
 
@@ -21,15 +23,15 @@ def inverse_project(
     mode: str = "2d",
     neighbor_count: int = 5,
     loaded_points: list[dict[str, Any]] | None = None,
-) -> tuple[list[dict[str, Any]], np.ndarray]:
-    """Inverse-project canvas coords -> estimated embedding & top-k nearest prompts
+) -> tuple[list[dict[str, Any]], np.ndarray, dict[str, Any]]:
+    """Inverse-project canvas coords -> estimated embedding, top-k nearest prompts
 
     Embedding estimation always uses the full dataset for accuracy
     """
     path = Path(dataset_path)
     ref_key = "umap_2d.npy" if mode == "2d" else "umap_3d.npy"
     ref_path = path / ref_key
-    pooled_path = path / "embeddings.npy"
+    pooled_path = path / "compact_embeddings.npy"
     if not ref_path.exists() or not pooled_path.exists():
         raise FileNotFoundError(f"Dataset files missing in {path}")
 
@@ -44,6 +46,14 @@ def inverse_project(
     weights = 1.0 / (dists[nn_idx] + 1e-8)
     weights /= weights.sum()
     q = (np.array(pooled[nn_idx], dtype=np.float32) * weights[:, None]).sum(axis=0)
+
+    cluster_results = predict_cluster_for_new(path, q.reshape(1, -1))
+    cluster_hit = cluster_results[0]
+    cluster_info = {
+        "cluster_id": None if cluster_hit.get("is_noise") else cluster_hit.get("cluster_global"),
+        "is_noise": bool(cluster_hit.get("is_noise")),
+        "membership_strength": float(cluster_hit.get("membership_strength") or 0.0),
+    }
 
     # 2: nearest-prompts kNN on loaded points
     if loaded_points:
@@ -72,7 +82,7 @@ def inverse_project(
                         "full_text": pt.get("metadata", {}).get("text"),
                     }
                 )
-            return results, q
+            return results, q, cluster_info
 
     # Fallback: full dataset search (results may not be selectable in canvas)
     samples_path = path / "samples.jsonl"
@@ -101,7 +111,7 @@ def inverse_project(
                 "full_text": s.get("text"),
             }
         )
-    return results, q
+    return results, q, cluster_info
 
 
 def build_text_reconstruction(
@@ -123,8 +133,8 @@ def build_text_reconstruction(
     - Seeds + noise bootstrap the first LLM call and then dropped
     - Negatives steer the LLM away from unrelated concepts every iteration
     - Beam contains only LLM-generated candidates throughout
-    - Returns the best result plus one snapshot (raw CLIP embedding + best text) for the
-      starting point and each step where the best similarity genuinely improved, for
+    - Returns the best result plus one snapshot (real conditioning + compact embedding + best text)
+      for the starting point and each step where the best similarity genuinely improved, for
       trajectory construction
 
     Stops when: max iterations reached, time limit reached, no candidates returned, or best cosine sim hasn't improved by > convergence_threshold for convergence_patience consecutive iterations.
@@ -138,8 +148,8 @@ def build_text_reconstruction(
     deadline = time.monotonic() + max_minutes * 60
     from .. import llm_ops  # heavy transformers dependency - only load when reconstruction runs
 
-    # raw CLIP vecs per text -> used later to build trajectory point tensors
-    text_to_raw_vec: dict[str, np.ndarray] = {}
+    # per-text encoded state -> used later to build trajectory point tensors and sampler conds
+    text_to_state: dict[str, dict[str, Any]] = {}
 
     # bootstrap beam from seeds + noise (none of these enter the beam)
     initial: list[str] = []
@@ -149,13 +159,22 @@ def build_text_reconstruction(
     if not initial:
         return {"text": "", "cosine_sim": 0.0, "snapshots": []}
 
-    vecs = encode_prompts_pooled(clip_obj, initial)
+    encoded_initial = encode_prompts_real_conditioning(clip_obj, initial)
     scored = []
-    for txt, rv in zip(initial, vecs, strict=True):
+    for txt, state in zip(initial, encoded_initial, strict=True):
+        rv = state["embedding"].detach().cpu().numpy()
         rn = np.linalg.norm(rv)
         sim = float(np.dot(rv / (rn + 1e-8), _t_norm)) if rn > 1e-8 else 0.0
         scored.append((sim, txt))
-        text_to_raw_vec[txt] = rv
+        text_to_state[txt] = {
+            "embedding": rv.copy(),
+            "cond": state["cond"].detach().float(),
+            "pooled_output": (
+                state["pooled_output"].detach().float()
+                if state["pooled_output"] is not None
+                else None
+            ),
+        }
     scored.sort(reverse=True)
     beam: list[tuple[float, str]] = scored[:beam_width]
 
@@ -163,12 +182,36 @@ def build_text_reconstruction(
 
     def _snapshot(step: int) -> None:
         best_sim, best_text = beam[0]
+        state = text_to_state.get(best_text, {})
         snapshots.append(
             {
                 "step": step,
                 "text": best_text,
                 "cosine_sim": best_sim,
-                "embedding": text_to_raw_vec.get(best_text),
+                "embedding": state.get("embedding"),
+                "cond": state.get("cond"),
+                "pooled_output": state.get("pooled_output"),
+            }
+        )
+
+    def _ensure_final_snapshot(step: int) -> None:
+        best_sim, best_text = beam[0]
+        state = text_to_state.get(best_text, {})
+        if snapshots and snapshots[-1].get("text") == best_text:
+            snapshots[-1]["step"] = step
+            snapshots[-1]["cosine_sim"] = best_sim
+            snapshots[-1]["embedding"] = state.get("embedding")
+            snapshots[-1]["cond"] = state.get("cond")
+            snapshots[-1]["pooled_output"] = state.get("pooled_output")
+            return
+        snapshots.append(
+            {
+                "step": step,
+                "text": best_text,
+                "cosine_sim": best_sim,
+                "embedding": state.get("embedding"),
+                "cond": state.get("cond"),
+                "pooled_output": state.get("pooled_output"),
             }
         )
 
@@ -199,13 +242,22 @@ def build_text_reconstruction(
             stopped_early = True
             break
 
-        cand_vecs = encode_prompts_pooled(clip_obj, candidates)
+        encoded_candidates = encode_prompts_real_conditioning(clip_obj, candidates)
         new_scored = []
-        for txt, rv in zip(candidates, cand_vecs, strict=True):
+        for txt, state in zip(candidates, encoded_candidates, strict=True):
+            rv = state["embedding"].detach().cpu().numpy()
             rn = np.linalg.norm(rv)
             sim = float(np.dot(rv / (rn + 1e-8), _t_norm)) if rn > 1e-8 else 0.0
             new_scored.append((sim, txt))
-            text_to_raw_vec[txt] = rv
+            text_to_state[txt] = {
+                "embedding": rv.copy(),
+                "cond": state["cond"].detach().float(),
+                "pooled_output": (
+                    state["pooled_output"].detach().float()
+                    if state["pooled_output"] is not None
+                    else None
+                ),
+            }
 
         combined = sorted(beam + new_scored, reverse=True)
         seen: set[str] = set()
@@ -242,8 +294,8 @@ def build_text_reconstruction(
     llm_ops.unload()
     best_sim, best_text = beam[0]
     # Always append the final result as the last trajectory point, so the user-facing
-    # reconstruction is guaranteed to match the trajectory's last step
-    _snapshot(final_step)
+    # reconstruction is guaranteed to match the trajectory's last step without duplication
+    _ensure_final_snapshot(final_step)
     return {"text": best_text, "cosine_sim": best_sim, "snapshots": snapshots}
 
 
@@ -268,8 +320,20 @@ def build_latent_probe_recon_trajectory(
             if raw_emb is not None
             else torch.from_numpy(fallback_embedding).float()
         )
-        pt = trajectory_point(i, tensor, alpha, [], "latent_probe_recon")
+        pt = trajectory_point(i, tensor, alpha, "latent_probe_recon")
         pt["source_text_index"] = i
+        cond = snap.get("cond")
+        if cond is not None:
+            pt["cond"] = (
+                cond.detach().float() if hasattr(cond, "detach") else torch.as_tensor(cond).float()
+            )
+        pooled_output = snap.get("pooled_output")
+        if pooled_output is not None:
+            pt["pooled_output"] = (
+                pooled_output.detach().float()
+                if hasattr(pooled_output, "detach")
+                else torch.as_tensor(pooled_output).float()
+            )
         trajectory_points.append(pt)
         source_texts.append(snap.get("text") or "")
 
@@ -384,10 +448,7 @@ def _denormalize_canvas_coords(coords: list[float], ref: np.ndarray, mode: str) 
     Inverse:          raw   = coord * iso_span / 2 + midpoint
     2D special case:  Y is negated in Sigma (y_graph = -y_norm) -> undo that too
     """
-    mins = ref.min(axis=0)
-    maxs = ref.max(axis=0)
-    midpoint = (mins + maxs) / 2.0
-    iso_span = float((maxs - mins).max()) or 1.0
+    midpoint, iso_span = compute_iso_bounds(ref)
     q = np.array(coords, dtype=np.float32)
     if mode == "2d" and len(q) >= 2:
         q = q.copy()

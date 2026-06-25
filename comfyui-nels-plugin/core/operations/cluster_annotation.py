@@ -7,7 +7,6 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .. import llm_ops
 from ..defaults import DEFAULT_LLM_MODEL as DEFAULT_MODEL
 from ..text_terms import STOP_WORDS, extract_bigrams, first_line, tokenize_words
 
@@ -51,6 +50,8 @@ def annotate_clusters(
     refine_rounds: int = ANNOTATION_REFINE_ROUNDS,
 ) -> dict[str, str]:
     """Generate LLM cluster labels and write them into dataset.json"""
+    from .. import llm_ops  # heavy transformers dependency - only load when annotation runs
+
     path = Path(dataset_path)
     if not path.is_dir():
         raise ValueError(f"Dataset folder not found: {path}")
@@ -138,6 +139,8 @@ def label_cluster(
     context: str = "",
 ) -> str:
     """Generate a 2-5 word label for a semantic cluster given sample prompts and optional term profile"""
+    from .. import llm_ops  # heavy transformers dependency - only load when annotation runs
+
     ctx = f' from "{context}"' if context else ""
     size_hint = f" ({size} points total)" if size else ""
     prompt_block = "\n".join(f"- {p}" for p in prompts)
@@ -172,6 +175,8 @@ def label_cluster_from_profile(
     context: str = "",
 ) -> str:
     """Label a cluster from its TF-IDF term profile (common + distinctive + bigrams) and optional raw examples"""
+    from .. import llm_ops  # heavy transformers dependency - only load when annotation runs
+
     ctx = f' from "{context}"' if context else ""
     size_hint = f" ({size} points total)" if size else ""
     user_content = f"Cluster{size_hint}:\n{_format_profile(profile)}"
@@ -203,6 +208,8 @@ def refine_labels(
     context: str = "",
 ) -> dict[str, str]:
     """Round-2 refinement: show all labels + full term profile so LLM can improve generic or overlapping ones"""
+    from .. import llm_ops  # heavy transformers dependency - only load when annotation runs
+
     ctx = f' from "{context}"' if context else ""
     cluster_summary = "\n".join(
         "- Cluster {cid} | frequent: {common} | distinctive: {distinctive} | label: {label}".format(
@@ -470,7 +477,9 @@ def _relabel_group(
     """Ask LLM to give each cluster in the group a distinct label
 
     Fall back to top distinctive term"""
-    # forbidden: all labels outside this group, updated live as we assign within the group
+    from .. import llm_ops  # heavy transformers dependency - only load when annotation runs
+
+    # all labels outside this group, updated live as we assign within the group
     forbidden_norms = {_normalize_label(v) for k, v in cluster_labels.items() if k not in cids}
 
     # build per-cluster summaries

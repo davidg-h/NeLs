@@ -18,7 +18,10 @@ from ..core.operations.latent_probe import (
     inverse_project,
 )
 from ..core.operations.nearest_neighbor import nearest_neighbor_result
-from ..core.operations.vector_walks import build_delta_walk_trajectory, build_interpolation_trajectory
+from ..core.operations.vector_walks import (
+    build_delta_walk_trajectory,
+    build_interpolation_trajectory,
+)
 from ..core.projection_ops import project_trajectory
 from ..core.session_contracts import json_dumps, validate_session_bundle
 from ..core.tensor_ops import normalize_tensor
@@ -77,6 +80,14 @@ class NelsGraphOperation:
                 payload=payload or {},
             )
 
+        def emit_failure(exc: Exception) -> None:
+            emit(
+                "operation_failed",
+                f"NELS Graph Operation failed {operation}: {exc}",
+                "failed",
+                {"operation": operation, "error": str(exc), "request": request},
+            )
+
         emit("operation_started", f"NELS Graph Operation started {operation}", "running", request)
 
         random_seed = int(embedding_set.get("_source_config", {}).get("random_seed", 42))
@@ -86,6 +97,7 @@ class NelsGraphOperation:
         llm_ops.set_preferred_model(resolved_llm)
 
         trajectory = None
+        result: dict[str, Any] | None = None
         try:
             if operation in ("lerp", "slerp"):
                 trajectory = build_interpolation_trajectory(
@@ -96,10 +108,6 @@ class NelsGraphOperation:
                     request_id=run_id,
                     state_revision=rev,
                 )
-                result = trajectory_result_summary(
-                    trajectory,
-                    embedding_set if request.get("nearest_sample") else None,
-                )
             elif operation == "delta_walk":
                 trajectory = build_delta_walk_trajectory(
                     embedding_set,
@@ -107,10 +115,6 @@ class NelsGraphOperation:
                     alpha_schedule=request.get("alpha_schedule", [0, 1]),
                     request_id=run_id,
                     state_revision=rev,
-                )
-                result = trajectory_result_summary(
-                    trajectory,
-                    embedding_set if request.get("nearest_sample") else None,
                 )
             elif operation == "axis_projection":
                 compute_labels = bool(request.get("compute_axis_labels", False))
@@ -140,7 +144,7 @@ class NelsGraphOperation:
                 )
             elif operation == "consistency_check":
                 seed_ids = selection.get("selected_point_ids", [])
-                if not seed_ids:
+                if len(seed_ids) != 1:
                     raise ValueError("consistency_check requires exactly 1 selected point")
                 seed_id = str(seed_ids[0])
                 id_to_point = {str(p["id"]): p for p in embedding_set.get("points", [])}
@@ -189,7 +193,7 @@ class NelsGraphOperation:
                     raise ValueError(
                         "Latent Space Probe requires a loaded dataset with a file path"
                     )
-                hits, estimated = inverse_project(
+                hits, estimated, probe_cluster = inverse_project(
                     probe_coords,
                     dataset_path,
                     mode=probe_mode,
@@ -205,6 +209,7 @@ class NelsGraphOperation:
                     "request_id": run_id,
                     "state_revision": rev,
                     "inverse_project": clean_hits,
+                    "probe_cluster": probe_cluster,
                 }
                 if probe_text_recon and hits:
                     seed_hits = [h for h in hits if h.get("full_text") or h.get("label")][
@@ -302,45 +307,45 @@ class NelsGraphOperation:
                     "selection": selection,
                 }
         except Exception as exc:
-            emit(
-                "operation_failed",
-                f"NELS Graph Operation failed {operation}: {exc}",
-                "failed",
-                {"operation": operation, "error": str(exc), "request": request},
-            )
+            emit_failure(exc)
             raise
-
-        # Free GPU memory -> unload LLM after operation completes
-        llm_ops.unload()
+        finally:
+            # Free GPU memory after every operation path
+            llm_ops.unload()
 
         if trajectory is not None and clip is not None:
             attach_sequence_conditioning(trajectory, clip)
+        if trajectory is not None and operation in ("lerp", "slerp", "delta_walk"):
+            result = trajectory_result_summary(
+                trajectory,
+                embedding_set if request.get("nearest_sample") else None,
+            )
 
-        if trajectory is not None:
-            result_count = len(trajectory.get("points", []))
-            # consistency_check builds its own (correctly cv_NNNN-id'd + labeled) trajectory_overlay
-            # inside build_consistency_check_result; its `trajectory` here only feeds the separate
-            # NELS_TRAJECTORY output socket so skip rebuilding/overwriting the overlay for it
-            if operation != "consistency_check":
-                dataset_path = embedding_set.get("_source_config", {}).get("dataset_path")
-                overlay, overlay_warning = project_trajectory(
-                    trajectory.get("points", []),
-                    dataset_path,
-                )
-                result["trajectory_overlay"] = overlay
-                if overlay_warning:
-                    result["trajectory_overlay_warning"] = overlay_warning
-        elif isinstance(result, dict) and "neighbors" in result:
-            result_count = len(result.get("neighbors", []))
-        else:
-            result_count = len(selection.get("selected_point_ids", []))
-        emit(
-            "operation_result",
-            f"NELS Graph Operation completed {result.get('operation', operation)} with {result_count} result item(s)",
-            "completed",
-            result,
-        )
-        return (bundle, trajectory or {}, json_dumps(result))
+        try:
+            if trajectory is not None:
+                result_count = len(trajectory.get("points", []))
+                # consistency_check builds its own trajectory_overlay
+                if operation != "consistency_check":
+                    dataset_path = embedding_set.get("_source_config", {}).get("dataset_path")
+                    overlay = project_trajectory(
+                        trajectory.get("points", []),
+                        dataset_path,
+                    )
+                    result["trajectory_overlay"] = overlay
+            elif isinstance(result, dict) and "neighbors" in result:
+                result_count = len(result.get("neighbors", []))
+            else:
+                result_count = len(selection.get("selected_point_ids", []))
+            emit(
+                "operation_result",
+                f"NELS Graph Operation completed {result.get('operation', operation)} with {result_count} result item(s)",
+                "completed",
+                result,
+            )
+            return (bundle, trajectory or {}, json_dumps(result))
+        except Exception as exc:
+            emit_failure(exc)
+            raise
 
 
 NODE_CLASS_MAPPINGS = {"nels_GraphOperation": NelsGraphOperation}
