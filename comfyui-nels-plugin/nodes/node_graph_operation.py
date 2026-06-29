@@ -6,7 +6,6 @@ from typing import Any
 import numpy as np
 
 from ..core.defaults import DEFAULT_LLM_MODEL
-from ..core.encoding_ops import attach_sequence_conditioning
 from ..core.operations.axis_projection import (
     build_axis_projection,
     build_axis_trajectory,
@@ -103,6 +102,7 @@ class NelsGraphOperation:
                 trajectory = build_interpolation_trajectory(
                     embedding_set,
                     selection,
+                    clip_obj=clip,
                     method=operation,
                     alpha_schedule=request.get("alpha_schedule", [0, 1]),
                     request_id=run_id,
@@ -112,6 +112,7 @@ class NelsGraphOperation:
                 trajectory = build_delta_walk_trajectory(
                     embedding_set,
                     selection,
+                    clip_obj=clip,
                     alpha_schedule=request.get("alpha_schedule", [0, 1]),
                     request_id=run_id,
                     state_revision=rev,
@@ -128,6 +129,7 @@ class NelsGraphOperation:
                 )
                 trajectory = build_axis_trajectory(
                     result,
+                    clip_obj=clip,
                     alpha_schedule=request.get("alpha_schedule") or None,
                     request_id=run_id,
                     state_revision=rev,
@@ -313,8 +315,6 @@ class NelsGraphOperation:
             # Free GPU memory after every operation path
             llm_ops.unload()
 
-        if trajectory is not None and clip is not None:
-            attach_sequence_conditioning(trajectory, clip)
         if trajectory is not None and operation in ("lerp", "slerp", "delta_walk"):
             result = trajectory_result_summary(
                 trajectory,

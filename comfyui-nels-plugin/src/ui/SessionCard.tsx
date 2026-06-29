@@ -15,6 +15,16 @@ export function SessionCard() {
     if (meta?.dataset_name) rows.push(["dataset", meta.dataset_name]);
     if (meta?.source_dataset) rows.push(["source", meta.source_dataset]);
     if (meta?.encoder) rows.push(["encoder", meta.encoder]);
+    if (meta?.clip_type) rows.push(["clip type", meta.clip_type]);
+    if (meta?.embedding_strategy) {
+      rows.push(["embedding strategy", meta.embedding_strategy]);
+    }
+    if (meta?.embedding_shape?.length) {
+      rows.push(["compact shape", meta.embedding_shape.join(" x ")]);
+    }
+    if (meta?.full_dim?.length) {
+      rows.push(["full shape", meta.full_dim.join(" x ")]);
+    }
     if (meta?.total_sample_count != null) {
       rows.push(["dataset total", String(meta.total_sample_count)]);
     }

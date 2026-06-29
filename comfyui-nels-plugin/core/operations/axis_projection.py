@@ -7,8 +7,17 @@ from typing import Any
 
 import torch
 
+from ..encoding_ops import (
+    compact_embedding_from_real_conditioning,
+    encode_prompts_real_conditioning,
+    interpolate_optional_pooled,
+    mean_optional_pooled,
+    set_optional_pooled_output,
+)
 from ..tensor_ops import (
     flatten_tensor,
+    lerp_cond,
+    mean_cond,
     point_embedding,
     trajectory_payload,
     trajectory_point,
@@ -284,44 +293,74 @@ def build_axis_projection(
 def build_axis_trajectory(
     axis_projection_result: dict[str, Any],
     *,
+    clip_obj: Any,
     alpha_schedule: list[float] | None = None,
     request_id: str | None = None,
     state_revision: int | None = None,
 ) -> dict[str, Any]:
-    """Build trajectory along Axis 1 (A->B) and optionally Axis 2 (orthogonal)"""
-    raw_centroid_a: torch.Tensor = axis_projection_result["_raw_centroid_a"]
-    raw_centroid_b: torch.Tensor = axis_projection_result["_raw_centroid_b"]
-    raw_origin: torch.Tensor = axis_projection_result["_raw_origin"]
+    """Build trajectory along Axis 1 (A->B) and optionally Axis 2 using final real conditioning"""
     axis_2: torch.Tensor | None = axis_projection_result.get("_axis_2")
-    axis_2_distance: float = axis_projection_result.get("_axis_2_distance", 1.0)
     axis_1_anchor_texts_a: list[str] = axis_projection_result.get("_axis_1_anchor_texts_a", [])
     axis_1_anchor_texts_b: list[str] = axis_projection_result.get("_axis_1_anchor_texts_b", [])
     axis_2_anchor_texts_neg: list[str] = axis_projection_result.get("_axis_2_anchor_texts_neg", [])
     axis_2_anchor_texts_pos: list[str] = axis_projection_result.get("_axis_2_anchor_texts_pos", [])
 
     alphas = alpha_schedule if alpha_schedule is not None else [0.0, 0.25, 0.5, 0.75, 1.0]
-    pair_sizes: list[int] = []
-
     points = []
-    for i, alpha in enumerate(alphas):
-        tensor = torch.lerp(raw_centroid_a, raw_centroid_b, float(alpha))
-        pt = trajectory_point(i, tensor, float(alpha), "axis_projection")
-        pt["source_text_pair"] = 0
-        points.append(pt)
 
     source_texts = axis_1_anchor_texts_a + axis_1_anchor_texts_b
-    pair_sizes.append(len(axis_1_anchor_texts_a))
+    if axis_1_anchor_texts_a and axis_1_anchor_texts_b:
+        encoded_axis_1 = encode_prompts_real_conditioning(clip_obj, source_texts)
+        axis_1_group_size = len(axis_1_anchor_texts_a)
+        axis_1_a_conds = [item["cond"] for item in encoded_axis_1[:axis_1_group_size]]
+        axis_1_b_conds = [item["cond"] for item in encoded_axis_1[axis_1_group_size:]]
+        cond_a = mean_cond(axis_1_a_conds) if len(axis_1_a_conds) > 1 else axis_1_a_conds[0]
+        cond_b = mean_cond(axis_1_b_conds) if len(axis_1_b_conds) > 1 else axis_1_b_conds[0]
+        pooled_a = mean_optional_pooled(
+            [item["pooled_output"] for item in encoded_axis_1[:axis_1_group_size]]
+        )
+        pooled_b = mean_optional_pooled(
+            [item["pooled_output"] for item in encoded_axis_1[axis_1_group_size:]]
+        )
+
+        for i, alpha in enumerate(alphas):
+            alpha_value = float(alpha)
+            cond = lerp_cond(cond_a, cond_b, alpha_value)
+            pooled_step = interpolate_optional_pooled(pooled_a, pooled_b, alpha_value)
+            tensor = compact_embedding_from_real_conditioning(cond, pooled_step)
+            pt = trajectory_point(i, tensor, alpha_value, "axis_projection")
+            pt["source_text_pair"] = 0
+            pt["cond"] = cond
+            set_optional_pooled_output(pt, pooled_step)
+            points.append(pt)
 
     if axis_2 is not None and axis_2_anchor_texts_neg and axis_2_anchor_texts_pos:
         offset = len(points)
+        axis_2_source_texts = axis_2_anchor_texts_neg + axis_2_anchor_texts_pos
+        encoded_axis_2 = encode_prompts_real_conditioning(clip_obj, axis_2_source_texts)
+        axis_2_group_size = len(axis_2_anchor_texts_neg)
+        axis_2_neg_conds = [item["cond"] for item in encoded_axis_2[:axis_2_group_size]]
+        axis_2_pos_conds = [item["cond"] for item in encoded_axis_2[axis_2_group_size:]]
+        cond_neg = mean_cond(axis_2_neg_conds) if len(axis_2_neg_conds) > 1 else axis_2_neg_conds[0]
+        cond_pos = mean_cond(axis_2_pos_conds) if len(axis_2_pos_conds) > 1 else axis_2_pos_conds[0]
+        pooled_neg = mean_optional_pooled(
+            [item["pooled_output"] for item in encoded_axis_2[:axis_2_group_size]]
+        )
+        pooled_pos = mean_optional_pooled(
+            [item["pooled_output"] for item in encoded_axis_2[axis_2_group_size:]]
+        )
+
         for j, alpha in enumerate(alphas):
-            scale = 2.0 * float(alpha) - 1.0
-            tensor = raw_origin + scale * axis_2 * axis_2_distance
-            pt = trajectory_point(offset + j, tensor, float(alpha), "axis_orth")
+            alpha_value = float(alpha)
+            cond = lerp_cond(cond_neg, cond_pos, alpha_value)
+            pooled_step = interpolate_optional_pooled(pooled_neg, pooled_pos, alpha_value)
+            tensor = compact_embedding_from_real_conditioning(cond, pooled_step)
+            pt = trajectory_point(offset + j, tensor, alpha_value, "axis_orth")
             pt["source_text_pair"] = 1
+            pt["cond"] = cond
+            set_optional_pooled_output(pt, pooled_step)
             points.append(pt)
-        source_texts += axis_2_anchor_texts_neg + axis_2_anchor_texts_pos
-        pair_sizes.append(len(axis_2_anchor_texts_neg))
+        source_texts += axis_2_source_texts
 
     payload = trajectory_payload(
         operation="axis_projection",
@@ -332,9 +371,6 @@ def build_axis_trajectory(
         request_id=request_id,
         state_revision=state_revision,
     )
-    if pair_sizes:
-        payload["seq_cond_group_size"] = pair_sizes[0]
-        payload["seq_cond_group_sizes"] = pair_sizes
     return payload
 
 

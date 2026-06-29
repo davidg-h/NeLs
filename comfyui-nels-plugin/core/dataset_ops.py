@@ -297,7 +297,7 @@ def create_dataset_from_records(
     umap_params: dict[str, Any] | None = None,
     cluster_params: dict[str, Any] | None = None,
 ) -> tuple[str, np.ndarray]:
-    """Encode records, finalize dataset, return saved path plus vectors"""
+    """Encode records, finalize dataset, return saved path plus compact embeddings"""
     vectors, samples, embedding_info = encode_prompt_records(clip, records, source_id)
     saved_path = finalize_dataset(
         vectors,
@@ -417,7 +417,7 @@ def append_to_dataset(
     Raises ValueError on embedding-dimension mismatch
     Returns the updated metadata dict
     """
-    existing_vectors: np.ndarray = ds["pooled"]
+    existing_vectors: np.ndarray = ds["compact_embeddings"]
     existing_samples: list[dict] = ds["samples"]
     meta: dict = ds["metadata"]
 
@@ -458,7 +458,7 @@ def append_to_dataset(
         {
             "metadata": updated_meta,
             "samples": merged_samples,
-            "pooled": merged_vectors,
+            "compact_embeddings": merged_vectors,
             "umap_2d": umap_2d,
             "umap_3d": umap_3d,
         },
@@ -523,7 +523,7 @@ def _build_dataset(
     return {
         "metadata": metadata,
         "samples": [dict(s) for s in samples],
-        "pooled": vectors,
+        "compact_embeddings": vectors,
         "umap_2d": None,
         "umap_3d": None,
     }

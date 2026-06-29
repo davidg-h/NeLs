@@ -42,7 +42,7 @@ def save_dataset(dataset: dict[str, Any], output_path: str | Path) -> str:
     )
     _atomic_write_text(path / "samples.jsonl", samples_text)
 
-    _atomic_save_npy(path / "compact_embeddings.npy", dataset["pooled"])
+    _atomic_save_npy(path / "compact_embeddings.npy", dataset["compact_embeddings"])
     if dataset.get("umap_2d") is not None:
         _atomic_save_npy(path / "umap_2d.npy", dataset["umap_2d"])
     if dataset.get("umap_3d") is not None:
@@ -74,7 +74,7 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
     embeddings_path = path / "compact_embeddings.npy"
     if not embeddings_path.exists():
         raise FileNotFoundError(f"{'compact_embeddings.npy'} not found in {path}")
-    pooled = np.load(str(embeddings_path), mmap_mode="r")
+    compact_embeddings = np.load(str(embeddings_path), mmap_mode="r")
 
     def _load_npy(name: str) -> np.ndarray | None:
         p = path / name
@@ -83,7 +83,7 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
     return {
         "metadata": metadata,
         "samples": samples,
-        "pooled": pooled,
+        "compact_embeddings": compact_embeddings,
         "umap_2d": _load_npy("umap_2d.npy"),
         "umap_3d": _load_npy("umap_3d.npy"),
     }
