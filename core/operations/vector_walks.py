@@ -3,15 +3,18 @@
 from collections.abc import Iterable
 from typing import Any
 
-import torch
-
+from ..encoding_ops import (
+    compact_embedding_from_real_conditioning,
+    delta_optional_pooled,
+    encode_prompts_real_conditioning,
+    interpolate_optional_pooled,
+    set_optional_pooled_output,
+)
 from ..tensor_ops import (
-    delta_walk_step,
-    flatten_tensor,
-    normalize_tensor,
-    point_embedding,
+    delta_cond,
+    lerp_cond,
     selected_points,
-    slerp,
+    slerp_cond,
     trajectory_payload,
     trajectory_point,
     validate_embedding_set,
@@ -40,6 +43,7 @@ def build_interpolation_trajectory(
     embedding_set: dict[str, Any],
     selection: dict[str, Any],
     *,
+    clip_obj: Any,
     method: str,
     alpha_schedule: Iterable[float],
     request_id: str | None = None,
@@ -55,17 +59,33 @@ def build_interpolation_trajectory(
         start.get("metadata", {}).get("text", "") or start.get("label", ""),
         end.get("metadata", {}).get("text", "") or end.get("label", ""),
     ]
+    encoded = encode_prompts_real_conditioning(clip_obj, source_texts)
+    cond_a = encoded[0]["cond"]
+    cond_b = encoded[1]["cond"] if len(encoded) > 1 else encoded[0]["cond"]
+    pooled_a = encoded[0]["pooled_output"]
+    pooled_b = encoded[1]["pooled_output"] if len(encoded) > 1 else pooled_a
 
     alphas = validate_alpha_schedule(alpha_schedule)
     trajectory_points = []
     for index, alpha in enumerate(alphas):
-        if method == "lerp":
-            tensor = torch.lerp(point_embedding(start), point_embedding(end), float(alpha))
-        elif method == "slerp":
-            tensor = slerp(point_embedding(start), point_embedding(end), alpha)
+        alpha_value = float(alpha)
+        if method == "slerp":
+            cond = slerp_cond(cond_a, cond_b, alpha_value)
+            pooled_step = interpolate_optional_pooled(
+                pooled_a,
+                pooled_b,
+                alpha_value,
+                spherical=True,
+            )
+        elif method == "lerp":
+            cond = lerp_cond(cond_a, cond_b, alpha_value)
+            pooled_step = interpolate_optional_pooled(pooled_a, pooled_b, alpha_value)
         else:
             raise ValueError(f"Unsupported interpolation method: {method}")
-        step = trajectory_point(index, tensor, alpha, method)
+        tensor = compact_embedding_from_real_conditioning(cond, pooled_step)
+        step = trajectory_point(index, tensor, alpha_value, method)
+        step["cond"] = cond
+        set_optional_pooled_output(step, pooled_step)
         trajectory_points.append(step)
 
     return trajectory_payload(
@@ -82,6 +102,7 @@ def build_delta_walk_trajectory(
     embedding_set: dict[str, Any],
     selection: dict[str, Any],
     *,
+    clip_obj: Any,
     alpha_schedule: Iterable[float],
     request_id: str | None = None,
     state_revision: int | None = None,
@@ -94,22 +115,31 @@ def build_delta_walk_trajectory(
             "delta_walk requires exactly 3 points: A (direction from), B (direction to), C (walk start)."
         )
 
-    a_norm = normalize_tensor(point_embedding(points[0]))
-    b_norm = normalize_tensor(point_embedding(points[1]))
-    start = points[2]
-    start_raw = point_embedding(start)
-    start_mag = float(torch.linalg.vector_norm(flatten_tensor(start_raw)))
-    c_norm = normalize_tensor(start_raw)
     source_ids = [points[0]["id"], points[1]["id"], points[2]["id"]]
     source_texts = [p.get("metadata", {}).get("text", "") or p.get("label", "") for p in points[:3]]
+    encoded = encode_prompts_real_conditioning(clip_obj, source_texts)
 
     trajectory_points = []
     for index, scale in enumerate(
         validate_alpha_schedule(alpha_schedule, min_val=-2.0, max_val=4.0)
     ):
-        stepped = delta_walk_step(a_norm, b_norm, c_norm, scale, eps=1e-12)
-        tensor = stepped * start_mag
+        alpha_value = float(scale)
+        cond = delta_cond(
+            encoded[0]["cond"],
+            encoded[1]["cond"],
+            encoded[2]["cond"],
+            alpha_value,
+        )
+        pooled_step = delta_optional_pooled(
+            encoded[0]["pooled_output"],
+            encoded[1]["pooled_output"],
+            encoded[2]["pooled_output"],
+            alpha_value,
+        )
+        tensor = compact_embedding_from_real_conditioning(cond, pooled_step)
         step = trajectory_point(index, tensor, scale, "delta_walk")
+        step["cond"] = cond
+        set_optional_pooled_output(step, pooled_step)
         trajectory_points.append(step)
 
     return trajectory_payload(

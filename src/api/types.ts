@@ -29,6 +29,10 @@ export interface NelsEmbeddingMeta {
   embedding_dim?: number;
   encoder?: string;
   source_dataset?: string;
+  full_dim?: number[];
+  embedding_shape?: number[];
+  embedding_strategy?: string;
+  clip_type?: string;
 }
 
 export interface NelsSnapshotSource extends NelsEmbeddingMeta {

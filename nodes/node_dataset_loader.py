@@ -29,7 +29,7 @@ def preview_dataset_source(
     count: int,
     window_start: int,
     random_seed: int,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> dict[str, Any]:
     """Fetch or rebuild cached snapshot for panel Refresh"""
     config = {
         "dataset_path": dataset_path,
@@ -40,7 +40,7 @@ def preview_dataset_source(
     }
     store = get_store()
     cache_config = _cache_config(config)
-    embedding_set, snapshot, from_cache = _get_cached_or_build_source(
+    _embedding_set, snapshot, from_cache = _get_cached_or_build_source(
         config,
         cache_config=cache_config,
         session_id=session_id,
@@ -51,7 +51,7 @@ def preview_dataset_source(
             "session_id": str(session_id or "default"),
             "state_revision": store.get_revision(session_id),
         }
-    return embedding_set, snapshot
+    return snapshot
 
 
 class NelsDatasetLoader:
@@ -156,14 +156,14 @@ def _build_embedding_set(
     indices: list[int],
 ) -> dict[str, Any]:
     """Convert selected rows into a NELS_EMBEDDING_SET"""
-    pooled = dataset["pooled"]
+    compact_embeddings = dataset["compact_embeddings"]
     samples = dataset["samples"]
     meta = dataset["metadata"]
 
     points = []
     for i in indices:
         sample = samples[i]
-        vec = torch.from_numpy(pooled[i].copy()).float()
+        vec = torch.from_numpy(compact_embeddings[i].copy()).float()
         point_meta: dict[str, Any] = {
             "index": i,
             "source": sample.get("source", ""),
@@ -188,9 +188,17 @@ def _build_embedding_set(
             "dataset_name": meta.get("name", ""),
             "loaded_sample_count": len(indices),
             "total_sample_count": meta.get("sample_count", len(indices)),
-            "embedding_dim": int(pooled.shape[1]) if pooled.ndim > 1 else int(pooled.shape[0]),
+            "embedding_dim": (
+                int(compact_embeddings.shape[1])
+                if compact_embeddings.ndim > 1
+                else int(compact_embeddings.shape[0])
+            ),
             "encoder": meta.get("encoder", ""),
             "source_dataset": meta.get("source_dataset", ""),
+            "full_dim": meta.get("full_dim", []),
+            "embedding_shape": meta.get("embedding_shape", []),
+            "embedding_strategy": meta.get("embedding_strategy", ""),
+            "clip_type": meta.get("clip_type", ""),
             "umap_params": meta.get("umap_params", {}),
             "cluster_labels": meta.get("cluster_labels", {}),
         },

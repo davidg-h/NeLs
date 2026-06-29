@@ -7,15 +7,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from .tensor_ops import (
-    delta_cond,
-    delta_walk_step,
-    lerp_cond,
-    mean_cond,
-    slerp,
-    slerp_cond,
-    tensor_summary,
-)
+from .tensor_ops import delta_walk_step, slerp
 
 # Progress/cleanup cadence only;
 # encoding itself is sequential (one prompt per clip.encode_from_tokens call ->  return_pooled=True needs a per-prompt forward pass)
@@ -143,123 +135,14 @@ def encode_prompts_real_conditioning(
     return result
 
 
-def attach_sequence_conditioning(trajectory: dict, clip: Any) -> None:
-    """Compute and attach sequence cond tensors to each trajectory point in-place"""
-    points = trajectory.get("points", [])
-    source_texts = trajectory.get("source_texts", [])
-    if not points or not source_texts:
-        return
-    if all("cond" in pt for pt in points):
-        return
-
-    encoded = encode_prompts_real_conditioning(clip, source_texts)
-    cond_tensors = [item["cond"] for item in encoded]
-    operation = trajectory.get("operation", "")
-    uses_index = any("source_text_index" in pt for pt in points)
-    uses_pair = any("source_text_pair" in pt for pt in points)
-    is_delta_walk = operation == "delta_walk" and not uses_index and not uses_pair
-
-    for pt in points:
-        if uses_index:
-            idx = int(pt.get("source_text_index", 0))
-            if idx >= len(cond_tensors):
-                raise IndexError(
-                    f"source_text_index {idx} out of range for {len(cond_tensors)} source texts"
-                )
-            pt["cond"] = cond_tensors[idx]
-            _set_optional_pooled_output(pt, encoded[idx]["pooled_output"])
-        elif uses_pair:
-            pair = int(pt.get("source_text_pair", 0))
-            pair_sizes = trajectory.get("seq_cond_group_sizes") or []
-            if pair_sizes:
-                if pair >= len(pair_sizes):
-                    raise IndexError(
-                        f"source_text_pair {pair} out of range for {len(pair_sizes)} pair group sizes"
-                    )
-                group_size = int(pair_sizes[pair])
-                a_start = sum(2 * int(size) for size in pair_sizes[:pair])
-            else:
-                group_size = int(trajectory["seq_cond_group_size"])
-                a_start = pair * 2 * group_size
-            b_start = a_start + group_size
-            a_conds = cond_tensors[a_start : a_start + group_size]
-            b_conds = cond_tensors[b_start : b_start + group_size]
-            a_pooled = _mean_optional_vectors(
-                [item["pooled_output"] for item in encoded[a_start : a_start + group_size]]
-            )
-            b_pooled = _mean_optional_vectors(
-                [item["pooled_output"] for item in encoded[b_start : b_start + group_size]]
-            )
-            if not a_conds or not b_conds:
-                raise IndexError(
-                    f"source_text_pair {pair} (group_size={group_size}) out of range for {len(cond_tensors)} source texts"
-                )
-            cond_a = mean_cond(a_conds) if len(a_conds) > 1 else a_conds[0]
-            cond_b = mean_cond(b_conds) if len(b_conds) > 1 else b_conds[0]
-            alpha = float(pt.get("alpha", 0.0))
-            pt["cond"] = lerp_cond(cond_a, cond_b, alpha)
-            pooled_step = _interpolate_optional_pooled(a_pooled, b_pooled, alpha)
-            _set_optional_pooled_output(pt, pooled_step)
-            display_tensor = compact_embedding_from_real_conditioning(pt["cond"], pooled_step)
-            _replace_point_tensor(pt, display_tensor)
-        elif is_delta_walk:
-            alpha = float(pt.get("alpha", 0.0))
-            pt["cond"] = delta_cond(cond_tensors[0], cond_tensors[1], cond_tensors[2], alpha)
-            pooled_step = _delta_optional_pooled(
-                encoded[0]["pooled_output"],
-                encoded[1]["pooled_output"],
-                encoded[2]["pooled_output"],
-                alpha,
-            )
-            _set_optional_pooled_output(pt, pooled_step)
-            display_tensor = compact_embedding_from_real_conditioning(pt["cond"], pooled_step)
-            _replace_point_tensor(pt, display_tensor)
-        else:
-            cond_a = cond_tensors[0]
-            cond_b = cond_tensors[1] if len(cond_tensors) > 1 else cond_tensors[0]
-            pooled_a = encoded[0]["pooled_output"]
-            pooled_b = encoded[1]["pooled_output"] if len(encoded) > 1 else pooled_a
-            alpha = float(pt.get("alpha", 0.0))
-            pt["cond"] = (
-                slerp_cond(cond_a, cond_b, alpha)
-                if operation == "slerp"
-                else lerp_cond(cond_a, cond_b, alpha)
-            )
-            pooled_step = _interpolate_optional_pooled(
-                pooled_a,
-                pooled_b,
-                alpha,
-                spherical=operation == "slerp",
-            )
-            _set_optional_pooled_output(pt, pooled_step)
-            display_tensor = compact_embedding_from_real_conditioning(pt["cond"], pooled_step)
-            _replace_point_tensor(pt, display_tensor)
-
-
-# ---- internals ----
-
-
-def _compact_pooled_output(pooled: torch.Tensor | None) -> torch.Tensor | None:
-    if pooled is None:
-        return None
-    pooled = pooled.detach().float()
-    if pooled.ndim == 0:
-        return pooled.reshape(1)
-    if pooled.ndim == 1:
-        return pooled
-    if pooled.shape[0] == 1:
-        return pooled.squeeze(0)
-    return pooled.reshape(-1)
-
-
-def _mean_optional_vectors(vectors: list[torch.Tensor | None]) -> torch.Tensor | None:
+def mean_optional_pooled(vectors: list[torch.Tensor | None]) -> torch.Tensor | None:
     present = [vec for vec in vectors if vec is not None]
     if not present or len(present) != len(vectors):
         return None
     return torch.stack([vec.detach().float() for vec in present]).mean(dim=0)
 
 
-def _interpolate_optional_pooled(
+def interpolate_optional_pooled(
     pooled_a: torch.Tensor | None,
     pooled_b: torch.Tensor | None,
     alpha: float,
@@ -273,7 +156,7 @@ def _interpolate_optional_pooled(
     return torch.lerp(pooled_a, pooled_b, alpha).detach().float()
 
 
-def _delta_optional_pooled(
+def delta_optional_pooled(
     pooled_a: torch.Tensor | None,
     pooled_b: torch.Tensor | None,
     pooled_c: torch.Tensor | None,
@@ -290,7 +173,7 @@ def _delta_optional_pooled(
     return (delta_walk_step(a_norm, b_norm, c_norm, alpha, eps) * c_mag).detach().float()
 
 
-def _set_optional_pooled_output(
+def set_optional_pooled_output(
     point: dict[str, Any],
     pooled_output: torch.Tensor | None,
 ) -> None:
@@ -299,10 +182,17 @@ def _set_optional_pooled_output(
     point["pooled_output"] = pooled_output.detach().float() if pooled_output is not None else None
 
 
-def _replace_point_tensor(
-    point: dict[str, Any],
-    tensor: torch.Tensor,
-) -> None:
-    point["tensor"] = tensor.detach().float()
-    point["norm"] = float(point["tensor"].norm().item())
-    point.update(tensor_summary(point["tensor"]))
+# ---- internals ----
+
+
+def _compact_pooled_output(pooled: torch.Tensor | None) -> torch.Tensor | None:
+    if pooled is None:
+        return None
+    pooled = pooled.detach().float()
+    if pooled.ndim == 0:
+        return pooled.reshape(1)
+    if pooled.ndim == 1:
+        return pooled
+    if pooled.shape[0] == 1:
+        return pooled.squeeze(0)
+    return pooled.reshape(-1)

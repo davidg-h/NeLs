@@ -93,7 +93,7 @@ function drawSlerpArc(ctx: CanvasRenderingContext2D): void {
   if (operationResult.value?.operation !== "slerp") return;
 
   const ghosts: { alpha: number; x: number; y: number }[] = [];
-  sigmaGraph.forEachNode((node, attrs) => {
+  sigmaGraph.forEachNode((_node, attrs) => {
     if (!attrs.isGhost || attrs.isVariantGhost) return;
     const sc = sigma!.graphToViewport({
       x: attrs.x as number,

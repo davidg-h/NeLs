@@ -6,7 +6,7 @@ numpy>=2.1,<2.4
 safetensors
 tensorflow>=2.19,<2.21
 keras>=3.8,<3.15
-umap-learn[parametric_umap]>=0.5.7,<0.5.13  # pulls tensorflow for Parametric UMAP
+umap-learn[parametric_umap]>=0.5.7,<0.5.13 
 scikit-learn>=1.6,<1.8
 hdbscan>=0.8.40,<0.8.44
 joblib>=1.5,<1.6
