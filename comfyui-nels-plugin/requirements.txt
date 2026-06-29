@@ -1,24 +1,27 @@
-# Core — always required
 --extra-index-url https://download.pytorch.org/whl/cu126
-numpy
+# Projection stack is sensitive to version drift
+# Keep TensorFlow/Keras/UMAP/scikit-learn/numpy in a conservative band unless
+# you have revalidated Parametric UMAP dataset generation
+numpy>=2.1,<2.4
 safetensors
-umap-learn[parametric_umap]  # pulls tensorflow (CPU-only version) for Parametric UMAP
-scikit-learn
-hdbscan
-joblib
+tensorflow>=2.19,<2.21
+keras>=3.8,<3.15
+umap-learn[parametric_umap]>=0.5.7,<0.5.13  # pulls tensorflow for Parametric UMAP
+scikit-learn>=1.6,<1.8
+hdbscan>=0.8.40,<0.8.44
+joblib>=1.5,<1.6
 torch  # usually already present in a ComfyUI environment
 
 # kNN acceleration
-faiss-cpu
+faiss-cpu>=1.9,<2.0
 
 # LLM inference
-transformers
+transformers>=4.50,<6.0
 
 # Image saving
-Pillow
+Pillow>=10,<13
 
 # HuggingFace (dataset loading + model downloads)
-huggingface_hub
-datasets
+huggingface_hub>=0.30,<2.0
+datasets>=3.0,<5.0
 pyarrow>=21.0.0,<24.0.0  # 24.0.0 crashes with "import torch" due to a bug in pyarrow 24.0.0
-
