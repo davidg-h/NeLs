@@ -7,6 +7,7 @@ from typing import Any
 
 import torch
 
+from ..defaults import EPS_NORM
 from ..encoding_ops import (
     compact_embedding_from_real_conditioning,
     encode_prompts_real_conditioning,
@@ -66,9 +67,8 @@ def build_axis_projection(
     id_to_idx = {str(p["id"]): i for i, p in enumerate(embedding_set["points"])}
     raw_centroid_a = all_raw[[id_to_idx[str(p["id"])] for p in group_a]].mean(dim=0)
     raw_centroid_b = all_raw[[id_to_idx[str(p["id"])] for p in group_b]].mean(dim=0)
-    raw_origin = (raw_centroid_a + raw_centroid_b) / 2
 
-    all_norms = torch.linalg.vector_norm(all_raw, dim=1, keepdim=True).clamp_min(1e-12)
+    all_norms = torch.linalg.vector_norm(all_raw, dim=1, keepdim=True).clamp_min(EPS_NORM)
     x_norm = all_raw / all_norms
 
     a_centroid = x_norm[[id_to_idx[str(p["id"])] for p in group_a]].mean(dim=0)
@@ -155,7 +155,6 @@ def build_axis_projection(
     axis_2_results: list[dict[str, Any]] | None = None
     axis_2_labels_neg: list[str] = []
     axis_2_labels_pos: list[str] = []
-    axis_2_distance: float = 1.0
     axis_2_keywords_neg: list[str] = []
     axis_2_keywords_pos: list[str] = []
     axis_2_anchor_points_neg: list[dict[str, Any]] = []
@@ -173,7 +172,6 @@ def build_axis_projection(
             ]
 
             raw_abs = torch.tensor(raw_scores).abs()
-            axis_2_distance = float(torch.quantile(raw_abs, 0.95).item())
             axis_2_display_scale = max(float(raw_abs.max().item()), 1e-8)
 
             axis_2_entries = [
@@ -273,12 +271,8 @@ def build_axis_projection(
         "axis_b_keywords_a": " | ".join(axis_2_keywords_neg) if axis_2_keywords_neg else None,
         "axis_b_keywords_b": " | ".join(axis_2_keywords_pos) if axis_2_keywords_pos else None,
         "axis_b_variance": axis_2_variance if axis_2 is not None else None,
-        "_raw_centroid_a": raw_centroid_a,
-        "_raw_centroid_b": raw_centroid_b,
-        "_raw_origin": raw_origin,
         "_axis_1": axis_1,
         "_axis_2": axis_2,
-        "_axis_2_distance": axis_2_distance,
         "_axis_1_labels_a": axis_1_labels_a,
         "_axis_1_labels_b": axis_1_labels_b,
         "_axis_2_labels_neg": axis_2_labels_neg,
@@ -528,11 +522,11 @@ def _select_point_anchors(
         return []
 
     k = max(1, min(int(target_k), len(valid_points)))
-    centroid_unit = centroid / torch.linalg.vector_norm(centroid).clamp_min(1e-12)
+    centroid_unit = centroid / torch.linalg.vector_norm(centroid).clamp_min(EPS_NORM)
     scored: list[tuple[float, dict[str, Any]]] = []
     for point in valid_points:
         vector = all_raw[id_to_idx[str(point["id"])]]
-        vector_unit = vector / torch.linalg.vector_norm(vector).clamp_min(1e-12)
+        vector_unit = vector / torch.linalg.vector_norm(vector).clamp_min(EPS_NORM)
         similarity = float(torch.dot(vector_unit, centroid_unit).item())
         scored.append((similarity, point))
     scored.sort(key=lambda item: item[0], reverse=True)
@@ -568,7 +562,7 @@ def _coherent_axis_subset(
 
     mat = torch.stack(vectors)
     prototype = mat.mean(dim=0)
-    prototype = prototype / torch.linalg.vector_norm(prototype).clamp_min(1e-12)
+    prototype = prototype / torch.linalg.vector_norm(prototype).clamp_min(EPS_NORM)
     scored = []
     for entry, vec in zip(valid_entries, mat, strict=True):
         similarity = float(torch.dot(vec, prototype).item())

@@ -80,23 +80,54 @@ When a HuggingFace model is downloaded via `--clip owner/repo/file.safetensors`,
 
 ## Output format
 
-Every dataset is a folder:
+Every dataset is a folder with shared core artifacts:
 
 ```text
 my_dataset/
-├── dataset.json              # Metadata
-├── samples.jsonl             # One JSON record per sample
-├── compact_embeddings.npy    # Shape: (N, compact_dim), float32 compact prompt embeddings
-├── umap_2d.npy               # Shape: (N, 2), 2D UMAP projection for visualization
-├── umap_3d.npy               # Shape: (N, 3), 3D UMAP projection for visualization
-├── umap_model_2d/            # Parametric 2D UMAP reducer directory
-├── umap_model_3d/            # Parametric 3D UMAP reducer directory
-├── umap_model_cluster/       # Parametric UMAP cluster-space reducer directory
-└── hdbscan_model.pkl         # joblib-pickled HDBSCAN clusterer model
+├── dataset.json
+├── samples.jsonl
+├── compact_embeddings.npy
+├── umap_2d.npy
+└── umap_3d.npy
 ```
 
-> `umap_model_2d/3d/cluster` are directories, not files, because Parametric UMAP saves a Keras
-> model bundle rather than a single pickle
+The remaining files depend on `projection.strategy`.
+
+### `classic`
+
+```text
+my_dataset/
+├── umap_model_cluster.joblib
+├── umap_model_2d.joblib
+├── umap_model_3d.joblib
+└── hdbscan_model.joblib
+```
+
+### `two_pass`
+
+```text
+my_dataset/
+├── runtime_umap_model_cluster.joblib
+├── runtime_umap_model_2d.joblib
+├── runtime_umap_model_3d.joblib
+└── used_subset.jsonl
+```
+
+`two_pass` still computes the full canonical dataset projections and labels, but it does not save
+the full classic reducers or `hdbscan_model.joblib`.
+
+### `parametric`
+
+```text
+my_dataset/
+├── umap_model_cluster/
+├── umap_model_2d/
+├── umap_model_3d/
+└── hdbscan_model.joblib
+```
+
+`umap_model_2d/3d/cluster` are directories only for `parametric`, because Parametric UMAP saves a
+Keras model bundle rather than a single pickle.
 
 ### Compact embedding semantics
 
@@ -123,6 +154,10 @@ That strategy is recorded in `dataset.json` as `embedding_strategy`.
 
 Important `dataset.json` fields:
 
+- `projection.strategy`: `classic`, `two_pass`, or `parametric`
+- `projection.canonical.umap_params`: full canonical 2D and 3D projection settings
+- `projection.canonical.cluster_params`: full canonical cluster-space settings
+- `projection.runtime`: runtime subset and reducer settings, only for `two_pass`
 - `full_dim`: the real full conditioning shape seen during encoding, for example `[1, 512, 7680]`
 - `embedding_shape`: the saved per-prompt compact shape, for example `[7680]`
 - `embedding_strategy`: `native_pooled` or `mean_seq_fallback`
@@ -143,7 +178,27 @@ Each sample record in `samples.jsonl`:
 }
 ```
 
-`raw_text` equals `text` when no template is used. `template` and `metadata` are omitted when not applicable. `cluster_global`, `is_noise`, and `membership_strength` are set by HDBSCAN at encode time.
+`raw_text` equals `text` when no template is used. `template` and `metadata` are omitted when not
+applicable. `cluster_global`, `is_noise`, and `membership_strength` are always canonical
+full-dataset labels.
+
+### `used_subset.jsonl` for `two_pass`
+
+`two_pass` writes one JSON line per subset point:
+
+```json
+{
+  "index": 1234,
+  "id": "pt_001234",
+  "text": "a snowy owl on a branch",
+  "cluster_global": 7,
+  "is_noise": false,
+  "membership_strength": 0.94
+}
+```
+
+`index` points back into `compact_embeddings.npy` and `samples.jsonl`, so the exact subset vectors
+can be reconstructed later from the full embedding matrix if needed.
 
 ---
 
@@ -165,11 +220,12 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 
 **General options**
 
-| Flag             | Default            | Description                                                                             |
-| ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
-| `--name`         | output folder name | Human-readable name stored in `dataset.json`.                                           |
-| `--clip-type`    | `FLUX2`            | ComfyUI CLIPType. Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
-| `--encode-limit` | `0` (all)          | Max texts to encode (applied before cleaning).                                          |
+| Flag             | Default   | Description                                                                             |
+| ---------------- | --------- | --------------------------------------------------------------------------------------- |
+| `--clip-type`    | `FLUX2`   | ComfyUI CLIPType. Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
+| `--encode-limit` | `0` (all) | Max texts to encode (applied before cleaning).                                          |
+
+The dataset name stored in `dataset.json` always comes from the output folder name.
 
 **HuggingFace source options**
 
@@ -194,24 +250,37 @@ python encode_cli.py create --input <source> --output <folder> --clip <path> [op
 | `--min-words` | `0`     | Drop texts with fewer words. 0 = no minimum. |
 | `--max-words` | `0`     | Drop texts with more words. 0 = no maximum.  |
 
-**UMAP options**
+**Projection options**
 
-| Flag                 | Default | Description                            |
-| -------------------- | ------- | -------------------------------------- |
-| `--umap-n-neighbors` | `15`    | Controls local vs. global structure.   |
-| `--umap-min-dist`    | `0.1`   | Min distance between points in layout. |
-| `--umap-seed`        | `42`    | Random seed for reproducible layout.   |
+| Flag                    | Default      | Description                                                    |
+| ----------------------- | ------------ | -------------------------------------------------------------- |
+| `--projection-strategy` | `parametric` | Projection build mode: `classic`, `two_pass`, or `parametric`. |
+| `--umap-n-neighbors`    | `15`         | Canonical full-data UMAP n_neighbors.                          |
+| `--umap-min-dist`       | `0.1`        | Canonical full-data UMAP min_dist.                             |
+| `--umap-seed`           | `42`         | Canonical full-data seed.                                      |
 
-`create` always fits all three Parametric UMAP models on the full dataset. There is no subset-fit mode anymore: if you encode 500,000 prompts, the reducers train on all 500,000 prompts before `umap_2d.npy`, `umap_3d.npy`, and the saved `umap_model_*` directories are written.
+**Canonical cluster options**
 
-**Cluster options**
+| Flag                       | Default | Description                                        |
+| -------------------------- | ------- | -------------------------------------------------- |
+| `--cluster-umap-dims`      | `10`    | Dimensions for the canonical cluster UMAP.         |
+| `--cluster-umap-neighbors` | `30`    | n_neighbors for the canonical cluster UMAP.        |
+| `--cluster-min-size`       | `30`    | HDBSCAN min_cluster_size for canonical clustering. |
+| `--cluster-min-samples`    | `10`    | HDBSCAN min_samples for canonical clustering.      |
 
-| Flag                       | Default | Description                                                      |
-| -------------------------- | ------- | ---------------------------------------------------------------- |
-| `--cluster-umap-dims`      | `10`    | Dimensions for the cluster UMAP (lower = more compact clusters). |
-| `--cluster-umap-neighbors` | `30`    | n_neighbors for the cluster UMAP.                                |
-| `--cluster-min-size`       | `30`    | HDBSCAN min_cluster_size — minimum points to form a cluster.     |
-| `--cluster-min-samples`    | `10`    | HDBSCAN min_samples — controls noise sensitivity.                |
+**Two-pass runtime options**
+
+| Flag                               | Default | Description                                                            |
+| ---------------------------------- | ------- | ---------------------------------------------------------------------- |
+| `--runtime-subset-size`            | `20000` | Global target size for the saved runtime subset.                       |
+| `--runtime-subset-seed`            | `42`    | Seed for subset selection.                                             |
+| `--runtime-umap-n-neighbors`       | `15`    | Runtime reducer n_neighbors for the subset-trained runtime models.     |
+| `--runtime-umap-min-dist`          | `0.1`   | Runtime reducer min_dist for the subset-trained runtime models.        |
+| `--runtime-cluster-umap-dims`      | `10`    | Runtime cluster-space reducer dims for the subset-trained models.      |
+| `--runtime-cluster-umap-neighbors` | `30`    | Runtime cluster-space reducer neighbors for the subset-trained models. |
+
+Runtime options are accepted for every `create`, but they are only used when
+`--projection-strategy two_pass`.
 
 **Annotation options**
 
@@ -281,8 +350,14 @@ python encode_cli.py add --dataset <folder> --input <source> --clip <path> [opti
 | `--annotate`       | off     | Run LLM cluster annotation after appending (recommended, since cluster IDs are renumbered on every add). Optionally pass a model ID; bare uses the default. |
 | `--annotate-top-n` | `20`    | Number of top prompts per cluster (by membership strength) sent to the LLM.                                                                                 |
 
-`add` is a ground-truth operation like `create`, not an approximation: every `add` fully refits
-all three Parametric UMAP networks (2D, 3D, cluster) **and** HDBSCAN on the complete dataset (old + new points together) — it does not transform new points through the old frozen models.
+`add` is a ground-truth operation like `create`, not an approximation. It reloads the stored
+`projection` settings from `dataset.json`, merges the new vectors into the full
+`compact_embeddings.npy`, and rebuilds the dataset with the same strategy:
+
+- `classic`: full classic reducers + HDBSCAN are refit on the merged dataset
+- `two_pass`: the canonical full pass is recomputed, then the runtime subset and runtime reducers
+  are regenerated
+- `parametric`: the full Parametric UMAP reducers + HDBSCAN are refit on the merged dataset
 
 ### Cluster relabeling on `add`
 
@@ -317,6 +392,37 @@ python encode_cli.py create \
   --hf-split train \
   --encode-limit 5000 \
   --output datasets/sd_prompts_5k
+```
+
+### Classic strategy
+
+```bash
+python encode_cli.py create \
+  --clip models/text_encoders/qwen_3_4b_fp4_flux2.safetensors \
+  --clip-type FLUX2 \
+  --input Gustavosta/Stable-Diffusion-Prompts \
+  --hf-column Prompt \
+  --encode-limit 5000 \
+  --projection-strategy classic \
+  --output datasets/sd_prompts_classic
+```
+
+### Two-pass strategy
+
+```bash
+python encode_cli.py create \
+  --clip models/text_encoders/qwen_3_4b_fp4_flux2.safetensors \
+  --clip-type FLUX2 \
+  --input Gustavosta/Stable-Diffusion-Prompts \
+  --hf-column Prompt \
+  --encode-limit 50000 \
+  --projection-strategy two_pass \
+  --runtime-subset-size 20000 \
+  --runtime-umap-n-neighbors 15 \
+  --runtime-umap-min-dist 0.1 \
+  --runtime-cluster-umap-dims 10 \
+  --runtime-cluster-umap-neighbors 30 \
+  --output datasets/sd_prompts_two_pass
 ```
 
 > `--clip` accepts a HuggingFace path `owner/repo/file.safetensors` — the model is downloaded to  

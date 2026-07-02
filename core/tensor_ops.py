@@ -7,6 +7,8 @@ from typing import Any
 
 import torch
 
+from .defaults import EPS_NORM
+
 EMBEDDING_SET_TYPE = "NELS_EMBEDDING_SET"
 
 
@@ -213,14 +215,14 @@ def slerp(
     return (interpolated_direction * interpolated_norm).reshape_as(start).to(start.dtype)
 
 
-def normalize_tensor(value: torch.Tensor, eps: float = 1e-12) -> torch.Tensor:
+def normalize_tensor(value: torch.Tensor, eps: float = EPS_NORM) -> torch.Tensor:
     """Normalize tensor as flat vector"""
     vector = flatten_tensor(value)
     norm = torch.linalg.vector_norm(vector)
     return vector / norm.clamp_min(eps)
 
 
-def cosine_similarity(left: torch.Tensor, right: torch.Tensor, eps: float = 1e-12) -> float:
+def cosine_similarity(left: torch.Tensor, right: torch.Tensor, eps: float = EPS_NORM) -> float:
     """Cosine similarity after flattening"""
     left_vector = normalize_tensor(left, eps=eps)
     right_vector = normalize_tensor(right, eps=eps)
@@ -273,7 +275,7 @@ def delta_walk_step(
     b_norm: torch.Tensor,
     c_norm: torch.Tensor,
     alpha: float,
-    eps: float = 1e-8,
+    eps: float = EPS_NORM,
 ) -> torch.Tensor:
     """Step c_norm along the a_norm->b_norm direction by alpha, renormalized to unit length
 
@@ -293,9 +295,9 @@ def delta_cond(
     a = _pad_cond(cond_a, max_len)
     b = _pad_cond(cond_b, max_len)
     c = _pad_cond(cond_c, max_len)
-    c_mag = c.norm().clamp_min(1e-8)
-    a_norm = a / a.norm().clamp_min(1e-8)
-    b_norm = b / b.norm().clamp_min(1e-8)
+    c_mag = c.norm().clamp_min(EPS_NORM)
+    a_norm = a / a.norm().clamp_min(EPS_NORM)
+    b_norm = b / b.norm().clamp_min(EPS_NORM)
     c_norm = c / c_mag
     return delta_walk_step(a_norm, b_norm, c_norm, alpha) * c_mag
 
@@ -353,7 +355,7 @@ def _nearest_neighbors_faiss(
     *,
     limit: int,
 ) -> list[tuple[int, float]]:
-    import faiss
+    import faiss  # optional accelerated search, falls back to torch if unavailable
     import numpy as np
 
     n = len(candidates)

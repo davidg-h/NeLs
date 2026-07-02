@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from ..dataset_ops import predict_cluster_for_new
+from ..defaults import EPS_NORM
 from ..encoding_ops import encode_prompts_real_conditioning
 from ..projection_ops import compute_iso_bounds
 from ..tensor_ops import trajectory_payload, trajectory_point
@@ -142,7 +143,7 @@ def build_text_reconstruction(
     if not seed_texts:
         return {"text": "", "cosine_sim": 0.0, "snapshots": []}
 
-    _t_norm = target_embedding / (np.linalg.norm(target_embedding) + 1e-8)
+    _t_norm = target_embedding / (np.linalg.norm(target_embedding) + EPS_NORM)
     positives = list(dict.fromkeys(t for t in (seed_texts + (noise_texts or [])) if t))
     negatives = negative_texts or []
     deadline = time.monotonic() + max_minutes * 60
@@ -164,7 +165,7 @@ def build_text_reconstruction(
     for txt, state in zip(initial, encoded_initial, strict=True):
         rv = state["embedding"].detach().cpu().numpy()
         rn = np.linalg.norm(rv)
-        sim = float(np.dot(rv / (rn + 1e-8), _t_norm)) if rn > 1e-8 else 0.0
+        sim = float(np.dot(rv / (rn + EPS_NORM), _t_norm)) if rn > EPS_NORM else 0.0
         scored.append((sim, txt))
         text_to_state[txt] = {
             "embedding": rv.copy(),
@@ -247,7 +248,7 @@ def build_text_reconstruction(
         for txt, state in zip(candidates, encoded_candidates, strict=True):
             rv = state["embedding"].detach().cpu().numpy()
             rn = np.linalg.norm(rv)
-            sim = float(np.dot(rv / (rn + 1e-8), _t_norm)) if rn > 1e-8 else 0.0
+            sim = float(np.dot(rv / (rn + EPS_NORM), _t_norm)) if rn > EPS_NORM else 0.0
             new_scored.append((sim, txt))
             text_to_state[txt] = {
                 "embedding": rv.copy(),
@@ -465,9 +466,9 @@ def _cosine_knn_numpy(
     k = min(k, len(matrix))
     mat = np.array(matrix, dtype=np.float32)
     norms = np.linalg.norm(mat, axis=1, keepdims=True)
-    mat /= norms + 1e-8
+    mat /= norms + EPS_NORM
     q = query.astype(np.float32)
-    q /= np.linalg.norm(q) + 1e-8
+    q /= np.linalg.norm(q) + EPS_NORM
     sims = mat @ q
     top = np.argpartition(sims, -k)[-k:]
     top = top[np.argsort(sims[top])[::-1]]

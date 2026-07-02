@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from ..core.dataset_io import load_dataset, resolve_dataset_path
-from ..core.dataset_ops import select_sample_indices
+from ..core.dataset_ops import require_projection_meta, select_sample_indices
 from ..core.defaults import DEFAULT_DATASETS, UMAP_SEED
 from ..core.projection_ops import map_coords_to_range
 from ..core.session_contracts import (
@@ -159,6 +159,7 @@ def _build_embedding_set(
     compact_embeddings = dataset["compact_embeddings"]
     samples = dataset["samples"]
     meta = dataset["metadata"]
+    projection = require_projection_meta(meta)
 
     points = []
     for i in indices:
@@ -199,7 +200,7 @@ def _build_embedding_set(
             "embedding_shape": meta.get("embedding_shape", []),
             "embedding_strategy": meta.get("embedding_strategy", ""),
             "clip_type": meta.get("clip_type", ""),
-            "umap_params": meta.get("umap_params", {}),
+            "projection": projection,
             "cluster_labels": meta.get("cluster_labels", {}),
         },
     )

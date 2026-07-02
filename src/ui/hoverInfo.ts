@@ -11,7 +11,7 @@ export function getMousePos(): { x: number; y: number } {
   return mousePos;
 }
 
-export interface HoverRows {
+interface HoverRows {
   rows: [string, unknown][];
   reconText: string | null;
   reconSim: string | null;
