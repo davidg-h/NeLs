@@ -110,7 +110,19 @@ def _load_pipeline(model_name: str) -> Any:
     except Exception:
         pass
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Loading LLM: {model_name} on {device} (downloading on first use)")
-    pipe = pipeline("text-generation", model=model_name, device=device)
+    if torch.cuda.is_available():
+        print(
+            f"Loading LLM: {model_name} on cuda with device_map=auto, torch_dtype=float16 "
+            "(downloading on first use)"
+        )
+        pipe = pipeline(
+            "text-generation",
+            model=model_name,
+            device_map="auto",
+            model_kwargs={"torch_dtype": torch.float16},
+        )
+        return pipe
+
+    print(f"Loading LLM: {model_name} on cpu (downloading on first use)")
+    pipe = pipeline("text-generation", model=model_name, device="cpu")
     return pipe
