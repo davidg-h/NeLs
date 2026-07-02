@@ -37,6 +37,7 @@ from core.dataset_io import (
 from core.dataset_ops import (
     append_records_to_dataset,
     build_dataset_config,
+    build_projection_config,
     build_source_loader_meta,
     collect_prompt_records,
     create_dataset_from_records,
@@ -48,6 +49,10 @@ from core.defaults import (
     CLUSTER_UMAP_DIMS,
     CLUSTER_UMAP_NEIGHBORS,
     DEFAULT_DATASETS,
+    PROJECTION_STRATEGY_CLASSIC,
+    PROJECTION_STRATEGY_PARAMETRIC,
+    PROJECTION_STRATEGY_TWO_PASS,
+    RUNTIME_SUBSET_SIZE,
     UMAP_MIN_DIST,
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
@@ -80,11 +85,6 @@ def main() -> None:
         help="Prompt .txt file or HuggingFace dataset ID.",
     )
     cp.add_argument("--output", required=True, help="Output folder for the dataset.")
-    cp.add_argument(
-        "--name",
-        default=None,
-        help="Human-readable dataset name (defaults to output folder name).",
-    )
     cp.add_argument(
         "--clip",
         required=True,
@@ -163,6 +163,15 @@ def main() -> None:
     cp.add_argument("--umap-min-dist", type=float, default=UMAP_MIN_DIST)
     cp.add_argument("--umap-seed", type=int, default=UMAP_SEED)
     cp.add_argument(
+        "--projection-strategy",
+        choices=[
+            PROJECTION_STRATEGY_CLASSIC,
+            PROJECTION_STRATEGY_TWO_PASS,
+            PROJECTION_STRATEGY_PARAMETRIC,
+        ],
+        default=PROJECTION_STRATEGY_PARAMETRIC,
+    )
+    cp.add_argument(
         "--cluster-umap-dims",
         type=int,
         default=CLUSTER_UMAP_DIMS,
@@ -186,6 +195,12 @@ def main() -> None:
         default=CLUSTER_MIN_SAMPLES,
         help=f"HDBSCAN min_samples (default: {CLUSTER_MIN_SAMPLES}).",
     )
+    cp.add_argument("--runtime-subset-size", type=int, default=RUNTIME_SUBSET_SIZE)
+    cp.add_argument("--runtime-subset-seed", type=int, default=UMAP_SEED)
+    cp.add_argument("--runtime-umap-n-neighbors", type=int, default=UMAP_N_NEIGHBORS)
+    cp.add_argument("--runtime-umap-min-dist", type=float, default=UMAP_MIN_DIST)
+    cp.add_argument("--runtime-cluster-umap-dims", type=int, default=CLUSTER_UMAP_DIMS)
+    cp.add_argument("--runtime-cluster-umap-neighbors", type=int, default=CLUSTER_UMAP_NEIGHBORS)
 
     # ---- annotate ----
     annp = subparsers.add_parser(
@@ -303,7 +318,7 @@ def cmd_create(args: argparse.Namespace) -> None:
     _setup_paths(comfyui_root)
 
     output_path = Path(args.output)
-    name = args.name or output_path.name
+    name = output_path.name
     umap_params = {
         "n_neighbors": args.umap_n_neighbors,
         "min_dist": args.umap_min_dist,
@@ -315,6 +330,26 @@ def cmd_create(args: argparse.Namespace) -> None:
         "min_size": args.cluster_min_size,
         "min_samples": args.cluster_min_samples,
     }
+    runtime_umap_params = {
+        "n_neighbors": args.runtime_umap_n_neighbors,
+        "min_dist": args.runtime_umap_min_dist,
+        "random_state": args.runtime_subset_seed,
+    }
+    runtime_cluster_params = {
+        "umap_dims": args.runtime_cluster_umap_dims,
+        "umap_neighbors": args.runtime_cluster_umap_neighbors,
+        "min_size": args.cluster_min_size,
+        "min_samples": args.cluster_min_samples,
+    }
+    projection = build_projection_config(
+        strategy=args.projection_strategy,
+        canonical_umap_params=umap_params,
+        canonical_cluster_params=cluster_params,
+        runtime_subset_size=args.runtime_subset_size,
+        runtime_subset_seed=args.runtime_subset_seed,
+        runtime_umap_params=runtime_umap_params,
+        runtime_cluster_params=runtime_cluster_params,
+    )
 
     resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
 
@@ -342,7 +377,7 @@ def cmd_create(args: argparse.Namespace) -> None:
         name=name,
         encoder=_to_rel(str(resolved_clip), comfyui_root),
         source_id=source_id,
-        umap_params=umap_params,
+        projection=projection,
         clip_type=args.clip_type,
         source_loader=build_source_loader_meta(
             source_input=args.input,
@@ -363,8 +398,6 @@ def cmd_create(args: argparse.Namespace) -> None:
         source_id,
         config=config,
         output_path=output_path,
-        umap_params=umap_params,
-        cluster_params=cluster_params,
     )
 
     n = vectors.shape[0]

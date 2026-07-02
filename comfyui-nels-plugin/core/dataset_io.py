@@ -73,7 +73,7 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
 
     embeddings_path = path / "compact_embeddings.npy"
     if not embeddings_path.exists():
-        raise FileNotFoundError(f"{'compact_embeddings.npy'} not found in {path}")
+        raise FileNotFoundError(f"compact_embeddings.npy not found in {path}")
     compact_embeddings = np.load(str(embeddings_path), mmap_mode="r")
 
     def _load_npy(name: str) -> np.ndarray | None:

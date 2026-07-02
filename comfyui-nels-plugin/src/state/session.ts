@@ -84,7 +84,7 @@ export async function refreshSessions(): Promise<void> {
     await syncSessions();
     if (activeSessionId.value) await loadSession();
     else {
-      setSnapshot(null, { acceptCoordinates: true });
+      setSnapshot(null);
       setStatus("no active sessions");
     }
   } catch (err) {
@@ -99,7 +99,7 @@ export async function loadSession(): Promise<void> {
     const data = await getSession(activeSessionId.value);
     upsertSession(data);
     const snap = data.graph_snapshot ?? null;
-    setSnapshot(snap, { acceptCoordinates: true });
+    setSnapshot(snap);
     setOperationResult(data.operation_result ?? null);
     applyUiStateFields((data.ui_state ?? {}) as Record<string, unknown>, {
       skipViewport: false,
@@ -135,10 +135,7 @@ export async function loadPreview(): Promise<void> {
   try {
     const data = await requestSourcePreview(activeSessionId.value);
     if (data.session) upsertSession(data.session);
-    setSnapshot(data.graph_snapshot, {
-      acceptCoordinates: true,
-      forceCoordinates: true,
-    });
+    setSnapshot(data.graph_snapshot, { forceCoordinates: true });
     applyUiStateFields(
       (data.session?.ui_state ?? {}) as Record<string, unknown>,
       { skipViewport: false },
@@ -189,10 +186,7 @@ export function onSessionEvent(event: NelsEvent): void {
         graphData.value,
       );
       if (replace) {
-        setSnapshot(incoming, {
-          acceptCoordinates: true,
-          forceCoordinates: true,
-        });
+        setSnapshot(incoming, { forceCoordinates: true });
         getRenderer().pulseIds(
           (incoming.points ?? []).map((p) => String(p.id)),
         );

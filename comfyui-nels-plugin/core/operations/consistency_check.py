@@ -17,7 +17,7 @@ from ..tensor_ops import (
     trajectory_payload,
     trajectory_point,
 )
-from ..text_terms import first_line
+from ..text_terms import clean_llm_line, first_line
 
 
 def generate_variants(
@@ -72,7 +72,7 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
             {"role": "user", "content": text},
         ]
         raw = llm_ops.query(messages, max_new_tokens=tokens_per_variant)
-        line = first_line(raw).lstrip("-\u2022\u00b71234567890.) ").strip()
+        line = clean_llm_line(first_line(raw))
         if line and line not in seen:
             seen.add(line)
             result.append(line)

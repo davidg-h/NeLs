@@ -13,7 +13,6 @@ let coordCache3d = new Map<string, [number, number, number]>();
 export function setSnapshot(
   snap: NelsGraphSnapshot | null,
   options: {
-    acceptCoordinates?: boolean;
     forceCoordinates?: boolean;
   } = {},
 ): void {
@@ -76,7 +75,7 @@ function coordinateConfig(
 
 function stabilizeSnapshot(
   snap: NelsGraphSnapshot | null,
-  options: { acceptCoordinates?: boolean; forceCoordinates?: boolean } = {},
+  options: { forceCoordinates?: boolean } = {},
 ): NelsGraphSnapshot | null {
   if (!snap) return null;
   const key = JSON.stringify(coordinateConfig(snap));
@@ -86,10 +85,9 @@ function stabilizeSnapshot(
   const cacheMatches =
     sameKey &&
     [...pointIds].every((id) => coordCache2d.has(id) || coordCache3d.has(id));
-  const accept = options.acceptCoordinates !== false;
   const force = options.forceCoordinates === true || !sameKey;
 
-  if (accept && (force || !cacheMatches)) {
+  if (force || !cacheMatches) {
     coordinateCacheKey = key;
     coordCache2d = new Map(
       points

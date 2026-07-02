@@ -48,7 +48,7 @@ export function mixHex(hex: string, targetHex: string, amount: number): string {
   return `#${mix(sr, tr)}${mix(sg, tg)}${mix(sb, tb)}`;
 }
 
-export interface ClusterGroup {
+interface ClusterGroup {
   count: number;
   sample: string | null;
   ids: string[];
@@ -90,7 +90,7 @@ export function pointColor(
   normY = 0,
   lightness = 58,
 ): string {
-  const meta = point?.metadata;
+  const meta = point.metadata;
   if (meta?.is_noise) return dimHex(NOISE_COLOR, 0.28);
 
   const cg = meta?.cluster_global;

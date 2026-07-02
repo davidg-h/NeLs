@@ -728,7 +728,7 @@ function ensureAlphas(schedule: number[], min = 0, max = 1): number[] {
 }
 
 function nnDescription(): string {
-  const umapParams = snapshot.value?.source?.umap_params;
+  const umapParams = snapshot.value?.source?.projection?.canonical?.umap_params;
   const nNeighbors = umapParams?.n_neighbors as number | undefined;
   const base =
     "Find the k closest prompts to your selection in embedding space. Uses FAISS for exact kNN search.";

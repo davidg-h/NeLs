@@ -35,8 +35,24 @@ export interface NelsEmbeddingMeta {
   clip_type?: string;
 }
 
-export interface NelsSnapshotSource extends NelsEmbeddingMeta {
+export interface NelsProjectionParams {
   umap_params?: Record<string, unknown>;
+  cluster_params?: Record<string, unknown>;
+}
+
+export interface NelsProjectionRuntime extends NelsProjectionParams {
+  subset_size?: number;
+  subset_seed?: number;
+}
+
+export interface NelsProjectionMeta {
+  strategy?: string;
+  canonical?: NelsProjectionParams;
+  runtime?: NelsProjectionRuntime;
+}
+
+export interface NelsSnapshotSource extends NelsEmbeddingMeta {
+  projection?: NelsProjectionMeta;
   cluster_labels?: Record<string, string>;
 }
 

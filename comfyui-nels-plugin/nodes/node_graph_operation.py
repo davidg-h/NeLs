@@ -5,7 +5,8 @@ from typing import Any
 
 import numpy as np
 
-from ..core.defaults import DEFAULT_LLM_MODEL
+from ..core import llm_ops
+from ..core.defaults import DEFAULT_LLM_MODEL, EPS_NORM
 from ..core.operations.axis_projection import (
     build_axis_projection,
     build_axis_trajectory,
@@ -91,8 +92,6 @@ class NelsGraphOperation:
 
         random_seed = int(embedding_set.get("_source_config", {}).get("random_seed", 42))
         resolved_llm = (llm_model or "").strip() or DEFAULT_LLM_MODEL
-        from ..core import llm_ops  # lazy - only loads when an operation actually calls query()
-
         llm_ops.set_preferred_model(resolved_llm)
 
         trajectory = None
@@ -224,7 +223,7 @@ class NelsGraphOperation:
                     ]
 
                     # Score all loaded points against estimated for negatives/noise - track (sim, id, label)
-                    est_norm = estimated / (np.linalg.norm(estimated) + 1e-8)
+                    est_norm = estimated / (np.linalg.norm(estimated) + EPS_NORM)
                     all_scored: list[tuple[float, str, str]] = []
                     hit_ids = {h["id"] for h in hits}
                     rng = random.Random(random_seed)
