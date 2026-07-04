@@ -16,6 +16,7 @@ torch  # usually already present in a ComfyUI environment
 faiss-cpu>=1.9,<2.0
 
 # LLM inference
+accelerate>=1.0,<2.0
 transformers>=4.50,<6.0
 
 # Image saving
