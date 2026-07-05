@@ -4,11 +4,12 @@ import { injectStyle } from "./style.js";
 import { Panel } from "./ui/Panel.js";
 import { registerEventListener } from "./state/session.js";
 import { stopLlmPoll } from "./ui/Header.js";
+import { onNodeCreatedSections } from "./ui/node_sections.js";
 
 const LAUNCHER_NODE = "nels_GraphPanelLauncher";
 let cleanupNelsGraphPanel: (() => void) | null = null;
 
-// Opens the NELS Graph Panel tab using available ComfyUI extension APIs
+// Opens the NELS Graph Panel tab
 function openNelsGraphPanel(): void {
   const bottomPanel = app.extensionManager?.bottomPanel;
   if (bottomPanel?.toggleBottomPanelTab) {
@@ -23,6 +24,8 @@ function openNelsGraphPanel(): void {
 
 app.registerExtension({
   name: "nels.graph.panel",
+
+  nodeCreated: onNodeCreatedSections,
 
   beforeRegisterNodeDef(
     nodeType: { prototype: Record<string, unknown> },
