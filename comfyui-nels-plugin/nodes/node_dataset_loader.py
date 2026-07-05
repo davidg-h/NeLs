@@ -10,7 +10,6 @@ import torch
 from ..core.dataset_io import load_dataset, resolve_dataset_path
 from ..core.dataset_ops import require_projection_meta, select_sample_indices
 from ..core.defaults import DEFAULT_DATASETS, UMAP_SEED
-from ..core.projection_ops import map_coords_to_range
 from ..core.session_contracts import (
     assemble_snapshot,
     json_dumps,
@@ -105,8 +104,8 @@ class NelsDatasetLoader:
             },
         }
 
-    RETURN_TYPES = ("NELS_EMBEDDING_SET", "STRING")
-    RETURN_NAMES = ("embedding_set", "dataset_info_json")
+    RETURN_TYPES = ("NELS_EMBEDDING_SET", "STRING", "INT")
+    RETURN_NAMES = ("embedding_set", "dataset_info_json", "random_seed")
     FUNCTION = "execute"
     CATEGORY = "nels/data"
 
@@ -142,7 +141,7 @@ class NelsDatasetLoader:
             "source_config_hash": source_config_hash(cache_config),
             "graph_snapshot": snapshot,
         }
-        return (embedding_set, json_dumps(info))
+        return (embedding_set, json_dumps(info), config["random_seed"])
 
 
 NODE_CLASS_MAPPINGS = {"nels_DatasetLoader": NelsDatasetLoader}
@@ -230,12 +229,8 @@ def _build_loader_snapshot(
             "Re-encode the dataset with scripts/encode_cli.py to generate them."
         )
 
-    coords_2d = map_coords_to_range(
-        torch.from_numpy(np.asarray(saved_2d[indices], dtype=np.float32))
-    ).tolist()
-    coords_3d = map_coords_to_range(
-        torch.from_numpy(np.asarray(saved_3d[indices], dtype=np.float32))
-    ).tolist()
+    coords_2d = np.asarray(saved_2d[indices], dtype=np.float32).tolist()
+    coords_3d = np.asarray(saved_3d[indices], dtype=np.float32).tolist()
     snapshot_points = zip_point_coords(points, coords_2d, coords_3d)
 
     return assemble_snapshot(

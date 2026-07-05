@@ -41,7 +41,6 @@ import {
 import type { RendererModule } from "../graph/rendering_common.js";
 import * as renderer2d from "../graph/2d/renderer2d.js";
 import * as renderer3d from "../graph/3d/renderer3d.js";
-import { normalizeSigmaCoords } from "../graph/2d/sigma.js";
 import { registerPushCallback, registerGetRenderer } from "./rendererBridge.js";
 
 export const sessions = signal<NelsSession[]>([]);
@@ -246,24 +245,14 @@ export function onSessionEvent(event: NelsEvent): void {
         let totalWeight = 0;
         for (const h of hits) {
           const pt = gd.byId.get(String(h.id));
-          const c =
-            pt?.[crossKey] ??
-            (pt as { view_coords?: number[] } | undefined)?.view_coords;
+          const c = pt?.[crossKey];
           if (!c || c.length < dims) continue;
           const w = h.score ?? 1;
           for (let i = 0; i < dims; i++) sumCoords[i] += c[i] * w;
           totalWeight += w;
         }
         if (totalWeight > 0) {
-          let crossCoords = sumCoords.map((v) => v / totalWeight);
-          // 3D probe -> 2D cross: raw UMAP 2D coords need Sigma graph-space normalization
-          if (cfg.probe_mode === "3d" && crossCoords.length >= 2) {
-            const [nx, ny] = normalizeSigmaCoords(
-              crossCoords[0],
-              crossCoords[1],
-            );
-            crossCoords = [nx, ny];
-          }
+          const crossCoords = sumCoords.map((v) => v / totalWeight);
           setOperationConfig({ probe_cross_coords: crossCoords });
         }
       }

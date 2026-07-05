@@ -1,5 +1,10 @@
 import { signal } from "@preact/signals";
 import type { NelsGraphSnapshot, NelsPoint, GraphData } from "../api/types.js";
+import {
+  rawToDisplay2D,
+  rawToDisplay3D,
+  syncViewMappers,
+} from "../graph/view_mapper.js";
 
 export const snapshot = signal<NelsGraphSnapshot | null>(null);
 export const graphData = signal<GraphData>(emptyGraph());
@@ -49,10 +54,18 @@ function buildGraph(snap: NelsGraphSnapshot | null): GraphData {
   const rawPoints = Array.isArray(snap?.points) ? snap!.points : [];
   const mode = viewMode.value;
 
+  syncViewMappers(rawPoints);
+
   // Pick the correct coordinate set for the active view mode
   const points: NelsPoint[] = rawPoints.map((p) => {
-    if (mode === "3d" && p.coords_3d) return { ...p, view_coords: p.coords_3d };
-    if (mode === "2d" && p.coords_2d) return { ...p, view_coords: p.coords_2d };
+    if (mode === "3d" && p.coords_3d) {
+      const mapped = rawToDisplay3D(p.coords_3d);
+      return mapped ? { ...p, view_coords: mapped } : p;
+    }
+    if (mode === "2d" && p.coords_2d) {
+      const mapped = rawToDisplay2D(p.coords_2d);
+      return mapped ? { ...p, view_coords: mapped } : p;
+    }
     return p;
   });
 

@@ -32,6 +32,7 @@ import {
   projectToScreen,
   createLabelDiv,
 } from "./renderer3d.js";
+import { rawToDisplay3D } from "../view_mapper.js";
 
 const snap3d = computed(() => operationConfig.value.snap_endpoints);
 const ghostTexture = makeGhostTexture();
@@ -96,7 +97,9 @@ export function rebuildGhostNodes(): void {
   ghostClusterIds = validPts.map((pt) => pt.cluster_id ?? null);
 
   for (let g = 0; g < validPts.length; g++) {
-    const [gx, gy, gz] = validPts[g].coords_3d!;
+    const mapped = rawToDisplay3D(validPts[g].coords_3d);
+    if (!mapped) continue;
+    const [gx, gy, gz] = mapped;
     ghostBasePositions[g * 3] = gx;
     ghostBasePositions[g * 3 + 1] = gy;
     ghostBasePositions[g * 3 + 2] = gz;

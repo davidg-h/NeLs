@@ -15,6 +15,7 @@ import {
 } from "../../state/operation.js";
 import { dragSelectRect } from "../../state/dragSelect.js";
 import { showContextMenu } from "../context_menu.js";
+import { displayToRaw2D, rawToDisplay2D } from "../view_mapper.js";
 
 // ---- drag select ----
 
@@ -128,8 +129,10 @@ export function bindSigmaEvents(): void {
           x: ev.x ?? 0,
           y: ev.y ?? 0,
         });
+        const rawCoords = displayToRaw2D([graphCoords.x, graphCoords.y]);
+        if (!rawCoords) return;
         setOperationConfig({
-          probe_coords: [graphCoords.x, graphCoords.y],
+          probe_coords: rawCoords,
           probe_mode: "2d",
           probe_place_mode: false,
         });
@@ -154,8 +157,10 @@ export function bindSigmaEvents(): void {
       const s = getSigma();
       const attrs = s ? s.getGraph().getNodeAttributes(node) : null;
       if (attrs?.isGhost && attrs.ghostCoords2d) {
-        const c2 = attrs.ghostCoords2d as [number, number];
-        const c3 = attrs.ghostCoords3d as [number, number, number] | undefined;
+        const c2Raw = attrs.ghostCoords2d as [number, number];
+        const c2 = rawToDisplay2D(c2Raw);
+        const c3Raw = attrs.ghostCoords3d as [number, number, number] | undefined;
+        const c3 = c3Raw ? c3Raw : undefined;
         const displayId = node.startsWith("__ghost__") ? node.slice(9) : node;
         const clusterId = attrs.ghostClusterId as number | null | undefined;
         // prefer full text from operationResult over sigma attribute
@@ -165,7 +170,7 @@ export function bindSigmaEvents(): void {
         const text = variant?.text ?? (attrs.label as string | undefined) ?? "";
         hoverPoint.value = {
           id: displayId,
-          view_coords: c2 ?? c3,
+          view_coords: c2 ?? c3 ?? [0, 0],
           label: text,
           metadata: {
             text: text || undefined,
@@ -193,9 +198,10 @@ export function bindSigmaEvents(): void {
   function getProbeCoords2d(): number[] | null {
     const cfg = operationConfig.value;
     if (cfg.operation !== "latent_probe") return null;
-    const coords2d =
+    const coords2dRaw =
       cfg.probe_mode === "2d" ? cfg.probe_coords : cfg.probe_cross_coords;
-    return coords2d && coords2d.length >= 2 ? coords2d : null;
+    const mapped = rawToDisplay2D(coords2dRaw ?? undefined);
+    return mapped ?? null;
   }
 
   function isProbeHit(viewportX: number, viewportY: number): boolean {
