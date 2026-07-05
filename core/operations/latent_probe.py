@@ -12,7 +12,6 @@ import torch
 from ..dataset_ops import predict_cluster_for_new
 from ..defaults import EPS_NORM
 from ..encoding_ops import encode_prompts_real_conditioning
-from ..projection_ops import compute_iso_bounds
 from ..tensor_ops import trajectory_payload, trajectory_point
 from ..text_terms import clean_llm_line
 
@@ -25,7 +24,7 @@ def inverse_project(
     neighbor_count: int = 5,
     loaded_points: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], np.ndarray, dict[str, Any]]:
-    """Inverse-project canvas coords -> estimated embedding, top-k nearest prompts
+    """Use raw projection coords -> estimated embedding, top-k nearest prompts
 
     Embedding estimation always uses the full dataset for accuracy
     """
@@ -39,7 +38,7 @@ def inverse_project(
     # 1: estimate high-dim embedding from full dataset
     ref: np.ndarray = np.load(str(ref_path))
     pooled: np.ndarray = np.load(str(pooled_path), mmap_mode="r")
-    query_raw = _denormalize_canvas_coords(coords, ref, mode)
+    query_raw = np.array(coords, dtype=np.float32)
     ref_f32 = ref.astype(np.float32)
     dists = np.linalg.norm(ref_f32 - query_raw, axis=1)
     k_inv = min(10, len(ref_f32))
@@ -440,23 +439,6 @@ def probe_suggest_iter(
         if len(result) >= count:
             break
     return result
-
-
-def _denormalize_canvas_coords(coords: list[float], ref: np.ndarray, mode: str) -> np.ndarray:
-    """Invert the frontend [-1, 1] isotropic normalization
-
-    Frontend formula: coord = 2 * (raw - midpoint) / iso_span
-    Inverse:          raw   = coord * iso_span / 2 + midpoint
-    2D special case:  Y is negated in Sigma (y_graph = -y_norm) -> undo that too
-    """
-    midpoint, iso_span = compute_iso_bounds(ref)
-    q = np.array(coords, dtype=np.float32)
-    if mode == "2d" and len(q) >= 2:
-        q = q.copy()
-        q[1] = -q[1]  # undo Sigma Y-flip
-    return q * (iso_span / 2.0) + midpoint
-
-
 def _cosine_knn_numpy(
     query: np.ndarray,
     matrix: np.ndarray,

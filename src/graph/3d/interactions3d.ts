@@ -31,6 +31,7 @@ import {
   isGhostVariant,
 } from "./ghost_nodes.js";
 import { showContextMenu } from "../context_menu.js";
+import { displayToRaw3D, rawToDisplay3D } from "../view_mapper.js";
 
 const raycaster = new THREE.Raycaster();
 raycaster.params.Points = { threshold: 0.025 };
@@ -133,15 +134,14 @@ export function onMouseMove(e: MouseEvent): void {
             ? operationResult.value?.text_reconstruction
             : undefined;
         const cfg = operationConfig.value;
-        const pc =
+        const pcRaw =
           cfg.probe_mode === "3d" ? cfg.probe_coords : cfg.probe_cross_coords;
+        const pc3d = rawToDisplay3D(pcRaw ?? undefined);
         hoverPoint.value = {
           id: "probe",
-          view_coords: (pc?.length === 3
-            ? [pc[0], pc[1], pc[2]]
-            : pc?.length === 2
-              ? [pc[0], pc[1]]
-              : [0, 0]) as [number, number] | [number, number, number],
+          view_coords: (pc3d ?? [0, 0, 0]) as
+            | [number, number]
+            | [number, number, number],
           label: "Latent probe",
           metadata: {
             text: "Latent Space Probe",
@@ -175,7 +175,7 @@ export function onMouseMove(e: MouseEvent): void {
         const clId = gpt.cluster_id ?? null;
         hoverPoint.value = {
           id: gpt.id,
-          view_coords: gpt.coords_3d ??
+          view_coords: rawToDisplay3D(gpt.coords_3d ?? undefined) ??
             (gpt.coords_2d as [number, number] | undefined) ?? [0, 0],
           label: resolvedLabel,
           metadata: {
@@ -350,8 +350,10 @@ export function onClick(e: MouseEvent): void {
     );
     const hit3d = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, hit3d);
+    const rawCoords = displayToRaw3D([hit3d.x, hit3d.y, hit3d.z]);
+    if (!rawCoords) return;
     setOperationConfig({
-      probe_coords: [hit3d.x, hit3d.y, hit3d.z],
+      probe_coords: rawCoords,
       probe_mode: "3d",
       probe_place_mode: false,
     });

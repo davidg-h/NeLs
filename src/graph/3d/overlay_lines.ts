@@ -12,6 +12,7 @@ import {
   getSourceIds,
 } from "../rendering_common.js";
 import { getScene, getNodeIds, getBasePositions } from "./renderer3d.js";
+import { rawToDisplay3D } from "../view_mapper.js";
 
 let extraOverlayLines: Array<THREE.Line | THREE.LineSegments> = [];
 let nnOverlaySegments: THREE.LineSegments | null = null;
@@ -199,7 +200,8 @@ function buildGhostCurvePoints(
     operationConfig.value.snap_endpoints &&
     result.operation !== "axis_projection";
   return ghosts3d.map((pt) => {
-    let [x, y, z] = pt.coords_3d!;
+    const mapped = rawToDisplay3D(pt.coords_3d);
+    let [x, y, z] = mapped ?? [0, 0, 0];
     if (snapEp) {
       if (pt.alpha === 0.0 && si !== undefined)
         [x, y, z] = [

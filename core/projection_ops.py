@@ -23,7 +23,7 @@ def project_trajectory(
     trajectory_points: list[dict[str, Any]],
     dataset_path: str | None,
 ) -> list[dict[str, Any]]:
-    """Project synthetic trajectory tensors and ghost nodes into 2D and 3D canvas space"""
+    """Project synthetic trajectory tensors and ghost nodes into raw 2D and 3D projection space"""
 
     if not dataset_path:
         raise ValueError("Dataset path is required for trajectory projection")
@@ -33,13 +33,8 @@ def project_trajectory(
     backend = reducer_backend_for_strategy(strategy)
     model_2d_path = reducer_path(path, strategy, "2d")
     model_3d_path = reducer_path(path, strategy, "3d")
-    ref_2d_path = path / "umap_2d.npy"
-    ref_3d_path = path / "umap_3d.npy"
-
     model_2d = load_reducer(model_2d_path, backend=backend)
     model_3d = load_reducer(model_3d_path, backend=backend)
-    ref_2d: np.ndarray = np.load(str(ref_2d_path))
-    ref_3d: np.ndarray = np.load(str(ref_3d_path))
 
     tensors = [pt["tensor"] for pt in trajectory_points if pt.get("tensor") is not None]
     if not tensors:
@@ -48,9 +43,6 @@ def project_trajectory(
     matrix = _stack_flattened_tensors(tensors).numpy()
     raw_2d = model_2d.transform(matrix).astype(np.float32)
     raw_3d = model_3d.transform(matrix).astype(np.float32)
-
-    norm_2d = _apply_projection_mapping(raw_2d, ref_2d)
-    norm_3d = _apply_projection_mapping(raw_3d, ref_3d)
 
     overlay: list[dict[str, Any]] = []
     mat_idx = 0
@@ -61,11 +53,11 @@ def project_trajectory(
             {
                 "id": pt["id"],
                 "alpha": float(pt.get("alpha", 0.0)),
-                "coords_2d": [float(norm_2d[mat_idx, 0]), float(norm_2d[mat_idx, 1])],
+                "coords_2d": [float(raw_2d[mat_idx, 0]), float(raw_2d[mat_idx, 1])],
                 "coords_3d": [
-                    float(norm_3d[mat_idx, 0]),
-                    float(norm_3d[mat_idx, 1]),
-                    float(norm_3d[mat_idx, 2]),
+                    float(raw_3d[mat_idx, 0]),
+                    float(raw_3d[mat_idx, 1]),
+                    float(raw_3d[mat_idx, 2]),
                 ],
                 **(
                     {"source_text_pair": pt["source_text_pair"]} if "source_text_pair" in pt else {}
@@ -75,25 +67,6 @@ def project_trajectory(
         mat_idx += 1
 
     return overlay
-
-
-def map_coords_to_range(
-    coordinates: torch.Tensor,
-    *,
-    target_radius: float = 1.0,
-) -> torch.Tensor:
-    """Center and scale projected coords to [-target_radius, target_radius] for frontend display"""
-    if coordinates.ndim != 2:
-        raise ValueError("Projected coordinates must be a 2D matrix")
-    if coordinates.numel() == 0:
-        return coordinates.float()
-
-    coords = torch.nan_to_num(coordinates.float(), nan=0.0, posinf=0.0, neginf=0.0)
-    coords = coords - coords.mean(dim=0, keepdim=True)
-    max_abs = torch.max(torch.abs(coords))
-    if float(max_abs) > 0.0:
-        coords = coords / max_abs * float(target_radius)
-    return coords
 
 
 def compute_umap(
@@ -212,15 +185,6 @@ def load_projection_strategy(dataset_path: str | Path) -> str:
     return strategy
 
 
-def compute_iso_bounds(reference: np.ndarray) -> tuple[np.ndarray, float]:
-    """Midpoint and isotropic span of reference, shared by the forward/inverse canvas mapping"""
-    mins = reference.min(axis=0)
-    maxs = reference.max(axis=0)
-    midpoint = (mins + maxs) / 2.0
-    iso_span = float((maxs - mins).max()) or 1.0
-    return midpoint, iso_span
-
-
 # ---- internals ----
 
 
@@ -238,12 +202,6 @@ def _stack_flattened_tensors(tensors: Iterable[torch.Tensor]) -> torch.Tensor:
                 f"match expected shape {tuple(expected_shape)}"
             )
     return torch.stack(vectors).float().cpu()
-
-
-def _apply_projection_mapping(ghost: np.ndarray, reference: np.ndarray) -> np.ndarray:
-    """Map ghost coords into the same range as reference: 2*(raw-midpoint)/iso_span"""
-    midpoint, iso_span = compute_iso_bounds(reference)
-    return 2.0 * (ghost - midpoint) / iso_span
 
 
 def _build_reducer(

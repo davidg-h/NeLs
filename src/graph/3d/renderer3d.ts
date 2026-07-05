@@ -42,6 +42,7 @@ import {
   updateGhostAnimation,
   setHighlightedGhostId,
 } from "./ghost_nodes.js";
+import { rawToDisplay3D } from "../view_mapper.js";
 import {
   onMouseDown,
   onMouseMove,
@@ -65,9 +66,6 @@ let container: HTMLElement | null = null;
 let nodeIds: string[] = [];
 let basePositions: Float32Array = new Float32Array(0);
 let baseRGB: Float32Array = new Float32Array(0);
-let zBounds = { min: -1, max: 1 };
-let isoCenter = { x: 0, y: 0, z: 0 };
-let isoSpan = 1;
 
 const pulses = new Map<string, number>();
 const effectDisposals: (() => void)[] = [];
@@ -265,26 +263,22 @@ export function initRenderer(el: HTMLElement): void {
         probeSphere3D = null;
       }
       if (cfg.operation === "latent_probe" && scene) {
-        let px: number | null = null;
-        let py: number | null = null;
-        let pz: number | null = null;
+        let probeCoords: [number, number, number] | null = null;
         if (
           cfg.probe_mode === "3d" &&
           cfg.probe_coords &&
           cfg.probe_coords.length >= 3
         ) {
-          [px, py, pz] = cfg.probe_coords;
+          probeCoords = rawToDisplay3D(cfg.probe_coords);
         } else if (
           cfg.probe_mode === "2d" &&
           cfg.probe_cross_coords &&
           cfg.probe_cross_coords.length >= 3
         ) {
-          const [gx, gy, gz] = cfg.probe_cross_coords;
-          px = ((gx - isoCenter.x) / isoSpan) * 2;
-          py = ((gy - isoCenter.y) / isoSpan) * 2;
-          pz = ((gz - isoCenter.z) / isoSpan) * 2;
+          probeCoords = rawToDisplay3D(cfg.probe_cross_coords);
         }
-        if (px !== null) {
+        if (probeCoords) {
+          const [px, py, pz] = probeCoords;
           const geo = new THREE.SphereGeometry(0.04, 12, 8);
           probeSphere3D = new THREE.Mesh(
             geo,
@@ -482,37 +476,15 @@ function rebuildScene(gd: typeof graphData.value): void {
     return;
   }
 
-  const bounds = gd.bounds;
-  const zs = points.map((p) => Number((p.view_coords as number[])[2] ?? 0));
-  const minZ = Math.min(...zs);
-  const maxZ = Math.max(...zs);
-  zBounds = {
-    min: minZ === maxZ ? minZ - 1 : minZ,
-    max: minZ === maxZ ? maxZ + 1 : maxZ,
-  };
-
   nodeIds = points.map((p) => String(p.id));
   basePositions = new Float32Array(points.length * 3);
   baseRGB = new Float32Array(points.length * 3);
 
-  // Isotropic normalization: same scale on all 3 axes so relative distances are preserved
-  isoCenter.x = (bounds.minX + bounds.maxX) / 2;
-  isoCenter.y = (bounds.minY + bounds.maxY) / 2;
-  isoCenter.z = (zBounds.min + zBounds.max) / 2;
-  isoSpan = Math.max(
-    bounds.maxX - bounds.minX,
-    bounds.maxY - bounds.minY,
-    zBounds.max - zBounds.min,
-    0.001,
-  );
-
   for (let i = 0; i < points.length; i++) {
     const p = points[i];
-    const nx = ((Number(p.view_coords[0]) - isoCenter.x) / isoSpan) * 2;
-    const ny = ((Number(p.view_coords[1]) - isoCenter.y) / isoSpan) * 2;
-    const nz =
-      ((Number((p.view_coords as number[])[2] ?? 0) - isoCenter.z) / isoSpan) *
-      2;
+    const nx = Number(p.view_coords[0] ?? 0);
+    const ny = Number(p.view_coords[1] ?? 0);
+    const nz = Number((p.view_coords as number[])[2] ?? 0);
     basePositions[i * 3] = nx;
     basePositions[i * 3 + 1] = ny;
     basePositions[i * 3 + 2] = nz;

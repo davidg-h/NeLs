@@ -17,6 +17,7 @@ import {
   drawClusterHullsOnCanvas,
   gradientFitSideIds,
 } from "../rendering_common.js";
+import { rawToDisplay2D } from "../view_mapper.js";
 
 const [SELECTED_R, SELECTED_G, SELECTED_B] = hexToRgb(C_SELECTED);
 
@@ -189,9 +190,10 @@ function drawProbeMarker2D(ctx: CanvasRenderingContext2D): void {
   if (!sigma) return;
   const cfg = operationConfig.value;
   if (cfg.operation !== "latent_probe") return;
-  const coords2d =
+  const coords2dRaw =
     cfg.probe_mode === "2d" ? cfg.probe_coords : cfg.probe_cross_coords;
-  if (!coords2d || coords2d.length < 2) return;
+  const coords2d = rawToDisplay2D(coords2dRaw ?? undefined);
+  if (!coords2d) return;
   const sc = sigma.graphToViewport({ x: coords2d[0], y: coords2d[1] });
   const selected = rs.selectedIds.has("probe");
   const hovered = rs.hoverNodeId === "probe";

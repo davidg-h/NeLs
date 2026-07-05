@@ -19,22 +19,12 @@ import {
   resolveSnapSourceId,
   rgbToHex,
 } from "../rendering_common.js";
+import { rawToDisplay2D } from "../view_mapper.js";
 
 const [GHOST_R, GHOST_G, GHOST_B] = hexToRgb(C_GHOST_HEX);
 
 type OverlayEdgeKeys = string[];
 type OverlayNodeKeys = string[];
-
-// Normalization params from last syncSigmaGraph call -> reused for ghost node coords
-let lastNormX: (x: number) => number = (x) => x;
-let lastNormY: (y: number) => number = (y) => -y;
-
-export function normalizeSigmaCoords(
-  rawX: number,
-  rawY: number,
-): [number, number] {
-  return [lastNormX(rawX), lastNormY(rawY)];
-}
 
 export function syncSigmaGraph(
   sigmaGraph: MultiGraph,
@@ -53,20 +43,14 @@ export function syncSigmaGraph(
   const { points } = data;
   if (!points.length) return;
 
-  const { normX, normY } = makeNormalizer(points);
-  lastNormX = normX;
-  lastNormY = normY;
-
   for (const point of points) {
+    const x = Number(point.view_coords?.[0] ?? 0);
+    const y = Number(point.view_coords?.[1] ?? 0);
     sigmaGraph.addNode(String(point.id), {
-      x: normX(Number(point.view_coords?.[0] ?? 0)),
-      y: normY(Number(point.view_coords?.[1] ?? 0)),
+      x,
+      y,
       size: 4,
-      color: pointColor(
-        point,
-        normX(Number(point.view_coords?.[0] ?? 0)),
-        normY(Number(point.view_coords?.[1] ?? 0)),
-      ),
+      color: pointColor(point, x, y),
       label: point.label ?? String(point.id),
     });
   }
@@ -141,26 +125,6 @@ export function syncOperationOverlay(
   }
 }
 
-function makeNormalizer(points: GraphData["points"]): {
-  normX: (x: number) => number;
-  normY: (y: number) => number;
-} {
-  const xs = points.map((p) => Number(p.view_coords?.[0] ?? 0));
-  const ys = points.map((p) => Number(p.view_coords?.[1] ?? 0));
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  const span = Math.max(maxX - minX, maxY - minY, 0.001);
-  const scale = 2 / span;
-  return {
-    normX: (x) => (x - cx) * scale,
-    normY: (y) => -((y - cy) * scale),
-  };
-}
-
 // Returns gradient hex for axis ghost nodes:
 // pair=0 -> blue->red (axis 1 A->B), pair=1 -> green->orange (axis 2), else -> default orange
 function axisGhostHex(alpha: number, pair: number | undefined): string {
@@ -202,8 +166,9 @@ function addGhostNodes(
     const nodeKey = `__ghost__${ghostPt.id}`;
     if (sigmaGraph.hasNode(nodeKey)) continue;
 
-    let x = ghostPt.coords_2d![0];
-    let y = -ghostPt.coords_2d![1]; // Y-flip to match Sigma convention
+    const mapped = rawToDisplay2D(ghostPt.coords_2d);
+    if (!mapped) continue;
+    let [x, y] = mapped;
 
     if (snapEndpoints && !isVariant && op !== "axis_projection") {
       const snapId = resolveSnapSourceId(ghostPt.alpha, op, sourcePointIds);
