@@ -12,13 +12,6 @@ def source_input_fields(*, hf_dataset_id_default: str = "") -> dict:
             ["file", "huggingface"],
             {"tooltip": "Where to load prompts from: a .txt file or a HuggingFace dataset."},
         ),
-        "file_path": (
-            "STRING",
-            {
-                "default": "",
-                "tooltip": "Path to a .txt file with one prompt per line (input_source='file').",
-            },
-        ),
         "hf_dataset_id": (
             "STRING",
             {
@@ -59,6 +52,13 @@ def source_input_fields(*, hf_dataset_id_default: str = "") -> dict:
             {
                 "default": "",
                 "tooltip": "Comma-separated HF column names to store in each sample record.",
+            },
+        ),
+        "file_path": (
+            "STRING",
+            {
+                "default": "",
+                "tooltip": "Path to a .txt file with one prompt per line (input_source='file').",
             },
         ),
         "dedupe": (
