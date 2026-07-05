@@ -25,7 +25,7 @@ from ..core.defaults import (
     UMAP_N_NEIGHBORS,
     UMAP_SEED,
 )
-from ._dataset_source_inputs import source_input_fields
+from .dataset_source_inputs import source_input_fields
 
 
 class NelsPromptEncoder:
@@ -40,19 +40,20 @@ class NelsPromptEncoder:
                         "tooltip": "Name for the saved dataset folder.",
                     },
                 ),
+            },
+            "optional": {
+                "clip": ("CLIP", {"tooltip": "Connect a Load CLIP node."}),
+                "save_path": _SAVE_PATH_INPUT,
                 "encode_limit": (
                     "INT",
                     {
-                        "default": 1000,
+                        "default": 0,
                         "min": 0,
                         "max": 1000000,
                         "step": 1,
                         "tooltip": "Max prompts to encode. 0 = encode all.",
                     },
                 ),
-            },
-            "optional": {
-                "clip": ("CLIP", {"tooltip": "Connect a Load CLIP node."}),
                 "projection_strategy": (
                     [
                         PROJECTION_STRATEGY_CLASSIC,
@@ -63,6 +64,10 @@ class NelsPromptEncoder:
                         "tooltip": "Projection build strategy for this dataset.",
                     },
                 ),
+                **source_input_fields(hf_dataset_id_default="Gustavosta/Stable-Diffusion-Prompts"),
+                **_UMAP_INPUTS,
+                **_CLUSTER_INPUTS,
+                **_RUNTIME_TWO_PASS_INPUTS,
                 "prompt_text": (
                     "STRING",
                     {
@@ -71,11 +76,6 @@ class NelsPromptEncoder:
                         "tooltip": "Additional prompts (one per line). Prepended to the source above.",
                     },
                 ),
-                **source_input_fields(hf_dataset_id_default="Gustavosta/Stable-Diffusion-Prompts"),
-                "save_path": _SAVE_PATH_INPUT,
-                **_UMAP_INPUTS,
-                **_CLUSTER_INPUTS,
-                **_RUNTIME_TWO_PASS_INPUTS,
             },
         }
 
@@ -88,7 +88,7 @@ class NelsPromptEncoder:
     def execute(
         self,
         dataset_name: str,
-        encode_limit: int,
+        encode_limit: int = 0,
         clip: Any = None,
         projection_strategy: str = PROJECTION_STRATEGY_PARAMETRIC,
         input_source: str = "file",

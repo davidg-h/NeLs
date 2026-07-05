@@ -9,7 +9,7 @@ from ..core.dataset_ops import (
     normalize_source_inputs,
 )
 from ..core.defaults import DEFAULT_DATASETS
-from ._dataset_source_inputs import source_input_fields
+from .dataset_source_inputs import source_input_fields
 
 
 class NelsAddToDataset:
@@ -27,15 +27,6 @@ class NelsAddToDataset:
             },
             "optional": {
                 "clip": ("CLIP", {}),
-                "prompt_text": (
-                    "STRING",
-                    {
-                        "multiline": True,
-                        "default": "",
-                        "tooltip": "Extra prompts (one per line). Prepended to the source.",
-                    },
-                ),
-                **source_input_fields(),
                 "encode_limit": (
                     "INT",
                     {
@@ -44,6 +35,15 @@ class NelsAddToDataset:
                         "max": 1000000,
                         "step": 1,
                         "tooltip": "Max prompts to encode. 0 = no limit.",
+                    },
+                ),
+                **source_input_fields(),
+                "prompt_text": (
+                    "STRING",
+                    {
+                        "multiline": True,
+                        "default": "",
+                        "tooltip": "Extra prompts (one per line). Prepended to the source.",
                     },
                 ),
             },
