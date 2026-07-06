@@ -20,7 +20,7 @@ Important distinction:
 - **Performance**: Skips ComfyUI’s server stack, node scheduling, and WebSocket overhead.
 - **Automation**: Scriptable, composable with other shell tools.
 
-Encoding runs on **GPU** (via ComfyUI model management). UMAP, clustering, and dataset I/O run on **CPU** — including Parametric UMAP's neural-network training, which is forced CPU-only on purpose (see Installation) to avoid contending with ComfyUI's own GPU usage.
+Encoding runs on **GPU** (via ComfyUI model management). UMAP, clustering, and dataset I/O run on **CPU** - including Parametric UMAP's neural-network training, which is forced CPU-only on purpose (see Installation) to avoid contending with ComfyUI's own GPU usage.
 
 > **Use ComfyUI’s embedded Python, for best consistency**
 >
@@ -47,7 +47,7 @@ Then install NELS dependencies into **ComfyUI’s Python**:
 path\to\python_embeded\python.exe -m pip install -r requirements.txt
 ```
 
-`requirements.txt` includes everything: `numpy`, `safetensors`, `torch`, `umap-learn[parametric_umap]` (pulls TensorFlow for Parametric UMAP), `scikit-learn`, `hdbscan`, `joblib`, `faiss-cpu`, `transformers` (LLM cluster annotation), `Pillow` (image saving), `huggingface_hub`, `datasets` (HuggingFace dataset loading), and a pinned `pyarrow` (see "Known import-order crash" below).
+> `requirements.txt` includes everything: `numpy`, `safetensors`, `torch`, `umap-learn[parametric_umap]` (pulls TensorFlow for Parametric UMAP), `scikit-learn`, `hdbscan`, `joblib`, `faiss-cpu`, `transformers` (LLM cluster annotation), `Pillow` (image saving), `huggingface_hub`, `datasets` (HuggingFace dataset loading), and a pinned `pyarrow` (see "Known import-order crash" below).
 
 ---
 
@@ -107,14 +107,28 @@ my_dataset/
 
 ```text
 my_dataset/
-├── runtime_umap_model_cluster.joblib
 ├── runtime_umap_model_2d.joblib
 ├── runtime_umap_model_3d.joblib
 └── used_subset.jsonl
 ```
 
-`two_pass` still computes the full canonical dataset projections and labels, but it does not save
-the full classic reducers or `hdbscan_model.joblib`.
+> Two-pass uses **kNN label voting** for clustering: find k nearest compact-embedding neighbors,
+> vote on their canonical cluster labels from `samples.jsonl`. No cluster reducer needed.
+>
+> Three alternatives were considered and rejected:
+>
+> - **Weighted-average**: FAISS kNN in compact space -> weighted average of neighbors'
+>   _canonical_ cluster UMAP coords (correct manifold) -> `hdbscan.approximate_predict()`.
+>   - Rejected: the weighted average assumes compact-space proximity and canonical UMAP cluster-space
+>     proximity correlate. When that assumption fails the averaged coord lands between clusters,
+>     HDBSCAN returns noise or the wrong label -> a silent, hard-to-detect failure
+> - **Runtime UMAP -> canonical HDBSCAN**: applying `approximate_predict()` using runtime subset
+>   UMAP coords
+>   - rejected because runtime and canonical UMAP are different manifolds; HDBSCAN
+>     decision boundaries from the full-data fit do not apply to subset manifold coordinates.
+> - **Refit HDBSCAN on runtime subset**: incorrect for the same reason: a subset-trained
+>   cluster UMAP produces different boundaries, so predicted labels would diverge from the
+>   canonical labels stored in `samples.jsonl`.
 
 ### `parametric`
 
@@ -126,8 +140,8 @@ my_dataset/
 └── hdbscan_model.joblib
 ```
 
-`umap_model_2d/3d/cluster` are directories only for `parametric`, because Parametric UMAP saves a
-Keras model bundle rather than a single pickle.
+> `umap_model_2d/3d/cluster` are directories only for `parametric`, because Parametric UMAP saves a
+> Keras model bundle rather than a single pickle.
 
 ### Compact embedding semantics
 

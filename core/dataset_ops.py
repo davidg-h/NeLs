@@ -809,18 +809,7 @@ def _save_two_pass_runtime_models(
 
     runtime_vectors = np.asarray(vectors[subset_indices], dtype=np.float32)
     runtime_umap_params = runtime.get("umap_params") or {}
-    runtime_cluster_params = runtime.get("cluster_params") or {}
     runtime_seed = int(runtime_umap_params.get("random_state", UMAP_SEED))
-
-    runtime_cluster_dims = int(runtime_cluster_params.get("umap_dims", CLUSTER_UMAP_DIMS))
-    print(f"Computing two-pass runtime cluster UMAP ({runtime_cluster_dims}D)...")
-    _, runtime_cluster_model = compute_cluster_umap(
-        runtime_vectors,
-        n_components=runtime_cluster_dims,
-        n_neighbors=int(runtime_cluster_params.get("umap_neighbors", CLUSTER_UMAP_NEIGHBORS)),
-        random_state=runtime_seed,
-        backend=PROJECTION_STRATEGY_CLASSIC,
-    )
 
     print("Computing two-pass runtime UMAP 2D + 3D projections...")
     _, _, runtime_2d_model, runtime_3d_model = compute_umap(
@@ -832,11 +821,6 @@ def _save_two_pass_runtime_models(
     )
 
     print("Saving two-pass runtime projection models...")
-    save_reducer(
-        runtime_cluster_model,
-        output_path / "runtime_umap_model_cluster.joblib",
-        backend=PROJECTION_STRATEGY_CLASSIC,
-    )
     save_reducer(
         runtime_2d_model,
         output_path / "runtime_umap_model_2d.joblib",
@@ -1003,7 +987,6 @@ def _clear_projection_artifacts(output_path: Path) -> None:
         output_path / "umap_model_cluster.joblib",
         output_path / "umap_model_2d.joblib",
         output_path / "umap_model_3d.joblib",
-        output_path / "runtime_umap_model_cluster.joblib",
         output_path / "runtime_umap_model_2d.joblib",
         output_path / "runtime_umap_model_3d.joblib",
         output_path / "used_subset.jsonl",
