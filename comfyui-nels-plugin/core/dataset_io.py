@@ -66,10 +66,11 @@ def load_dataset(dataset_path: str | Path) -> dict[str, Any]:
     samples: list[dict[str, Any]] = []
     samples_file = path / "samples.jsonl"
     if samples_file.exists():
-        for line in samples_file.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                samples.append(json.loads(line))
+        with samples_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    samples.append(json.loads(line))
 
     embeddings_path = path / "compact_embeddings.npy"
     if not embeddings_path.exists():

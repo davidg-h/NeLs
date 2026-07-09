@@ -1031,12 +1031,13 @@ def _load_canonical_cluster_labels(samples_path: Path) -> tuple[np.ndarray, np.n
     """Load canonical cluster labels and noise flags from samples.jsonl"""
     labels: list[int] = []
     noise_flags: list[bool] = []
-    for line in samples_path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        sample = json.loads(line)
-        labels.append(int(sample.get("cluster_global", -1)))
-        noise_flags.append(bool(sample.get("is_noise", False)))
+    with samples_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            sample = json.loads(line)
+            labels.append(int(sample.get("cluster_global", -1)))
+            noise_flags.append(bool(sample.get("is_noise", False)))
     return np.asarray(labels, dtype=np.int32), np.asarray(noise_flags, dtype=bool)
 
 
