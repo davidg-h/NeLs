@@ -273,10 +273,11 @@ def _stem_word(word: str) -> str:
 
 def _load_samples(samples_file: Path) -> list[dict[str, Any]]:
     samples = []
-    for line in samples_file.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line:
-            samples.append(json.loads(line))
+    with samples_file.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                samples.append(json.loads(line))
     return samples
 
 
