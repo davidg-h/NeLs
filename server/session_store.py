@@ -109,33 +109,24 @@ class NelsSessionStore:
             session["ui_state"] = normalize_ui_state(merged, session_id=session_key)
             return copy.deepcopy(session["ui_state"])
 
-    def get_cached_source(
-        self, config: dict[str, Any]
-    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
-        """Return cached (embedding_set, snapshot) for the given source config"""
+    def get_cached_source(self, config: dict[str, Any]) -> dict[str, Any] | None:
+        """Return the cached embedding set for the given source config"""
         cache_key = source_config_hash(config)
         with self._lock:
             cached = self._source_cache.get(cache_key)
             if cached is None:
                 return None
-            return (
-                copy.deepcopy(cached["embedding_set"]),
-                copy.deepcopy(cached["snapshot"]),
-            )
+            return copy.deepcopy(cached)
 
-    def set_cached_source(
-        self,
-        config: dict[str, Any],
-        embedding_set: dict[str, Any],
-        snapshot: dict[str, Any],
-    ) -> str:
-        """Store (embedding_set, snapshot) in the source cache keyed by config hash"""
+    def set_cached_source(self, config: dict[str, Any], embedding_set: dict[str, Any]) -> str:
+        """Store the embedding set in the source cache keyed by config hash
+
+        The embedding set carries its own coords_2d/coords_3d per point, so it is the single
+        cached source for both backend operation math and the frontend snapshot derived from it
+        """
         cache_key = source_config_hash(config)
         with self._lock:
-            self._source_cache[cache_key] = {
-                "embedding_set": copy.deepcopy(embedding_set),
-                "snapshot": copy.deepcopy(snapshot),
-            }
+            self._source_cache[cache_key] = copy.deepcopy(embedding_set)
         return cache_key
 
     def update_ui_state(self, session_id: str, patch: dict[str, Any]) -> dict[str, Any]:
