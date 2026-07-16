@@ -15,7 +15,7 @@ import {
   schedulePushState,
   highlightGhostStepOnCanvas,
 } from "../state/rendererBridge.js";
-import { graphData } from "../state/graph.js";
+import { graphData, snapshot } from "../state/graph.js";
 import { clusterColor } from "../graph/colors.js";
 import type {
   AxisProjectionScore,
@@ -25,6 +25,12 @@ import type {
   ProbeContextItem,
   TrajectoryStepTr,
 } from "../api/types.js";
+
+function clusterLabelFor(id: unknown): string {
+  const clusterLabels = snapshot.value?.source?.cluster_labels ?? {};
+  const label = clusterLabels[String(id)];
+  return label ? `${label} (${id})` : String(id);
+}
 
 export function ResultCard() {
   const nr = (operationResult.value ?? {}) as NelsOperationResult;
@@ -82,7 +88,7 @@ export function ResultCard() {
               />
               {probeCluster.is_noise
                 ? "cluster: noise"
-                : `cluster: ${probeCluster.cluster_id} (strength ${probeCluster.membership_strength.toFixed(2)})`}
+                : `cluster: ${clusterLabelFor(probeCluster.cluster_id)} (strength ${probeCluster.membership_strength.toFixed(2)})`}
             </div>
           )}
           {inverseHits.slice(0, 5).map((h) => (

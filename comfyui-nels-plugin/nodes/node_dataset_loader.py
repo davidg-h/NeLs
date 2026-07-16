@@ -11,10 +11,9 @@ from ..core.dataset_io import load_dataset, resolve_dataset_path
 from ..core.dataset_ops import require_projection_meta, select_sample_indices
 from ..core.defaults import DEFAULT_DATASETS, UMAP_SEED
 from ..core.session_contracts import (
-    assemble_snapshot,
+    build_frontend_snapshot,
     json_dumps,
     source_config_hash,
-    zip_point_coords,
 )
 from ..core.tensor_ops import create_embedding_set, make_embedding_point
 from ..server.session_store import get_store
@@ -29,7 +28,7 @@ def preview_dataset_source(
     window_start: int,
     random_seed: int,
 ) -> dict[str, Any]:
-    """Fetch or rebuild cached snapshot for panel Refresh"""
+    """Fetch or rebuild the cached embedding set for panel Refresh, return its frontend snapshot"""
     config = {
         "dataset_path": dataset_path,
         "load_mode": load_mode,
@@ -39,18 +38,16 @@ def preview_dataset_source(
     }
     store = get_store()
     cache_config = _cache_config(config)
-    _embedding_set, snapshot, from_cache = _get_cached_or_build_source(
+    embedding_set = _get_cached_or_build_source(
         config,
         cache_config=cache_config,
         session_id=session_id,
     )
-    if from_cache:
-        snapshot = {
-            **snapshot,
-            "session_id": str(session_id or "default"),
-            "state_revision": store.get_revision(session_id),
-        }
-    return snapshot
+    return build_frontend_snapshot(
+        embedding_set,
+        session_id=session_id,
+        state_revision=store.get_revision(session_id),
+    )
 
 
 class NelsDatasetLoader:
@@ -125,7 +122,7 @@ class NelsDatasetLoader:
             "random_seed": int(random_seed),
         }
         cache_config = _cache_config(config)
-        embedding_set, snapshot, _from_cache = _get_cached_or_build_source(
+        embedding_set = _get_cached_or_build_source(
             config,
             cache_config=cache_config,
             session_id="loader",
@@ -133,6 +130,13 @@ class NelsDatasetLoader:
 
         # Inject full loader config so NelsSession can sync it to the store
         embedding_set["_source_config"] = config
+
+        store = get_store()
+        snapshot = build_frontend_snapshot(
+            embedding_set,
+            session_id="loader",
+            state_revision=store.get_revision("loader"),
+        )
 
         info = {
             "node": "NELS Dataset Loader",
@@ -154,14 +158,32 @@ def _build_embedding_set(
     dataset: dict[str, Any],
     indices: list[int],
 ) -> dict[str, Any]:
-    """Convert selected rows into a NELS_EMBEDDING_SET"""
+    """Convert selected rows into a NELS_EMBEDDING_SET, with 2D/3D coords already attached
+
+    Coords live on the same point records as the compact embedding tensor, so this one
+    object is the single cached source for both backend operation math and the
+    frontend-facing snapshot derived from it, rather than two parallel structures
+    """
     compact_embeddings = dataset["compact_embeddings"]
     samples = dataset["samples"]
     meta = dataset["metadata"]
     projection = require_projection_meta(meta)
 
+    saved_2d = dataset.get("umap_2d")
+    saved_3d = dataset.get("umap_3d")
+    if saved_2d is None or saved_3d is None:
+        missing = [
+            n for n, v in (("umap_2d.npy", saved_2d), ("umap_3d.npy", saved_3d)) if v is None
+        ]
+        raise ValueError(
+            f"Dataset is missing pre-computed projections: {missing}. "
+            "Re-encode the dataset with scripts/encode_cli.py to generate them."
+        )
+    coords_2d = np.asarray(saved_2d[indices], dtype=np.float32).tolist()
+    coords_3d = np.asarray(saved_3d[indices], dtype=np.float32).tolist()
+
     points = []
-    for i in indices:
+    for pos, i in enumerate(indices):
         sample = samples[i]
         vec = torch.from_numpy(compact_embeddings[i].copy()).float()
         point_meta: dict[str, Any] = {
@@ -180,6 +202,8 @@ def _build_embedding_set(
         label = str(label)[:64]  # cap label length for display
 
         point = make_embedding_point(point_id, label, vec, point_meta)
+        point["coords_2d"] = coords_2d[pos]
+        point["coords_3d"] = coords_3d[pos]
         points.append(point)
 
     return create_embedding_set(
@@ -205,43 +229,6 @@ def _build_embedding_set(
     )
 
 
-def _build_loader_snapshot(
-    embedding_set: dict[str, Any],
-    *,
-    session_id: str,
-    config: dict[str, Any],
-    dataset: dict[str, Any],
-    indices: list[int],
-) -> dict[str, Any]:
-    """Build graph snapshot from pre-computed projections, raise if npy files are missing"""
-    store = get_store()
-    points = embedding_set["points"]
-
-    saved_2d = dataset.get("umap_2d")
-    saved_3d = dataset.get("umap_3d")
-
-    if saved_2d is None or saved_3d is None:
-        missing = [
-            n for n, v in (("umap_2d.npy", saved_2d), ("umap_3d.npy", saved_3d)) if v is None
-        ]
-        raise ValueError(
-            f"Dataset is missing pre-computed projections: {missing}. "
-            "Re-encode the dataset with scripts/encode_cli.py to generate them."
-        )
-
-    coords_2d = np.asarray(saved_2d[indices], dtype=np.float32).tolist()
-    coords_3d = np.asarray(saved_3d[indices], dtype=np.float32).tolist()
-    snapshot_points = zip_point_coords(points, coords_2d, coords_3d)
-
-    return assemble_snapshot(
-        snapshot_points,
-        session_id=session_id,
-        config=config,
-        source_meta=embedding_set["metadata"],
-        state_revision=store.get_revision(session_id),
-    )
-
-
 def _load_and_build(
     *,
     session_id: str,
@@ -250,8 +237,8 @@ def _load_and_build(
     count: int,
     window_start: int,
     random_seed: int,
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Load dataset, select samples, build embedding set and snapshot"""
+) -> dict[str, Any]:
+    """Load dataset, select samples, build the embedding set (points carry tensor + coords)"""
     if not dataset_path or not dataset_path.strip():
         available = (
             sorted(d.name for d in DEFAULT_DATASETS.iterdir() if d.is_dir())
@@ -296,28 +283,16 @@ def _load_and_build(
     )
     embedding_set = _build_embedding_set(dataset, indices)
 
-    config = {
+    # Kept on the embedding set itself so build_frontend_snapshot can read it back
+    # without every call site having to re-resolve and re-pass the loader config
+    embedding_set["loader_config"] = {
         "dataset_path": str(resolved),
         "load_mode": load_mode,
         "count": count,
         "window_start": window_start,
         "random_seed": random_seed,
     }
-    store.publish_node_event(
-        session_id,
-        "computing_projection",
-        node_name="NELS Dataset Loader",
-        message="Computing projections...",
-        status="running",
-    )
-    snapshot = _build_loader_snapshot(
-        embedding_set,
-        session_id=session_id,
-        config=config,
-        dataset=dataset,
-        indices=indices,
-    )
-    return embedding_set, snapshot
+    return embedding_set
 
 
 def _get_cached_or_build_source(
@@ -325,15 +300,14 @@ def _get_cached_or_build_source(
     *,
     cache_config: dict[str, Any],
     session_id: str,
-) -> tuple[dict[str, Any], dict[str, Any], bool]:
-    """Get cached loader output or build and cache it"""
+) -> dict[str, Any]:
+    """Get cached embedding set or build and cache it"""
     store = get_store()
     cached = store.get_cached_source(cache_config)
     if cached is not None:
-        embedding_set, snapshot = cached
-        return embedding_set, snapshot, True
+        return cached
 
-    embedding_set, snapshot = _load_and_build(
+    embedding_set = _load_and_build(
         session_id=session_id,
         dataset_path=config["dataset_path"],
         load_mode=config["load_mode"],
@@ -341,8 +315,8 @@ def _get_cached_or_build_source(
         window_start=config["window_start"],
         random_seed=config["random_seed"],
     )
-    store.set_cached_source(cache_config, embedding_set, snapshot)
-    return embedding_set, snapshot, False
+    store.set_cached_source(cache_config, embedding_set)
+    return embedding_set
 
 
 def _cache_config(config: dict[str, Any]) -> dict[str, Any]:

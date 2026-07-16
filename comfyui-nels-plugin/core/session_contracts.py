@@ -73,14 +73,10 @@ def normalize_ui_state(
     normalized["probe_recon_max_minutes"] = max(
         1, int(normalized.get("probe_recon_max_minutes") or 5)
     )
-    normalized["probe_recon_max_iter"] = max(
-        1, int(normalized.get("probe_recon_max_iter") or 10)
-    )
+    normalized["probe_recon_max_iter"] = max(1, int(normalized.get("probe_recon_max_iter") or 10))
     normalized["probe_seed_count"] = max(1, int(normalized.get("probe_seed_count") or 15))
     normalized["probe_noise_count"] = max(0, int(normalized.get("probe_noise_count") or 5))
-    normalized["probe_negative_count"] = max(
-        0, int(normalized.get("probe_negative_count") or 5)
-    )
+    normalized["probe_negative_count"] = max(0, int(normalized.get("probe_negative_count") or 5))
     try:
         revision = int(normalized.get("state_revision") or 0)
     except (TypeError, ValueError):
@@ -135,39 +131,33 @@ def validate_session_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
     return bundle
 
 
-def zip_point_coords(
-    points: list[dict[str, Any]],
-    coords_2d: list,
-    coords_3d: list,
-) -> list[dict[str, Any]]:
-    """Build snapshot dicts from embedding_set points and separate coord arrays"""
-    return [
+def build_frontend_snapshot(
+    embedding_set: dict[str, Any],
+    *,
+    session_id: str,
+    state_revision: int,
+) -> dict[str, Any]:
+    """Derive the JSON-safe graph snapshot the frontend receives from one embedding set
+
+    The embedding set is the single cached source for both backend operation math and view;
+    strip backend-only `tensor` field per point
+    """
+    points = [
         {
             "id": p["id"],
             "label": p["label"],
             "metadata": p.get("metadata", {}),
-            "view_coords": c2,
-            "coords_2d": c2,
-            "coords_3d": c3,
+            "view_coords": p.get("coords_2d"),
+            "coords_2d": p.get("coords_2d"),
+            "coords_3d": p.get("coords_3d"),
         }
-        for p, c2, c3 in zip(points, coords_2d, coords_3d, strict=True)
+        for p in embedding_set.get("points", [])
     ]
-
-
-def assemble_snapshot(
-    points: list[dict[str, Any]],
-    *,
-    session_id: str,
-    config: dict[str, Any],
-    source_meta: dict[str, Any],
-    state_revision: int,
-) -> dict[str, Any]:
-    """Build the standard graph snapshot shared by all source nodes"""
     return {
         "session_id": str(session_id or "default"),
         "state_revision": state_revision,
-        "source": source_meta,
-        "source_config": config,
+        "source": embedding_set.get("metadata", {}),
+        "source_config": embedding_set.get("loader_config", {}),
         "points": points,
     }
 
