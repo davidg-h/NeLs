@@ -58,6 +58,7 @@ from core.defaults import (
     UMAP_SEED,
 )
 from core.operations.cluster_annotation import ANNOTATION_MODEL, ANNOTATION_TOP_N, annotate_clusters
+from core.projection_ops import load_projection_strategy
 
 # ---------------------------------------------------------------------------
 # CLI entry point
@@ -201,6 +202,16 @@ def main() -> None:
     cp.add_argument("--runtime-umap-min-dist", type=float, default=UMAP_MIN_DIST)
     cp.add_argument("--runtime-cluster-umap-dims", type=int, default=CLUSTER_UMAP_DIMS)
     cp.add_argument("--runtime-cluster-umap-neighbors", type=int, default=CLUSTER_UMAP_NEIGHBORS)
+    cp.add_argument(
+        "--parametric-enable-onednn",
+        action="store_true",
+        help=(
+            "Only for --projection-strategy parametric: by default the CLI forces "
+            "TF_ENABLE_ONEDNN_OPTS=0 before TensorFlow is imported, because oneDNN's "
+            "non-deterministic summation order can make Parametric UMAP training diverge "
+            "run-to-run even with a fixed seed. Pass this flag to leave oneDNN enabled instead."
+        ),
+    )
 
     # ---- annotate ----
     annp = subparsers.add_parser(
@@ -282,6 +293,17 @@ def main() -> None:
         default=ANNOTATION_TOP_N,
         help=f"Prompts per cluster sent to the LLM (default: {ANNOTATION_TOP_N}).",
     )
+    ap.add_argument(
+        "--parametric-enable-onednn",
+        action="store_true",
+        help=(
+            "Only relevant when appending to a dataset whose projection.strategy is "
+            "parametric: by default the CLI forces TF_ENABLE_ONEDNN_OPTS=0 before "
+            "TensorFlow is imported, because oneDNN's non-deterministic summation order "
+            "can make Parametric UMAP training diverge run-to-run even with a fixed seed. "
+            "Pass this flag to leave oneDNN enabled instead."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -316,6 +338,7 @@ def main() -> None:
 def cmd_create(args: argparse.Namespace) -> None:
     comfyui_root = _find_comfyui_root(args.comfyui_path)
     _setup_paths(comfyui_root)
+    _configure_onednn(args.projection_strategy, args.parametric_enable_onednn)
 
     output_path = Path(args.output)
     name = output_path.name
@@ -435,6 +458,8 @@ def cmd_add(args: argparse.Namespace) -> None:
     if not path_obj.is_dir():
         raise SystemExit(f"Dataset folder not found: {args.dataset}")
 
+    _configure_onednn(load_projection_strategy(path_obj), args.parametric_enable_onednn)
+
     ds = load_dataset(path_obj)
 
     resolved_clip = _resolve_clip_path(args.clip, comfyui_root)
@@ -524,6 +549,19 @@ def _find_comfyui_root(explicit: str | None = None) -> Path:
         "       export COMFYUI_ROOT=/path/to/ComfyUI\n"
         "  3. Run from inside the custom_nodes/ directory structure."
     )
+
+
+def _configure_onednn(strategy: str, allow_onednn: bool) -> None:
+    """Force deterministic TensorFlow math for Parametric UMAP unless overridden"""
+    if strategy != PROJECTION_STRATEGY_PARAMETRIC:
+        return
+    if allow_onednn:
+        print(
+            "Warning: --parametric-enable-onednn set - Parametric UMAP training may not "
+            "be reproducible across runs."
+        )
+        return
+    os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 
 def _setup_paths(comfyui_root: Path) -> None:

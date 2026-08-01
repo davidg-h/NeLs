@@ -22,6 +22,8 @@ Important distinction:
 
 Encoding runs on **GPU** (via ComfyUI model management). UMAP, clustering, and dataset I/O run on **CPU** - including Parametric UMAP's neural-network training, which is forced CPU-only on purpose (see Installation) to avoid contending with ComfyUI's own GPU usage.
 
+For the `parametric` strategy specifically, the CLI also forces `TF_ENABLE_ONEDNN_OPTS=0` before TensorFlow is imported (see "Parametric UMAP determinism" below) - `classic` and `two_pass` never import TensorFlow, so this has no effect on them.
+
 > **Use ComfyUI’s embedded Python, for best consistency**
 >
 > On a ComfyUI portable install, invoke the CLI like this:
@@ -48,18 +50,6 @@ path\to\python_embeded\python.exe -m pip install -r requirements.txt
 ```
 
 > `requirements.txt` includes everything: `numpy`, `safetensors`, `torch`, `umap-learn[parametric_umap]` (pulls TensorFlow for Parametric UMAP), `scikit-learn`, `hdbscan`, `joblib`, `faiss-cpu`, `transformers` (LLM cluster annotation), `Pillow` (image saving), `huggingface_hub`, `datasets` (HuggingFace dataset loading), and a pinned `pyarrow` (see "Known import-order crash" below).
-
----
-
-## Known import-order crash: `torch` before `pyarrow`/`datasets`
-
-Importing `torch` and then `pyarrow` (or anything that imports it, like the `datasets` package)
-in the same process can crash with a native access violation on Windows -> this is a
-long-standing, documented upstream incompatibility (`apache/arrow#2637`), not specific to this
-plugin.
-`requirements.txt` pins `pyarrow>=21.0.0,<24.0.0` for this reason -> don't loosen this
-pin without re-verifying against the exact crash scenario (`import torch` followed by
-`from datasets import load_dataset`)
 
 ---
 
@@ -97,6 +87,7 @@ The remaining files depend on `projection.strategy`.
 
 ```text
 my_dataset/
+...
 ├── umap_model_cluster.joblib
 ├── umap_model_2d.joblib
 ├── umap_model_3d.joblib
@@ -107,33 +98,20 @@ my_dataset/
 
 ```text
 my_dataset/
+...
 ├── runtime_umap_model_2d.joblib
 ├── runtime_umap_model_3d.joblib
 └── used_subset.jsonl
 ```
 
 > Two-pass uses **kNN label voting** for clustering: find k nearest compact-embedding neighbors,
-> vote on their canonical cluster labels from `samples.jsonl`. No cluster reducer needed.
->
-> Three alternatives were considered and rejected:
->
-> - **Weighted-average**: FAISS kNN in compact space -> weighted average of neighbors'
->   _canonical_ cluster UMAP coords (correct manifold) -> `hdbscan.approximate_predict()`.
->   - Rejected: the weighted average assumes compact-space proximity and canonical UMAP cluster-space
->     proximity correlate. When that assumption fails the averaged coord lands between clusters,
->     HDBSCAN returns noise or the wrong label -> a silent, hard-to-detect failure
-> - **Runtime UMAP -> canonical HDBSCAN**: applying `approximate_predict()` using runtime subset
->   UMAP coords
->   - rejected because runtime and canonical UMAP are different manifolds; HDBSCAN
->     decision boundaries from the full-data fit do not apply to subset manifold coordinates.
-> - **Refit HDBSCAN on runtime subset**: incorrect for the same reason: a subset-trained
->   cluster UMAP produces different boundaries, so predicted labels would diverge from the
->   canonical labels stored in `samples.jsonl`.
+> vote on their canonical cluster labels from `samples.jsonl`. No cluster reducers needed.
 
 ### `parametric`
 
 ```text
 my_dataset/
+...
 ├── umap_model_cluster/
 ├── umap_model_2d/
 ├── umap_model_3d/
@@ -176,7 +154,7 @@ Important `dataset.json` fields:
 - `embedding_shape`: the saved per-prompt compact shape, for example `[7680]`
 - `embedding_strategy`: `native_pooled` or `mean_seq_fallback`
 
-Each sample record in `samples.jsonl`:
+Example sample record in `samples.jsonl`:
 
 ```json
 {
@@ -296,6 +274,10 @@ The dataset name stored in `dataset.json` always comes from the output folder na
 Runtime options are accepted for every `create`, but they are only used when
 `--projection-strategy two_pass`.
 
+| Flag                         | Default | Description                                                                                                                             |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--parametric-enable-onednn` | off     | Only for `--projection-strategy parametric`. Leaves oneDNN enabled instead of forcing it off - see "Parametric UMAP determinism" below. |
+
 **Annotation options**
 
 | Flag               | Default | Description                                                                                                                                        |
@@ -344,18 +326,19 @@ python encode_cli.py add --dataset <folder> --input <source> --clip <path> [opti
 
 **Other options**
 
-| Flag                 | Description                                                                                                |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `--clip-type`        | ComfyUI CLIPType (default: `FLUX2`). Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3. |
-| `--encode-limit`     | Max new texts. 0 = all.                                                                                    |
-| `--hf-column`        | Column name when `--input` is a HF dataset (default: `Prompt`).                                            |
-| `--hf-split`         | HF dataset split to load (default: `train`).                                                               |
-| `--hf-config`        | HF dataset config/name.                                                                                    |
-| `--text-template`    | Template string (same as `create`).                                                                        |
-| `--metadata-columns` | Columns to store per sample (same as `create`).                                                            |
-| `--dedupe`           | Remove duplicates.                                                                                         |
-| `--min-words`        | Drop short texts.                                                                                          |
-| `--max-words`        | Drop long texts.                                                                                           |
+| Flag                         | Description                                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--clip-type`                | ComfyUI CLIPType (default: `FLUX2`). Use `FLUX` for Flux.1, `STABLE_DIFFUSION` for SD/SDXL, `SD3` for SD3.                                                   |
+| `--encode-limit`             | Max new texts. 0 = all.                                                                                                                                      |
+| `--hf-column`                | Column name when `--input` is a HF dataset (default: `Prompt`).                                                                                              |
+| `--hf-split`                 | HF dataset split to load (default: `train`).                                                                                                                 |
+| `--hf-config`                | HF dataset config/name.                                                                                                                                      |
+| `--text-template`            | Template string (same as `create`).                                                                                                                          |
+| `--metadata-columns`         | Columns to store per sample (same as `create`).                                                                                                              |
+| `--dedupe`                   | Remove duplicates.                                                                                                                                           |
+| `--min-words`                | Drop short texts.                                                                                                                                            |
+| `--max-words`                | Drop long texts.                                                                                                                                             |
+| `--parametric-enable-onednn` | Only relevant when the target dataset's strategy is `parametric`. Leaves oneDNN enabled instead of forcing it off - see "Parametric UMAP determinism" below. |
 
 **Annotation options**
 
@@ -562,6 +545,41 @@ python encode_cli.py add \
   --clip-type FLUX2 \
   --annotate
 ```
+
+---
+
+## Notes
+
+General hints - not required reading to use the CLI, but useful background if something looks off.
+
+### Known import-order crash: `torch` before `pyarrow`/`datasets`
+
+Importing `torch` and then `pyarrow` (or anything that imports it, like the `datasets` package)
+in the same process can crash with a native access violation on Windows -> this is a
+long-standing, documented upstream incompatibility (`apache/arrow#2637`), not specific to this
+plugin.
+`requirements.txt` pins `pyarrow>=21.0.0,<24.0.0` for this reason -> don't loosen this
+pin without re-verifying against the exact crash scenario (`import torch` followed by
+`from datasets import load_dataset`)
+
+### Parametric UMAP determinism: `TF_ENABLE_ONEDNN_OPTS`
+
+TensorFlow's oneDNN CPU acceleration uses a non-deterministic summation order across
+multi-threaded runs. For most TensorFlow use cases this only affects the last few bits of
+a float, but for Parametric UMAP training it can compound over epochs into a genuinely
+different (sometimes divergent, non-converging) result run-to-run - even with a fixed seed
+and identical inputs.
+
+To keep `parametric` builds reproducible, the CLI sets `TF_ENABLE_ONEDNN_OPTS=0` **before**
+TensorFlow is imported, by default, whenever the active strategy is `parametric`:
+
+- `create --projection-strategy parametric`
+- `add` onto an existing dataset whose `projection.strategy` is `parametric`
+
+`classic` and `two_pass` never import TensorFlow, so this setting has no effect on them.
+
+Pass `--parametric-enable-onednn` to leave oneDNN enabled instead (faster, but training may
+not reproduce across runs).
 
 ---
 
