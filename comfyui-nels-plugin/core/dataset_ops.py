@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import faiss
 import hdbscan
 import joblib
 import numpy as np
@@ -47,6 +46,7 @@ from .projection_ops import (
     reducer_path,
     save_reducer,
 )
+from .tensor_ops import build_faiss_ip_index, normalize_l2_safe
 
 
 def load_texts_from_source(
@@ -1018,7 +1018,7 @@ def _predict_clusters_two_pass(
     labels, noise_flags = _load_canonical_cluster_labels(samples_path)
     index = _get_or_build_cluster_index(path, embeddings_path)
     normalized_queries = np.asarray(new_vectors, dtype=np.float32).copy()
-    faiss.normalize_L2(normalized_queries)
+    normalize_l2_safe(normalized_queries)
     scores, indices = index.search(normalized_queries, min(RUNTIME_CLUSTER_K, len(labels)))
 
     results: list[dict[str, Any]] = []
@@ -1045,7 +1045,12 @@ _CLUSTER_INDEX_CACHE: dict[str, tuple[str, Any]] = {}
 
 
 def _get_or_build_cluster_index(dataset_path: Path, embeddings_path: Path) -> Any:
-    """Build and cache a FAISS cosine index for one dataset"""
+    """Build and cache a FAISS cosine index for one dataset
+
+    Caches only the most recently built index. Each index holds a full float32 copy
+    of the dataset compact embeddings, and a NELS session only ever works with one
+    active dataset at a time
+    """
     cache_key = str(dataset_path.resolve())
     cache_version = _cluster_index_version(embeddings_path)
     cached = _CLUSTER_INDEX_CACHE.get(cache_key)
@@ -1053,8 +1058,9 @@ def _get_or_build_cluster_index(dataset_path: Path, embeddings_path: Path) -> An
         return cached[1]
 
     embeddings = np.load(str(embeddings_path), mmap_mode="r")
-    matrix = np.ascontiguousarray(np.asarray(embeddings, dtype=np.float32))
-    index = _build_faiss_index(matrix)
+    # Pass the mmap directly to build_faiss_ip_index
+    index = build_faiss_ip_index(embeddings)
+    _CLUSTER_INDEX_CACHE.clear()
     _CLUSTER_INDEX_CACHE[cache_key] = (cache_version, index)
     return index
 
@@ -1063,31 +1069,6 @@ def _cluster_index_version(embeddings_path: Path) -> str:
     """Stable cache version for one embeddings file"""
     stat = embeddings_path.stat()
     return f"{stat.st_size}:{stat.st_mtime_ns}"
-
-
-def _build_faiss_index(matrix: np.ndarray) -> Any:
-    """Build one FAISS cosine index for the full compact embedding matrix"""
-    import faiss
-
-    if matrix.ndim != 2:
-        raise ValueError("compact_embeddings.npy must be a 2D matrix")
-
-    normalized = np.ascontiguousarray(matrix.copy())
-    faiss.normalize_L2(normalized)
-    dim = normalized.shape[1]
-    n = normalized.shape[0]
-
-    if n > 200_000:
-        nlist = 128
-        quantizer = faiss.IndexFlatIP(dim)
-        index = faiss.IndexIVFFlat(quantizer, dim, nlist, faiss.METRIC_INNER_PRODUCT)
-        index.train(normalized)
-        index.nprobe = min(16, nlist)
-    else:
-        index = faiss.IndexFlatIP(dim)
-
-    index.add(normalized)
-    return index
 
 
 def _vote_clusters(
@@ -1104,7 +1085,7 @@ def _vote_clusters(
     valid_scores = scores[valid_mask].astype(np.float32)
     valid_indices = indices[valid_mask].astype(np.int64)
     scaled = valid_scores * float(RUNTIME_CLUSTER_TEMPERATURE)
-    scaled -= scaled.max()
+    scaled -= scaled.max()  # Prevent overflow in exp() for large positive scores
     weights = np.exp(scaled)
     total = float(weights.sum()) or 1.0
     normalized = weights / total
