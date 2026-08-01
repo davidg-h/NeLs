@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 
 from ..dataset_ops import predict_cluster_for_new
@@ -13,7 +14,6 @@ from ..projection_ops import project_trajectory
 from ..tensor_ops import (
     cosine_similarity,
     flatten_tensor,
-    point_embedding,
     trajectory_payload,
     trajectory_point,
 )
@@ -24,6 +24,7 @@ def generate_variants(
     prompt: str, count: int, strength: float, *, random_seed: int = 42
 ) -> list[str]:
     """Generate text variants; uses word dropout at low strength LLM paraphrase at higher strength"""
+    strength = max(_MIN_VARIATION_STRENGTH, min(1.0, float(strength)))
     if strength < _LLM_STRENGTH_THRESHOLD:
         return _word_dropout(prompt, count, strength, random_seed=random_seed)
     # LLM may be unavailable/fail -> fall through to word dropout
@@ -39,7 +40,7 @@ def generate_variants(
 
 
 def paraphrase(text: str, count: int, strength: float) -> list[str]:
-    """Return exactly `count` paraphrases (one LLM call per variant)"""
+    """Return up to `count` distinct, length-limited LLM paraphrases"""
     from .. import llm_ops  # heavy transformers dependency - only load when paraphrasing runs
 
     style = (
@@ -49,8 +50,12 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
         if strength < 0.7
         else "aggressive paraphrase, change phrasing substantially"
     )
-    # Token budget for one complete image prompt
-    tokens_per_variant = max(80, len(text.split()) * 6)
+    max_variant_words = len(text.split()) + _LLM_VARIANT_WORD_BUFFER
+    # Keep generation proportionate to the permitted output length
+    tokens_per_variant = max(
+        _MIN_LLM_VARIANT_TOKENS,
+        max_variant_words * _LLM_TOKENS_PER_WORD_ESTIMATE,
+    )
     seen: set[str] = {text}
     result: list[str] = []
     for _ in range(count):
@@ -65,6 +70,7 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
                 "content": (
                     "You paraphrase short image generation prompts. "
                     f"Style: {style}. "
+                    f"Keep the paraphrase to at most {max_variant_words} words. "
                     "Output exactly ONE paraphrase: a single line, no numbering, no extra text."
                     + avoid_hint
                 ),
@@ -72,7 +78,7 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
             {"role": "user", "content": text},
         ]
         raw = llm_ops.query(messages, max_new_tokens=tokens_per_variant)
-        line = clean_llm_line(first_line(raw))
+        line = _limit_word_count(clean_llm_line(first_line(raw)), max_variant_words)
         if line and line not in seen:
             seen.add(line)
             result.append(line)
@@ -82,19 +88,25 @@ def paraphrase(text: str, count: int, strength: float) -> list[str]:
 def consistency_score_metrics(
     seed_vec: torch.Tensor,
     variant_vecs: list[torch.Tensor],
-    dataset_vecs: list[torch.Tensor],
+    dataset_path: str,
     *,
     inter_sample_size: int = 100,
     random_seed: int = 42,
 ) -> dict[str, float]:
-    """Compute SC = mean_intra_dist / mean_inter_dist; lower = tighter semantic cluster"""
+    """Compute SC = mean_intra_dist / mean_inter_dist; lower = tighter semantic cluster
+
+    The inter-set background reference is sampled from the complete saved dataset
+    not from the points currently loaded into the graph panel
+    """
     seed_f = flatten_tensor(seed_vec).float()
     intra = [1.0 - cosine_similarity(seed_f, v) for v in variant_vecs]
     mean_intra = sum(intra) / len(intra)
 
+    embeddings = np.load(str(Path(dataset_path) / "compact_embeddings.npy"), mmap_mode="r")
     rng = random.Random(random_seed)
-    sample = rng.sample(dataset_vecs, min(inter_sample_size, len(dataset_vecs)))
-    inter = [1.0 - cosine_similarity(seed_f, v) for v in sample]
+    sample_idx = rng.sample(range(len(embeddings)), min(inter_sample_size, len(embeddings)))
+    sample = torch.from_numpy(np.array(embeddings[sample_idx], dtype=np.float32))
+    inter = [1.0 - cosine_similarity(seed_f, vec) for vec in sample]
     mean_inter = sum(inter) / len(inter)
 
     sc = mean_intra / max(mean_inter, 1e-8)
@@ -107,7 +119,6 @@ def build_consistency_check_result(
     variant_count: int,
     variation_strength: float,
     clip_obj: Any,
-    embedding_set: dict[str, Any],
     dataset_path: str,
     request_id: str,
     state_revision: int,
@@ -129,12 +140,9 @@ def build_consistency_check_result(
 
     seed_vec = compact_vecs[0].detach().float()
     variant_vecs = [compact_vecs[i + 1].detach().float() for i in range(len(variants))]
-    dataset_vecs = [
-        flatten_tensor(point_embedding(p)).float() for p in embedding_set.get("points", [])
-    ]
 
     metrics = consistency_score_metrics(
-        seed_vec, variant_vecs, dataset_vecs, random_seed=random_seed
+        seed_vec, variant_vecs, dataset_path, random_seed=random_seed
     )
 
     cluster_results = (
@@ -205,6 +213,15 @@ def build_consistency_check_result(
 
 _LLM_STRENGTH_THRESHOLD = 0.35
 _WORD_DROPOUT_MAX_FRACTION = 0.2
+_MIN_VARIATION_STRENGTH = 0.05
+_LLM_VARIANT_WORD_BUFFER = 5
+_LLM_TOKENS_PER_WORD_ESTIMATE = 3
+_MIN_LLM_VARIANT_TOKENS = 24
+
+
+def _limit_word_count(text: str, maximum: int) -> str:
+    """Return text with at most ``maximum`` whitespace-separated words"""
+    return " ".join(text.split()[:maximum])
 
 
 def _word_dropout(
@@ -219,10 +236,18 @@ def _word_dropout(
     rng = random.Random(random_seed)
     # Cap how much of the prompt can be dropped regardless of strength, so low-strength
     # variants stay close in length to the seed instead of losing a third of their words
-    dropout_n = max(
-        0, min(len(words) - 1, round(min(strength, _WORD_DROPOUT_MAX_FRACTION) * len(words)))
+    dropout_n = (
+        max(
+            1,
+            min(
+                len(words) - 1,
+                round(min(strength, _WORD_DROPOUT_MAX_FRACTION) * len(words)),
+            ),
+        )
+        if len(words) > 1
+        else 0
     )
-    seen: set[str] = set()
+    seen: set[str] = {prompt}
     variants: list[str] = []
     for _ in range(count * 8):
         w = words[:]
