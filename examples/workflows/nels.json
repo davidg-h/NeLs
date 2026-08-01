@@ -1,18 +1,18 @@
 {
   "id": "09f3bf97-c412-4472-87d8-70a9df9e5a8a",
   "revision": 0,
-  "last_node_id": 95,
-  "last_link_id": 124,
+  "last_node_id": 112,
+  "last_link_id": 154,
   "nodes": [
     {
       "id": 65,
       "type": "CLIPLoader",
       "pos": [
-        385.2007614136794,
-        355.40306191686307
+        385.20392402744204,
+        355.42366719702795
       ],
       "size": [
-        400.1166687011719,
+        400.0833435058594,
         120.63333129882812
       ],
       "flags": {},
@@ -24,10 +24,10 @@
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            101,
             108,
             110,
-            123
+            130,
+            132
           ]
         }
       ],
@@ -44,11 +44,11 @@
       "id": 66,
       "type": "UNETLoader",
       "pos": [
-        382.40069027003324,
-        589.4906622679571
+        382.38888827304766,
+        589.4633796970168
       ],
       "size": [
-        405.5666809082031,
+        405.5333251953125,
         111.56666564941406
       ],
       "flags": {},
@@ -76,8 +76,8 @@
       "id": 67,
       "type": "nels_GraphPanelLauncher",
       "pos": [
-        458.892558578593,
-        189.76939272543393
+        458.9047142160371,
+        189.78401545143038
       ],
       "size": [
         260,
@@ -96,81 +96,29 @@
       ]
     },
     {
-      "id": 68,
-      "type": "nels_PromptEncoder",
-      "pos": [
-        1098.6310636317403,
-        -328.7416423808959
-      ],
-      "size": [
-        481.6666564941406,
-        910.3333129882812
-      ],
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "shape": 7,
-          "type": "CLIP",
-          "link": 101
-        }
-      ],
-      "outputs": [
-        {
-          "name": "dataset_path",
-          "type": "STRING",
-          "links": [
-            124
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "nels_PromptEncoder"
-      },
-      "widgets_values": [
-        "my_prompts",
-        1000,
-        64,
-        "huggingface",
-        "",
-        "",
-        "Gustavosta/Stable-Diffusion-Prompts",
-        "Prompt",
-        "train",
-        "",
-        "",
-        "",
-        true,
-        0,
-        0,
-        "C:\\Users\\David\\Downloads\\dataset",
-        15,
-        0.1,
-        42,
-        0,
-        30,
-        30,
-        30,
-        10
-      ]
-    },
-    {
       "id": 70,
       "type": "nels_DatasetAnnotator",
       "pos": [
-        1806.8564943710724,
-        399.7762364754243
+        1751.9815765720434,
+        397.85960335968423
       ],
       "size": [
-        399.70001220703125,
+        510.2833251953125,
         175.6666717529297
       ],
       "flags": {},
-      "order": 3,
+      "order": 10,
       "mode": 0,
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "dataset_path",
+          "type": "STRING",
+          "widget": {
+            "name": "dataset_path"
+          },
+          "link": 154
+        }
+      ],
       "outputs": [
         {
           "name": "annotation_info",
@@ -184,8 +132,8 @@
         "Node name for S&R": "nels_DatasetAnnotator"
       },
       "widgets_values": [
-        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\cc12m_llava_short_500k",
-        "Qwen/Qwen2.5-1.5B-Instruct",
+        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\gustavosta_sd_prompts_v2_two_pass",
+        "Qwen/Qwen2.5-3B-Instruct",
         20
       ]
     },
@@ -193,15 +141,15 @@
       "id": 71,
       "type": "PreviewAny",
       "pos": [
-        2335.118347009445,
-        401.9833712466949
+        2335.1755061501517,
+        399.05716007422313
       ],
       "size": [
         225,
         164.88333129882812
       ],
       "flags": {},
-      "order": 10,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
@@ -224,15 +172,15 @@
       "id": 72,
       "type": "nels_DatasetLoader",
       "pos": [
-        1024.5768695466609,
-        760.2962084115954
+        1024.6130074945136,
+        760.1940698856072
       ],
       "size": [
-        586.4000244140625,
-        262.3333435058594
+        586.3833618164062,
+        286.3333435058594
       ],
       "flags": {},
-      "order": 4,
+      "order": 3,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -247,15 +195,22 @@
           "name": "dataset_info_json",
           "type": "STRING",
           "links": null
+        },
+        {
+          "name": "random_seed",
+          "type": "INT",
+          "links": [
+            129
+          ]
         }
       ],
       "properties": {
         "Node name for S&R": "nels_DatasetLoader"
       },
       "widgets_values": [
-        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\gustavosta_sd_prompts_v2",
+        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\gustavosta_sd_prompts_v2_two_pass",
         "random_n",
-        1000,
+        1500,
         0,
         42
       ]
@@ -264,15 +219,15 @@
       "id": 73,
       "type": "nels_Session",
       "pos": [
-        1743.277971977429,
-        761.844508236043
+        1743.2032517159755,
+        761.8411915248588
       ],
       "size": [
         281.79998779296875,
         155.6666717529297
       ],
       "flags": {},
-      "order": 11,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -311,15 +266,15 @@
       "id": 74,
       "type": "nels_GraphOperation",
       "pos": [
-        2188.591283349784,
-        763.2280767041368
+        2188.582420536145,
+        763.2187692134573
       ],
       "size": [
         314.5333251953125,
         155.6666717529297
       ],
       "flags": {},
-      "order": 13,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
@@ -343,76 +298,38 @@
           "name": "trajectory",
           "type": "NELS_TRAJECTORY",
           "links": [
-            120
+            120,
+            151
           ]
         },
         {
           "name": "operation_result_json",
           "type": "STRING",
-          "links": null
+          "links": [
+            152
+          ]
         }
       ],
       "properties": {
         "Node name for S&R": "nels_GraphOperation"
       },
       "widgets_values": [
-        "Qwen/Qwen2.5-1.5B-Instruct"
-      ]
-    },
-    {
-      "id": 76,
-      "type": "nels_SaveRunBundle",
-      "pos": [
-        2623.0336522221396,
-        760.1644414222308
-      ],
-      "size": [
-        270,
-        167.6666717529297
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "trajectory",
-          "type": "NELS_TRAJECTORY",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "manifest_json",
-          "type": "STRING",
-          "links": null
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "nels_SaveRunBundle"
-      },
-      "widgets_values": [
-        "run_001",
-        "experiments/runs"
+        "Qwen/Qwen2.5-3B-Instruct"
       ]
     },
     {
       "id": 77,
       "type": "CLIPTextEncode",
       "pos": [
-        1112.1703102860213,
-        1171.7778551722117
+        1112.149537199557,
+        1171.7625678691386
       ],
       "size": [
-        398.79998779296875,
-        198.8000030517578
+        398.76666259765625,
+        198.76666259765625
       ],
       "flags": {},
-      "order": 9,
+      "order": 6,
       "mode": 0,
       "inputs": [
         {
@@ -441,15 +358,15 @@
       "id": 78,
       "type": "KSampler",
       "pos": [
-        1719.4606890359933,
-        1145.6217006296715
+        1719.5147499703712,
+        1145.6183948855887
       ],
       "size": [
         270,
         317
       ],
       "flags": {},
-      "order": 16,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
@@ -471,6 +388,14 @@
           "name": "latent_image",
           "type": "LATENT",
           "link": 114
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 129
         }
       ],
       "outputs": [
@@ -487,8 +412,8 @@
       },
       "widgets_values": [
         69735870483987,
-        "randomize",
-        5,
+        "fixed",
+        20,
         8,
         "euler",
         "simple",
@@ -499,15 +424,15 @@
       "id": 79,
       "type": "EmptyLatentImage",
       "pos": [
-        1174.6288283498307,
-        1450.3704573902928
+        1174.6499824945063,
+        1450.3342256640776
       ],
       "size": [
         270,
         143.6666717529297
       ],
       "flags": {},
-      "order": 15,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {
@@ -541,15 +466,15 @@
       "id": 80,
       "type": "MarkdownNote",
       "pos": [
-        1201.2132180679234,
-        1660.9373636242615
+        1201.1535199945051,
+        1661.0448283526662
       ],
       "size": [
         225,
-        88
+        137.39999389648438
       ],
       "flags": {},
-      "order": 6,
+      "order": 4,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -564,15 +489,15 @@
       "id": 81,
       "type": "VAEDecode",
       "pos": [
-        2475.7488605146877,
-        1253.4087567041142
+        2475.689198084349,
+        1253.4293948855836
       ],
       "size": [
         225,
         71.66666412353516
       ],
       "flags": {},
-      "order": 17,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -592,7 +517,8 @@
           "type": "IMAGE",
           "links": [
             117,
-            119
+            119,
+            150
           ]
         }
       ],
@@ -605,15 +531,15 @@
       "id": 82,
       "type": "VAELoader",
       "pos": [
-        2052.8033047221656,
-        1333.8537251722043
+        2052.8004847817565,
+        1333.8384323855798
       ],
       "size": [
         373.1333312988281,
         82.33333587646484
       ],
       "flags": {},
-      "order": 7,
+      "order": 5,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -636,15 +562,15 @@
       "id": 83,
       "type": "nels_ComparisonGrid",
       "pos": [
-        2873.7241345094208,
-        1252.0251882360203
+        2873.811343509745,
+        1252.051817196985
       ],
       "size": [
         270,
         135.6666717529297
       ],
       "flags": {},
-      "order": 18,
+      "order": 17,
       "mode": 0,
       "inputs": [
         {
@@ -674,12 +600,12 @@
       "id": 84,
       "type": "PreviewImage",
       "pos": [
-        3227.293239419072,
-        1252.1240210179265
+        3227.3415810097276,
+        1252.1416651805362
       ],
       "size": [
         225,
-        279.6666564941406
+        279.6499938964844
       ],
       "flags": {},
       "order": 20,
@@ -701,15 +627,15 @@
       "id": 85,
       "type": "PreviewImage",
       "pos": [
-        2903.0428174348344,
-        1473.5618094328333
+        2903.0698170448995,
+        1473.4836395083757
       ],
       "size": [
         225,
         47.666664123535156
       ],
       "flags": {},
-      "order": 19,
+      "order": 18,
       "mode": 0,
       "inputs": [
         {
@@ -728,15 +654,15 @@
       "id": 86,
       "type": "nels_PromptConditioningBatch",
       "pos": [
-        2203.382361642325,
-        1009.7678837466669
+        2203.436482895763,
+        1009.7765513362483
       ],
       "size": [
         297.5,
         95.66666412353516
       ],
       "flags": {},
-      "order": 14,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
@@ -767,25 +693,96 @@
       "widgets_values": []
     },
     {
-      "id": 88,
-      "type": "nels_AddToDataset",
+      "id": 98,
+      "type": "nels_PromptEncoder",
       "pos": [
-        1798.719754599802,
-        -312.00696329581365
+        1001.3737456666643,
+        -543.4206051143304
       ],
       "size": [
-        410.04998779296875,
-        586.3333129882812
+        663.4166870117188,
+        1205.25
       ],
       "flags": {},
-      "order": 12,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
           "shape": 7,
           "type": "CLIP",
-          "link": 123
+          "link": 130
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dataset_path",
+          "type": "STRING",
+          "links": [
+            133,
+            154
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_PromptEncoder"
+      },
+      "widgets_values": [
+        "my_prompts",
+        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets",
+        1000,
+        "classic",
+        "",
+        "huggingface",
+        "Gustavosta/Stable-Diffusion-Prompts",
+        "Prompt",
+        "train",
+        "",
+        "",
+        "",
+        "",
+        true,
+        0,
+        0,
+        "",
+        15,
+        0.1,
+        42,
+        "",
+        10,
+        30,
+        30,
+        10,
+        "",
+        20000,
+        42,
+        15,
+        0.1,
+        10,
+        30,
+        ""
+      ]
+    },
+    {
+      "id": 99,
+      "type": "nels_AddToDataset",
+      "pos": [
+        1786.3875320931709,
+        -368.0479793117264
+      ],
+      "size": [
+        511.4166564941406,
+        603.183349609375
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "shape": 7,
+          "type": "CLIP",
+          "link": 132
         },
         {
           "name": "dataset_path",
@@ -793,7 +790,7 @@
           "widget": {
             "name": "dataset_path"
           },
-          "link": 124
+          "link": 133
         }
       ],
       "outputs": [
@@ -808,31 +805,75 @@
       },
       "widgets_values": [
         "",
-        "file",
+        0,
+        "",
+        "huggingface",
         "",
         "Prompt",
         "train",
         "",
         "",
         "",
-        false,
+        "",
+        true,
         0,
         0,
-        "",
-        "",
-        0
+        ""
+      ]
+    },
+    {
+      "id": 112,
+      "type": "nels_SaveRunBundle",
+      "pos": [
+        2865.126675913629,
+        842.5235548272607
+      ],
+      "size": [
+        509.1000061035156,
+        236.7833251953125
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 150
+        },
+        {
+          "name": "trajectory",
+          "type": "NELS_TRAJECTORY",
+          "link": 151
+        },
+        {
+          "name": "operation_result_json",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "operation_result_json"
+          },
+          "link": 152
+        }
+      ],
+      "outputs": [
+        {
+          "name": "manifest_json",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "nels_SaveRunBundle"
+      },
+      "widgets_values": [
+        "run_001",
+        "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis",
+        ""
       ]
     }
   ],
   "links": [
-    [
-      101,
-      65,
-      0,
-      68,
-      0,
-      "CLIP"
-    ],
     [
       105,
       70,
@@ -962,19 +1003,67 @@
       "INT"
     ],
     [
-      123,
+      129,
+      72,
+      2,
+      78,
+      4,
+      "INT"
+    ],
+    [
+      130,
       65,
       0,
-      88,
+      98,
       0,
       "CLIP"
     ],
     [
-      124,
-      68,
+      132,
+      65,
       0,
-      88,
+      99,
+      0,
+      "CLIP"
+    ],
+    [
+      133,
+      98,
+      0,
+      99,
       1,
+      "STRING"
+    ],
+    [
+      150,
+      81,
+      0,
+      112,
+      0,
+      "IMAGE"
+    ],
+    [
+      151,
+      74,
+      1,
+      112,
+      1,
+      "NELS_TRAJECTORY"
+    ],
+    [
+      152,
+      74,
+      2,
+      112,
+      2,
+      "STRING"
+    ],
+    [
+      154,
+      98,
+      0,
+      70,
+      0,
       "STRING"
     ]
   ],
@@ -982,10 +1071,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.2596251107269693,
+      "scale": 0.28558762179966707,
       "offset": [
-        1467.9079467776696,
-        554.9015856945977
+        961.8636313197322,
+        831.0908510363909
       ]
     },
     "frontendVersion": "1.41.21"
