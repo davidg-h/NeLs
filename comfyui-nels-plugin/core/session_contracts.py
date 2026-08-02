@@ -59,8 +59,9 @@ def normalize_ui_state(
     normalized["axis_group_b"] = [str(i) for i in (normalized.get("axis_group_b") or [])]
     normalized["compute_axis_labels"] = bool(normalized.get("compute_axis_labels", False))
     normalized["variant_count"] = max(3, int(normalized.get("variant_count") or 5))
+    variation_strength = normalized.get("variation_strength")
     normalized["variation_strength"] = max(
-        0.0, min(1.0, float(normalized.get("variation_strength") or 0.3))
+        0.05, min(1.0, float(0.3 if variation_strength is None else variation_strength))
     )
     probe_coords = normalized.get("probe_coords")
     if isinstance(probe_coords, Iterable) and not isinstance(probe_coords, (str, bytes, dict)):
@@ -75,8 +76,12 @@ def normalize_ui_state(
     )
     normalized["probe_recon_max_iter"] = max(1, int(normalized.get("probe_recon_max_iter") or 10))
     normalized["probe_seed_count"] = max(1, int(normalized.get("probe_seed_count") or 15))
-    normalized["probe_noise_count"] = max(0, int(normalized.get("probe_noise_count") or 5))
-    normalized["probe_negative_count"] = max(0, int(normalized.get("probe_negative_count") or 5))
+    normalized["probe_noise_count"] = max(
+        1, int(normalized.get("probe_noise_count") if normalized.get("probe_noise_count") is not None else 5)
+    )
+    normalized["probe_negative_count"] = max(
+        1, int(normalized.get("probe_negative_count") if normalized.get("probe_negative_count") is not None else 5)
+    )
     try:
         revision = int(normalized.get("state_revision") or 0)
     except (TypeError, ValueError):
@@ -215,13 +220,23 @@ def _make_operation_request(ui_state: dict[str, Any]) -> dict[str, Any]:
         "axis_group_b": list(ui_state.get("axis_group_b") or []),
         "compute_axis_labels": bool(ui_state.get("compute_axis_labels", False)),
         "variant_count": max(3, min(20, int(ui_state.get("variant_count") or 5))),
-        "variation_strength": max(0.0, min(1.0, float(ui_state.get("variation_strength") or 0.3))),
+        "variation_strength": max(
+            0.05,
+            min(
+                1.0,
+                float(0.3 if ui_state.get("variation_strength") is None else ui_state["variation_strength"]),
+            ),
+        ),
         "probe_coords": ui_state.get("probe_coords") or None,
         "probe_mode": str(ui_state.get("probe_mode") or "2d"),
         "probe_text_recon": bool(ui_state.get("probe_text_recon", False)),
         "probe_recon_max_minutes": max(1, int(ui_state.get("probe_recon_max_minutes") or 5)),
         "probe_recon_max_iter": max(1, int(ui_state.get("probe_recon_max_iter") or 10)),
         "probe_seed_count": max(1, int(ui_state.get("probe_seed_count") or 15)),
-        "probe_noise_count": max(0, int(ui_state.get("probe_noise_count") or 5)),
-        "probe_negative_count": max(0, int(ui_state.get("probe_negative_count") or 5)),
+        "probe_noise_count": max(
+            1, int(ui_state.get("probe_noise_count") if ui_state.get("probe_noise_count") is not None else 5)
+        ),
+        "probe_negative_count": max(
+            1, int(ui_state.get("probe_negative_count") if ui_state.get("probe_negative_count") is not None else 5)
+        ),
     }
