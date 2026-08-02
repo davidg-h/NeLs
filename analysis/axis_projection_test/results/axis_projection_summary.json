@@ -1,0 +1,168 @@
+{
+  "pairs": [
+    {
+      "pair": 1,
+      "label": "cyberpunk vs. steampunk",
+      "cluster_a": {
+        "id": 23,
+        "theme": "steampunk",
+        "n_anchor": 20,
+        "n_heldout": 318
+      },
+      "cluster_b": {
+        "id": 70,
+        "theme": "cyberpunk",
+        "n_anchor": 20,
+        "n_heldout": 511
+      },
+      "n_total_loaded": 4869,
+      "auc_heldout_separation": 0.9987753695430097,
+      "support_band_size": 80,
+      "band_a": {
+        "anchor_n": 8,
+        "heldout_n": 61,
+        "other_n": 11,
+        "precision": 0.8625
+      },
+      "band_b": {
+        "anchor_n": 5,
+        "heldout_n": 75,
+        "other_n": 0,
+        "precision": 1.0
+      },
+      "axis_1_keywords_a": "steampunk | artstation | trending",
+      "axis_1_keywords_b": "cyberpunk | art | concept",
+      "axis_2": {
+        "variance": 0.13175330729559298,
+        "keywords_a": "detailed digital | style | full",
+        "keywords_b": "steampunk | sharp | intricate",
+        "top5_texts": [
+          [
+            "pt_004814",
+            "steampunk living room, 3 d render, octane render, beautiful lighting, concept art"
+          ],
+          [
+            "pt_060232",
+            "steampunk city, highly detailed, magic fantasy, digital art, vibrant colors, keyframe illustration, trending on artstation, andreas rocha, sylvain sarrailh, darek zabrocki, finnian macmanus, dylan cole, liang mark, albert bierstadt, sung choi, peter mohrbacher, greg rutkowski"
+          ],
+          [
+            "pt_001988",
+            "good day, morning, landscape, no people, no man, steampunk, forest, wood, lost world, Anime Background, concept art, illustration,smooth, sharp focus, intricate, super wide angle, trending on artstation, trending on deviantart, 4K"
+          ],
+          [
+            "pt_056198",
+            "steampunk flying city, digital art, concept art, deviantart. highly detailed"
+          ],
+          [
+            "pt_037586",
+            "good day, morning, landscape, no people, no man, steampunk, lake, wood, lost world, Anime Background, concept art, illustration,smooth, sharp focus, intricate, super wide angle, trending on artstation, trending on deviantart, 4K"
+          ]
+        ],
+        "bottom5_texts": [
+          [
+            "pt_004672",
+            "night of the living dead, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+          ],
+          [
+            "pt_001180",
+            "monica bellucci as an angel, anatomy, cute, fantasy, intricate, elegant, highly detailed, digital painting, 4 k, hdr, concept art, smooth, sharp focus, illustration, art by artgerm and h r giger and alphonse mucha"
+          ],
+          [
+            "pt_005448",
+            "bilbo baggins sitting down inside bag end highly detailed, digital painting, concept art, sharp focus, by makoto shinkai"
+          ],
+          [
+            "pt_013949",
+            "Loba from Apex Legends as an anime character digital illustration portrait design by Ross Tran, artgerm detailed, soft lighting"
+          ],
+          [
+            "pt_017623",
+            "14 year old kristina pimenova, in the style of yoji shinkawa and naruto, epic concept art"
+          ]
+        ]
+      }
+    },
+    {
+      "pair": 2,
+      "label": "dragon/monster creatures vs. fairytale architecture",
+      "cluster_a": {
+        "id": 99,
+        "theme": "dragon/monster creatures",
+        "n_anchor": 20,
+        "n_heldout": 336
+      },
+      "cluster_b": {
+        "id": 109,
+        "theme": "fairytale architecture and interiors",
+        "n_anchor": 20,
+        "n_heldout": 613
+      },
+      "n_total_loaded": 4989,
+      "auc_heldout_separation": 0.9999660141381186,
+      "support_band_size": 80,
+      "band_a": {
+        "anchor_n": 7,
+        "heldout_n": 65,
+        "other_n": 8,
+        "precision": 0.9
+      },
+      "band_b": {
+        "anchor_n": 4,
+        "heldout_n": 74,
+        "other_n": 2,
+        "precision": 0.975
+      },
+      "axis_1_keywords_a": "dragon | artstation concept | art smooth",
+      "axis_1_keywords_b": "medieval | artstation | trending",
+      "axis_2": {
+        "variance": 0.11956725419814988,
+        "keywords_a": "anime | detailed digital | trending artstation",
+        "keywords_b": "focus | concept | sharp",
+        "top5_texts": [
+          [
+            "pt_057977",
+            "cyberpunk western, insane, intricate, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, Unreal Engine 5, 8K, art by artgerm and greg rutkowski and alphonse mucha"
+          ],
+          [
+            "pt_035178",
+            "breathtaking detailed painting of a whole city made of pages of paper, buildings covered in white pages, the sun shining on people of paper, rembrandt style, elegant, highly detailed, artstation, concept art, matte, sharp focus, art by tom bagshaw, and quentin mabille"
+          ],
+          [
+            "pt_015758",
+            "organic cyborg holding a weapon, art deco, rim lighting, fantasy, intricate, elegant, highly detailed, lifelike, photorealistic, digital painting, artstation, illustration, concept art, smooth, sharp focus, art by John Collier and Albert Aublet and Krenz Cushart and Artem Demura and Alphonse Mucha"
+          ],
+          [
+            "pt_014906",
+            "organic cyborg, ming dynasty porcelain, diffuse lighting, fantasy, intricate, elegant, highly detailed, lifelike, photorealistic, digital painting, artstation, illustration, concept art, smooth, sharp focus, art by John Collier and Albert Aublet and Krenz Cushart and Artem Demura and Alphonse Mucha"
+          ],
+          [
+            "pt_041004",
+            "organic mecha, diffuse lighting, fantasy, intricate, elegant, highly detailed, lifelike, photorealistic, digital painting, artstation, illustration, concept art, smooth, sharp focus, art by john collier and albert aublet and krenz cushart and artem demura and alphonse mucha"
+          ]
+        ],
+        "bottom5_texts": [
+          [
+            "pt_004672",
+            "night of the living dead, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+          ],
+          [
+            "pt_052641",
+            "one punch man as baker baking french baguette, manga book anime style, anime key visual, pixiv"
+          ],
+          [
+            "pt_052304",
+            "New  Apex Legends anime characters digital illustration portrait design by Ross Tran, artgerm detailed, soft lighting"
+          ],
+          [
+            "pt_030789",
+            "ozzy osborne as a female fantasy satyr, portrait, fantasy, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha"
+          ],
+          [
+            "pt_014388",
+            "hugh jackman as joel miller in last of us, au naturel, hyper detailed, digital art, trending in artstation, cinematic lighting, studio quality, smooth render, unreal engine 5 rendered, octane rendered, art style by klimt and nixeu and ian sprigger and wlop and krenz cushart"
+          ]
+        ]
+      }
+    }
+  ]
+}

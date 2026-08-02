@@ -1,0 +1,1000 @@
+{"original_id": "pt_000000", "text": "a photo of tench, Tinca tinca", "split": "train", "train_index": 0}
+{"original_id": "pt_000001", "text": "a photo of goldfish, Carassius auratus", "split": "train", "train_index": 1}
+{"original_id": "pt_000002", "text": "a photo of great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias", "split": "train", "train_index": 2}
+{"original_id": "pt_000004", "text": "a photo of hammerhead, hammerhead shark", "split": "train", "train_index": 3}
+{"original_id": "pt_000005", "text": "a photo of electric ray, crampfish, numbfish, torpedo", "split": "train", "train_index": 4}
+{"original_id": "pt_000007", "text": "a photo of cock", "split": "train", "train_index": 5}
+{"original_id": "pt_000008", "text": "a photo of hen", "split": "train", "train_index": 6}
+{"original_id": "pt_000009", "text": "a photo of ostrich, Struthio camelus", "split": "train", "train_index": 7}
+{"original_id": "pt_000010", "text": "a photo of brambling, Fringilla montifringilla", "split": "train", "train_index": 8}
+{"original_id": "pt_000012", "text": "a photo of house finch, linnet, Carpodacus mexicanus", "split": "train", "train_index": 9}
+{"original_id": "pt_000013", "text": "a photo of junco, snowbird", "split": "train", "train_index": 10}
+{"original_id": "pt_000014", "text": "a photo of indigo bunting, indigo finch, indigo bird, Passerina cyanea", "split": "train", "train_index": 11}
+{"original_id": "pt_000015", "text": "a photo of robin, American robin, Turdus migratorius", "split": "train", "train_index": 12}
+{"original_id": "pt_000016", "text": "a photo of bulbul", "split": "train", "train_index": 13}
+{"original_id": "pt_000017", "text": "a photo of jay", "split": "train", "train_index": 14}
+{"original_id": "pt_000018", "text": "a photo of magpie", "split": "train", "train_index": 15}
+{"original_id": "pt_000019", "text": "a photo of chickadee", "split": "train", "train_index": 16}
+{"original_id": "pt_000020", "text": "a photo of water ouzel, dipper", "split": "train", "train_index": 17}
+{"original_id": "pt_000021", "text": "a photo of kite", "split": "train", "train_index": 18}
+{"original_id": "pt_000022", "text": "a photo of bald eagle, American eagle, Haliaeetus leucocephalus", "split": "train", "train_index": 19}
+{"original_id": "pt_000023", "text": "a photo of vulture", "split": "train", "train_index": 20}
+{"original_id": "pt_000024", "text": "a photo of great grey owl, great gray owl, Strix nebulosa", "split": "train", "train_index": 21}
+{"original_id": "pt_000026", "text": "a photo of common newt, Triturus vulgaris", "split": "train", "train_index": 22}
+{"original_id": "pt_000028", "text": "a photo of spotted salamander, Ambystoma maculatum", "split": "train", "train_index": 23}
+{"original_id": "pt_000029", "text": "a photo of axolotl, mud puppy, Ambystoma mexicanum", "split": "train", "train_index": 24}
+{"original_id": "pt_000031", "text": "a photo of tree frog, tree-frog", "split": "train", "train_index": 25}
+{"original_id": "pt_000033", "text": "a photo of loggerhead, loggerhead turtle, Caretta caretta", "split": "train", "train_index": 26}
+{"original_id": "pt_000034", "text": "a photo of leatherback turtle, leatherback, leathery turtle, Dermochelys coriacea", "split": "train", "train_index": 27}
+{"original_id": "pt_000035", "text": "a photo of mud turtle", "split": "train", "train_index": 28}
+{"original_id": "pt_000036", "text": "a photo of terrapin", "split": "train", "train_index": 29}
+{"original_id": "pt_000037", "text": "a photo of box turtle, box tortoise", "split": "train", "train_index": 30}
+{"original_id": "pt_000038", "text": "a photo of banded gecko", "split": "train", "train_index": 31}
+{"original_id": "pt_000039", "text": "a photo of common iguana, iguana, Iguana iguana", "split": "train", "train_index": 32}
+{"original_id": "pt_000040", "text": "a photo of American chameleon, anole, Anolis carolinensis", "split": "train", "train_index": 33}
+{"original_id": "pt_000041", "text": "a photo of whiptail, whiptail lizard", "split": "train", "train_index": 34}
+{"original_id": "pt_000042", "text": "a photo of agama", "split": "train", "train_index": 35}
+{"original_id": "pt_000043", "text": "a photo of frilled lizard, Chlamydosaurus kingi", "split": "train", "train_index": 36}
+{"original_id": "pt_000045", "text": "a photo of Gila monster, Heloderma suspectum", "split": "train", "train_index": 37}
+{"original_id": "pt_000047", "text": "a photo of African chameleon, Chamaeleo chamaeleon", "split": "train", "train_index": 38}
+{"original_id": "pt_000049", "text": "a photo of African crocodile, Nile crocodile, Crocodylus niloticus", "split": "train", "train_index": 39}
+{"original_id": "pt_000050", "text": "a photo of American alligator, Alligator mississipiensis", "split": "train", "train_index": 40}
+{"original_id": "pt_000051", "text": "a photo of triceratops", "split": "train", "train_index": 41}
+{"original_id": "pt_000052", "text": "a photo of thunder snake, worm snake, Carphophis amoenus", "split": "train", "train_index": 42}
+{"original_id": "pt_000053", "text": "a photo of ringneck snake, ring-necked snake, ring snake", "split": "train", "train_index": 43}
+{"original_id": "pt_000054", "text": "a photo of hognose snake, puff adder, sand viper", "split": "train", "train_index": 44}
+{"original_id": "pt_000055", "text": "a photo of green snake, grass snake", "split": "train", "train_index": 45}
+{"original_id": "pt_000056", "text": "a photo of king snake, kingsnake", "split": "train", "train_index": 46}
+{"original_id": "pt_000058", "text": "a photo of water snake", "split": "train", "train_index": 47}
+{"original_id": "pt_000059", "text": "a photo of vine snake", "split": "train", "train_index": 48}
+{"original_id": "pt_000060", "text": "a photo of night snake, Hypsiglena torquata", "split": "train", "train_index": 49}
+{"original_id": "pt_000061", "text": "a photo of boa constrictor, Constrictor constrictor", "split": "train", "train_index": 50}
+{"original_id": "pt_000062", "text": "a photo of rock python, rock snake, Python sebae", "split": "train", "train_index": 51}
+{"original_id": "pt_000063", "text": "a photo of Indian cobra, Naja naja", "split": "train", "train_index": 52}
+{"original_id": "pt_000064", "text": "a photo of green mamba", "split": "train", "train_index": 53}
+{"original_id": "pt_000066", "text": "a photo of horned viper, cerastes, sand viper, horned asp, Cerastes cornutus", "split": "train", "train_index": 54}
+{"original_id": "pt_000068", "text": "a photo of sidewinder, horned rattlesnake, Crotalus cerastes", "split": "train", "train_index": 55}
+{"original_id": "pt_000069", "text": "a photo of trilobite", "split": "train", "train_index": 56}
+{"original_id": "pt_000070", "text": "a photo of harvestman, daddy longlegs, Phalangium opilio", "split": "train", "train_index": 57}
+{"original_id": "pt_000072", "text": "a photo of black and gold garden spider, Argiope aurantia", "split": "train", "train_index": 58}
+{"original_id": "pt_000074", "text": "a photo of garden spider, Aranea diademata", "split": "train", "train_index": 59}
+{"original_id": "pt_000075", "text": "a photo of black widow, Latrodectus mactans", "split": "train", "train_index": 60}
+{"original_id": "pt_000076", "text": "a photo of tarantula", "split": "train", "train_index": 61}
+{"original_id": "pt_000077", "text": "a photo of wolf spider, hunting spider", "split": "train", "train_index": 62}
+{"original_id": "pt_000078", "text": "a photo of tick", "split": "train", "train_index": 63}
+{"original_id": "pt_000079", "text": "a photo of centipede", "split": "train", "train_index": 64}
+{"original_id": "pt_000082", "text": "a photo of ruffed grouse, partridge, Bonasa umbellus", "split": "train", "train_index": 65}
+{"original_id": "pt_000083", "text": "a photo of prairie chicken, prairie grouse, prairie fowl", "split": "train", "train_index": 66}
+{"original_id": "pt_000084", "text": "a photo of peacock", "split": "train", "train_index": 67}
+{"original_id": "pt_000085", "text": "a photo of quail", "split": "train", "train_index": 68}
+{"original_id": "pt_000086", "text": "a photo of partridge", "split": "train", "train_index": 69}
+{"original_id": "pt_000087", "text": "a photo of African grey, African gray, Psittacus erithacus", "split": "train", "train_index": 70}
+{"original_id": "pt_000088", "text": "a photo of macaw", "split": "train", "train_index": 71}
+{"original_id": "pt_000090", "text": "a photo of lorikeet", "split": "train", "train_index": 72}
+{"original_id": "pt_000091", "text": "a photo of coucal", "split": "train", "train_index": 73}
+{"original_id": "pt_000092", "text": "a photo of bee eater", "split": "train", "train_index": 74}
+{"original_id": "pt_000096", "text": "a photo of toucan", "split": "train", "train_index": 75}
+{"original_id": "pt_000097", "text": "a photo of drake", "split": "train", "train_index": 76}
+{"original_id": "pt_000098", "text": "a photo of red-breasted merganser, Mergus serrator", "split": "train", "train_index": 77}
+{"original_id": "pt_000100", "text": "a photo of black swan, Cygnus atratus", "split": "train", "train_index": 78}
+{"original_id": "pt_000101", "text": "a photo of tusker", "split": "train", "train_index": 79}
+{"original_id": "pt_000102", "text": "a photo of echidna, spiny anteater, anteater", "split": "train", "train_index": 80}
+{"original_id": "pt_000105", "text": "a photo of koala, koala bear, kangaroo bear, native bear, Phascolarctos cinereus", "split": "train", "train_index": 81}
+{"original_id": "pt_000106", "text": "a photo of wombat", "split": "train", "train_index": 82}
+{"original_id": "pt_000107", "text": "a photo of jellyfish", "split": "train", "train_index": 83}
+{"original_id": "pt_000108", "text": "a photo of sea anemone, anemone", "split": "train", "train_index": 84}
+{"original_id": "pt_000109", "text": "a photo of brain coral", "split": "train", "train_index": 85}
+{"original_id": "pt_000110", "text": "a photo of flatworm, platyhelminth", "split": "train", "train_index": 86}
+{"original_id": "pt_000111", "text": "a photo of nematode, nematode worm, roundworm", "split": "train", "train_index": 87}
+{"original_id": "pt_000113", "text": "a photo of snail", "split": "train", "train_index": 88}
+{"original_id": "pt_000115", "text": "a photo of sea slug, nudibranch", "split": "train", "train_index": 89}
+{"original_id": "pt_000116", "text": "a photo of chiton, coat-of-mail shell, sea cradle, polyplacophore", "split": "train", "train_index": 90}
+{"original_id": "pt_000118", "text": "a photo of Dungeness crab, Cancer magister", "split": "train", "train_index": 91}
+{"original_id": "pt_000119", "text": "a photo of rock crab, Cancer irroratus", "split": "train", "train_index": 92}
+{"original_id": "pt_000120", "text": "a photo of fiddler crab", "split": "train", "train_index": 93}
+{"original_id": "pt_000121", "text": "a photo of king crab, Alaska crab, Alaskan king crab, Alaska king crab, Paralithodes camtschatica", "split": "train", "train_index": 94}
+{"original_id": "pt_000122", "text": "a photo of American lobster, Northern lobster, Maine lobster, Homarus americanus", "split": "train", "train_index": 95}
+{"original_id": "pt_000123", "text": "a photo of spiny lobster, langouste, rock lobster, crawfish, crayfish, sea crawfish", "split": "train", "train_index": 96}
+{"original_id": "pt_000124", "text": "a photo of crayfish, crawfish, crawdad, crawdaddy", "split": "train", "train_index": 97}
+{"original_id": "pt_000125", "text": "a photo of hermit crab", "split": "train", "train_index": 98}
+{"original_id": "pt_000126", "text": "a photo of isopod", "split": "train", "train_index": 99}
+{"original_id": "pt_000128", "text": "a photo of black stork, Ciconia nigra", "split": "train", "train_index": 100}
+{"original_id": "pt_000129", "text": "a photo of spoonbill", "split": "train", "train_index": 101}
+{"original_id": "pt_000130", "text": "a photo of flamingo", "split": "train", "train_index": 102}
+{"original_id": "pt_000131", "text": "a photo of little blue heron, Egretta caerulea", "split": "train", "train_index": 103}
+{"original_id": "pt_000132", "text": "a photo of American egret, great white heron, Egretta albus", "split": "train", "train_index": 104}
+{"original_id": "pt_000133", "text": "a photo of bittern", "split": "train", "train_index": 105}
+{"original_id": "pt_000134", "text": "a photo of crane", "split": "train", "train_index": 106}
+{"original_id": "pt_000135", "text": "a photo of limpkin, Aramus pictus", "split": "train", "train_index": 107}
+{"original_id": "pt_000136", "text": "a photo of European gallinule, Porphyrio porphyrio", "split": "train", "train_index": 108}
+{"original_id": "pt_000137", "text": "a photo of American coot, marsh hen, mud hen, water hen, Fulica americana", "split": "train", "train_index": 109}
+{"original_id": "pt_000138", "text": "a photo of bustard", "split": "train", "train_index": 110}
+{"original_id": "pt_000139", "text": "a photo of ruddy turnstone, Arenaria interpres", "split": "train", "train_index": 111}
+{"original_id": "pt_000140", "text": "a photo of red-backed sandpiper, dunlin, Erolia alpina", "split": "train", "train_index": 112}
+{"original_id": "pt_000143", "text": "a photo of oystercatcher, oyster catcher", "split": "train", "train_index": 113}
+{"original_id": "pt_000144", "text": "a photo of pelican", "split": "train", "train_index": 114}
+{"original_id": "pt_000145", "text": "a photo of king penguin, Aptenodytes patagonica", "split": "train", "train_index": 115}
+{"original_id": "pt_000147", "text": "a photo of grey whale, gray whale, devilfish, Eschrichtius gibbosus, Eschrichtius robustus", "split": "train", "train_index": 116}
+{"original_id": "pt_000148", "text": "a photo of killer whale, killer, orca, grampus, sea wolf, Orcinus orca", "split": "train", "train_index": 117}
+{"original_id": "pt_000149", "text": "a photo of dugong, Dugong dugon", "split": "train", "train_index": 118}
+{"original_id": "pt_000150", "text": "a photo of sea lion", "split": "train", "train_index": 119}
+{"original_id": "pt_000151", "text": "a photo of Chihuahua", "split": "train", "train_index": 120}
+{"original_id": "pt_000152", "text": "a photo of Japanese spaniel", "split": "train", "train_index": 121}
+{"original_id": "pt_000153", "text": "a photo of Maltese dog, Maltese terrier, Maltese", "split": "train", "train_index": 122}
+{"original_id": "pt_000154", "text": "a photo of Pekinese, Pekingese, Peke", "split": "train", "train_index": 123}
+{"original_id": "pt_000155", "text": "a photo of Shih-Tzu", "split": "train", "train_index": 124}
+{"original_id": "pt_000157", "text": "a photo of papillon", "split": "train", "train_index": 125}
+{"original_id": "pt_000158", "text": "a photo of toy terrier", "split": "train", "train_index": 126}
+{"original_id": "pt_000160", "text": "a photo of Afghan hound, Afghan", "split": "train", "train_index": 127}
+{"original_id": "pt_000162", "text": "a photo of beagle", "split": "train", "train_index": 128}
+{"original_id": "pt_000164", "text": "a photo of bluetick", "split": "train", "train_index": 129}
+{"original_id": "pt_000165", "text": "a photo of black-and-tan coonhound", "split": "train", "train_index": 130}
+{"original_id": "pt_000168", "text": "a photo of redbone", "split": "train", "train_index": 131}
+{"original_id": "pt_000169", "text": "a photo of borzoi, Russian wolfhound", "split": "train", "train_index": 132}
+{"original_id": "pt_000170", "text": "a photo of Irish wolfhound", "split": "train", "train_index": 133}
+{"original_id": "pt_000171", "text": "a photo of Italian greyhound", "split": "train", "train_index": 134}
+{"original_id": "pt_000172", "text": "a photo of whippet", "split": "train", "train_index": 135}
+{"original_id": "pt_000173", "text": "a photo of Ibizan hound, Ibizan Podenco", "split": "train", "train_index": 136}
+{"original_id": "pt_000174", "text": "a photo of Norwegian elkhound, elkhound", "split": "train", "train_index": 137}
+{"original_id": "pt_000176", "text": "a photo of Saluki, gazelle hound", "split": "train", "train_index": 138}
+{"original_id": "pt_000177", "text": "a photo of Scottish deerhound, deerhound", "split": "train", "train_index": 139}
+{"original_id": "pt_000178", "text": "a photo of Weimaraner", "split": "train", "train_index": 140}
+{"original_id": "pt_000179", "text": "a photo of Staffordshire bullterrier, Staffordshire bull terrier", "split": "train", "train_index": 141}
+{"original_id": "pt_000180", "text": "a photo of American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier", "split": "train", "train_index": 142}
+{"original_id": "pt_000181", "text": "a photo of Bedlington terrier", "split": "train", "train_index": 143}
+{"original_id": "pt_000182", "text": "a photo of Border terrier", "split": "train", "train_index": 144}
+{"original_id": "pt_000183", "text": "a photo of Kerry blue terrier", "split": "train", "train_index": 145}
+{"original_id": "pt_000184", "text": "a photo of Irish terrier", "split": "train", "train_index": 146}
+{"original_id": "pt_000185", "text": "a photo of Norfolk terrier", "split": "train", "train_index": 147}
+{"original_id": "pt_000186", "text": "a photo of Norwich terrier", "split": "train", "train_index": 148}
+{"original_id": "pt_000187", "text": "a photo of Yorkshire terrier", "split": "train", "train_index": 149}
+{"original_id": "pt_000188", "text": "a photo of wire-haired fox terrier", "split": "train", "train_index": 150}
+{"original_id": "pt_000189", "text": "a photo of Lakeland terrier", "split": "train", "train_index": 151}
+{"original_id": "pt_000190", "text": "a photo of Sealyham terrier, Sealyham", "split": "train", "train_index": 152}
+{"original_id": "pt_000191", "text": "a photo of Airedale, Airedale terrier", "split": "train", "train_index": 153}
+{"original_id": "pt_000192", "text": "a photo of cairn, cairn terrier", "split": "train", "train_index": 154}
+{"original_id": "pt_000193", "text": "a photo of Australian terrier", "split": "train", "train_index": 155}
+{"original_id": "pt_000194", "text": "a photo of Dandie Dinmont, Dandie Dinmont terrier", "split": "train", "train_index": 156}
+{"original_id": "pt_000195", "text": "a photo of Boston bull, Boston terrier", "split": "train", "train_index": 157}
+{"original_id": "pt_000197", "text": "a photo of giant schnauzer", "split": "train", "train_index": 158}
+{"original_id": "pt_000198", "text": "a photo of standard schnauzer", "split": "train", "train_index": 159}
+{"original_id": "pt_000199", "text": "a photo of Scotch terrier, Scottish terrier, Scottie", "split": "train", "train_index": 160}
+{"original_id": "pt_000200", "text": "a photo of Tibetan terrier, chrysanthemum dog", "split": "train", "train_index": 161}
+{"original_id": "pt_000201", "text": "a photo of silky terrier, Sydney silky", "split": "train", "train_index": 162}
+{"original_id": "pt_000202", "text": "a photo of soft-coated wheaten terrier", "split": "train", "train_index": 163}
+{"original_id": "pt_000204", "text": "a photo of Lhasa, Lhasa apso", "split": "train", "train_index": 164}
+{"original_id": "pt_000205", "text": "a photo of flat-coated retriever", "split": "train", "train_index": 165}
+{"original_id": "pt_000206", "text": "a photo of curly-coated retriever", "split": "train", "train_index": 166}
+{"original_id": "pt_000207", "text": "a photo of golden retriever", "split": "train", "train_index": 167}
+{"original_id": "pt_000208", "text": "a photo of Labrador retriever", "split": "train", "train_index": 168}
+{"original_id": "pt_000209", "text": "a photo of Chesapeake Bay retriever", "split": "train", "train_index": 169}
+{"original_id": "pt_000210", "text": "a photo of German short-haired pointer", "split": "train", "train_index": 170}
+{"original_id": "pt_000211", "text": "a photo of vizsla, Hungarian pointer", "split": "train", "train_index": 171}
+{"original_id": "pt_000212", "text": "a photo of English setter", "split": "train", "train_index": 172}
+{"original_id": "pt_000213", "text": "a photo of Irish setter, red setter", "split": "train", "train_index": 173}
+{"original_id": "pt_000215", "text": "a photo of Brittany spaniel", "split": "train", "train_index": 174}
+{"original_id": "pt_000218", "text": "a photo of Welsh springer spaniel", "split": "train", "train_index": 175}
+{"original_id": "pt_000219", "text": "a photo of cocker spaniel, English cocker spaniel, cocker", "split": "train", "train_index": 176}
+{"original_id": "pt_000221", "text": "a photo of Irish water spaniel", "split": "train", "train_index": 177}
+{"original_id": "pt_000222", "text": "a photo of kuvasz", "split": "train", "train_index": 178}
+{"original_id": "pt_000226", "text": "a photo of briard", "split": "train", "train_index": 179}
+{"original_id": "pt_000227", "text": "a photo of kelpie", "split": "train", "train_index": 180}
+{"original_id": "pt_000229", "text": "a photo of Old English sheepdog, bobtail", "split": "train", "train_index": 181}
+{"original_id": "pt_000230", "text": "a photo of Shetland sheepdog, Shetland sheep dog, Shetland", "split": "train", "train_index": 182}
+{"original_id": "pt_000231", "text": "a photo of collie", "split": "train", "train_index": 183}
+{"original_id": "pt_000232", "text": "a photo of Border collie", "split": "train", "train_index": 184}
+{"original_id": "pt_000235", "text": "a photo of German shepherd, German shepherd dog, German police dog, alsatian", "split": "train", "train_index": 185}
+{"original_id": "pt_000236", "text": "a photo of Doberman, Doberman pinscher", "split": "train", "train_index": 186}
+{"original_id": "pt_000237", "text": "a photo of miniature pinscher", "split": "train", "train_index": 187}
+{"original_id": "pt_000239", "text": "a photo of Bernese mountain dog", "split": "train", "train_index": 188}
+{"original_id": "pt_000240", "text": "a photo of Appenzeller", "split": "train", "train_index": 189}
+{"original_id": "pt_000241", "text": "a photo of EntleBucher", "split": "train", "train_index": 190}
+{"original_id": "pt_000242", "text": "a photo of boxer", "split": "train", "train_index": 191}
+{"original_id": "pt_000243", "text": "a photo of bull mastiff", "split": "train", "train_index": 192}
+{"original_id": "pt_000244", "text": "a photo of Tibetan mastiff", "split": "train", "train_index": 193}
+{"original_id": "pt_000245", "text": "a photo of French bulldog", "split": "train", "train_index": 194}
+{"original_id": "pt_000246", "text": "a photo of Great Dane", "split": "train", "train_index": 195}
+{"original_id": "pt_000247", "text": "a photo of Saint Bernard, St Bernard", "split": "train", "train_index": 196}
+{"original_id": "pt_000248", "text": "a photo of Eskimo dog, husky", "split": "train", "train_index": 197}
+{"original_id": "pt_000249", "text": "a photo of malamute, malemute, Alaskan malamute", "split": "train", "train_index": 198}
+{"original_id": "pt_000251", "text": "a photo of dalmatian, coach dog, carriage dog", "split": "train", "train_index": 199}
+{"original_id": "pt_000253", "text": "a photo of basenji", "split": "train", "train_index": 200}
+{"original_id": "pt_000254", "text": "a photo of pug, pug-dog", "split": "train", "train_index": 201}
+{"original_id": "pt_000255", "text": "a photo of Leonberg", "split": "train", "train_index": 202}
+{"original_id": "pt_000256", "text": "a photo of Newfoundland, Newfoundland dog", "split": "train", "train_index": 203}
+{"original_id": "pt_000258", "text": "a photo of Samoyed, Samoyede", "split": "train", "train_index": 204}
+{"original_id": "pt_000259", "text": "a photo of Pomeranian", "split": "train", "train_index": 205}
+{"original_id": "pt_000260", "text": "a photo of chow, chow chow", "split": "train", "train_index": 206}
+{"original_id": "pt_000261", "text": "a photo of keeshond", "split": "train", "train_index": 207}
+{"original_id": "pt_000262", "text": "a photo of Brabancon griffon", "split": "train", "train_index": 208}
+{"original_id": "pt_000263", "text": "a photo of Pembroke, Pembroke Welsh corgi", "split": "train", "train_index": 209}
+{"original_id": "pt_000264", "text": "a photo of Cardigan, Cardigan Welsh corgi", "split": "train", "train_index": 210}
+{"original_id": "pt_000265", "text": "a photo of toy poodle", "split": "train", "train_index": 211}
+{"original_id": "pt_000266", "text": "a photo of miniature poodle", "split": "train", "train_index": 212}
+{"original_id": "pt_000267", "text": "a photo of standard poodle", "split": "train", "train_index": 213}
+{"original_id": "pt_000268", "text": "a photo of Mexican hairless", "split": "train", "train_index": 214}
+{"original_id": "pt_000272", "text": "a photo of coyote, prairie wolf, brush wolf, Canis latrans", "split": "train", "train_index": 215}
+{"original_id": "pt_000275", "text": "a photo of African hunting dog, hyena dog, Cape hunting dog, Lycaon pictus", "split": "train", "train_index": 216}
+{"original_id": "pt_000277", "text": "a photo of red fox, Vulpes vulpes", "split": "train", "train_index": 217}
+{"original_id": "pt_000278", "text": "a photo of kit fox, Vulpes macrotis", "split": "train", "train_index": 218}
+{"original_id": "pt_000279", "text": "a photo of Arctic fox, white fox, Alopex lagopus", "split": "train", "train_index": 219}
+{"original_id": "pt_000280", "text": "a photo of grey fox, gray fox, Urocyon cinereoargenteus", "split": "train", "train_index": 220}
+{"original_id": "pt_000282", "text": "a photo of tiger cat", "split": "train", "train_index": 221}
+{"original_id": "pt_000283", "text": "a photo of Persian cat", "split": "train", "train_index": 222}
+{"original_id": "pt_000285", "text": "a photo of Egyptian cat", "split": "train", "train_index": 223}
+{"original_id": "pt_000286", "text": "a photo of cougar, puma, catamount, mountain lion, painter, panther, Felis concolor", "split": "train", "train_index": 224}
+{"original_id": "pt_000287", "text": "a photo of lynx, catamount", "split": "train", "train_index": 225}
+{"original_id": "pt_000288", "text": "a photo of leopard, Panthera pardus", "split": "train", "train_index": 226}
+{"original_id": "pt_000289", "text": "a photo of snow leopard, ounce, Panthera uncia", "split": "train", "train_index": 227}
+{"original_id": "pt_000290", "text": "a photo of jaguar, panther, Panthera onca, Felis onca", "split": "train", "train_index": 228}
+{"original_id": "pt_000291", "text": "a photo of lion, king of beasts, Panthera leo", "split": "train", "train_index": 229}
+{"original_id": "pt_000292", "text": "a photo of tiger, Panthera tigris", "split": "train", "train_index": 230}
+{"original_id": "pt_000293", "text": "a photo of cheetah, chetah, Acinonyx jubatus", "split": "train", "train_index": 231}
+{"original_id": "pt_000294", "text": "a photo of brown bear, bruin, Ursus arctos", "split": "train", "train_index": 232}
+{"original_id": "pt_000295", "text": "a photo of American black bear, black bear, Ursus americanus, Euarctos americanus", "split": "train", "train_index": 233}
+{"original_id": "pt_000297", "text": "a photo of sloth bear, Melursus ursinus, Ursus ursinus", "split": "train", "train_index": 234}
+{"original_id": "pt_000298", "text": "a photo of mongoose", "split": "train", "train_index": 235}
+{"original_id": "pt_000299", "text": "a photo of meerkat, mierkat", "split": "train", "train_index": 236}
+{"original_id": "pt_000301", "text": "a photo of ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle", "split": "train", "train_index": 237}
+{"original_id": "pt_000302", "text": "a photo of ground beetle, carabid beetle", "split": "train", "train_index": 238}
+{"original_id": "pt_000303", "text": "a photo of long-horned beetle, longicorn, longicorn beetle", "split": "train", "train_index": 239}
+{"original_id": "pt_000304", "text": "a photo of leaf beetle, chrysomelid", "split": "train", "train_index": 240}
+{"original_id": "pt_000305", "text": "a photo of dung beetle", "split": "train", "train_index": 241}
+{"original_id": "pt_000306", "text": "a photo of rhinoceros beetle", "split": "train", "train_index": 242}
+{"original_id": "pt_000307", "text": "a photo of weevil", "split": "train", "train_index": 243}
+{"original_id": "pt_000308", "text": "a photo of fly", "split": "train", "train_index": 244}
+{"original_id": "pt_000309", "text": "a photo of bee", "split": "train", "train_index": 245}
+{"original_id": "pt_000310", "text": "a photo of ant, emmet, pismire", "split": "train", "train_index": 246}
+{"original_id": "pt_000311", "text": "a photo of grasshopper, hopper", "split": "train", "train_index": 247}
+{"original_id": "pt_000312", "text": "a photo of cricket", "split": "train", "train_index": 248}
+{"original_id": "pt_000313", "text": "a photo of walking stick, walkingstick, stick insect", "split": "train", "train_index": 249}
+{"original_id": "pt_000314", "text": "a photo of cockroach, roach", "split": "train", "train_index": 250}
+{"original_id": "pt_000315", "text": "a photo of mantis, mantid", "split": "train", "train_index": 251}
+{"original_id": "pt_000316", "text": "a photo of cicada, cicala", "split": "train", "train_index": 252}
+{"original_id": "pt_000317", "text": "a photo of leafhopper", "split": "train", "train_index": 253}
+{"original_id": "pt_000318", "text": "a photo of lacewing, lacewing fly", "split": "train", "train_index": 254}
+{"original_id": "pt_000319", "text": "a photo of dragonfly, darning needle, devil's darning needle, sewing needle, snake feeder, snake doctor, mosquito hawk, skeeter hawk", "split": "train", "train_index": 255}
+{"original_id": "pt_000320", "text": "a photo of damselfly", "split": "train", "train_index": 256}
+{"original_id": "pt_000321", "text": "a photo of admiral", "split": "train", "train_index": 257}
+{"original_id": "pt_000324", "text": "a photo of cabbage butterfly", "split": "train", "train_index": 258}
+{"original_id": "pt_000325", "text": "a photo of sulphur butterfly, sulfur butterfly", "split": "train", "train_index": 259}
+{"original_id": "pt_000326", "text": "a photo of lycaenid, lycaenid butterfly", "split": "train", "train_index": 260}
+{"original_id": "pt_000327", "text": "a photo of starfish, sea star", "split": "train", "train_index": 261}
+{"original_id": "pt_000328", "text": "a photo of sea urchin", "split": "train", "train_index": 262}
+{"original_id": "pt_000329", "text": "a photo of sea cucumber, holothurian", "split": "train", "train_index": 263}
+{"original_id": "pt_000330", "text": "a photo of wood rabbit, cottontail, cottontail rabbit", "split": "train", "train_index": 264}
+{"original_id": "pt_000331", "text": "a photo of hare", "split": "train", "train_index": 265}
+{"original_id": "pt_000333", "text": "a photo of hamster", "split": "train", "train_index": 266}
+{"original_id": "pt_000334", "text": "a photo of porcupine, hedgehog", "split": "train", "train_index": 267}
+{"original_id": "pt_000335", "text": "a photo of fox squirrel, eastern fox squirrel, Sciurus niger", "split": "train", "train_index": 268}
+{"original_id": "pt_000336", "text": "a photo of marmot", "split": "train", "train_index": 269}
+{"original_id": "pt_000337", "text": "a photo of beaver", "split": "train", "train_index": 270}
+{"original_id": "pt_000338", "text": "a photo of guinea pig, Cavia cobaya", "split": "train", "train_index": 271}
+{"original_id": "pt_000339", "text": "a photo of sorrel", "split": "train", "train_index": 272}
+{"original_id": "pt_000340", "text": "a photo of zebra", "split": "train", "train_index": 273}
+{"original_id": "pt_000341", "text": "a photo of hog, pig, grunter, squealer, Sus scrofa", "split": "train", "train_index": 274}
+{"original_id": "pt_000342", "text": "a photo of wild boar, boar, Sus scrofa", "split": "train", "train_index": 275}
+{"original_id": "pt_000343", "text": "a photo of warthog", "split": "train", "train_index": 276}
+{"original_id": "pt_000345", "text": "a photo of ox", "split": "train", "train_index": 277}
+{"original_id": "pt_000346", "text": "a photo of water buffalo, water ox, Asiatic buffalo, Bubalus bubalis", "split": "train", "train_index": 278}
+{"original_id": "pt_000347", "text": "a photo of bison", "split": "train", "train_index": 279}
+{"original_id": "pt_000349", "text": "a photo of bighorn, bighorn sheep, cimarron, Rocky Mountain bighorn, Rocky Mountain sheep, Ovis canadensis", "split": "train", "train_index": 280}
+{"original_id": "pt_000350", "text": "a photo of ibex, Capra ibex", "split": "train", "train_index": 281}
+{"original_id": "pt_000351", "text": "a photo of hartebeest", "split": "train", "train_index": 282}
+{"original_id": "pt_000353", "text": "a photo of gazelle", "split": "train", "train_index": 283}
+{"original_id": "pt_000354", "text": "a photo of Arabian camel, dromedary, Camelus dromedarius", "split": "train", "train_index": 284}
+{"original_id": "pt_000355", "text": "a photo of llama", "split": "train", "train_index": 285}
+{"original_id": "pt_000356", "text": "a photo of weasel", "split": "train", "train_index": 286}
+{"original_id": "pt_000357", "text": "a photo of mink", "split": "train", "train_index": 287}
+{"original_id": "pt_000358", "text": "a photo of polecat, fitch, foulmart, foumart, Mustela putorius", "split": "train", "train_index": 288}
+{"original_id": "pt_000359", "text": "a photo of black-footed ferret, ferret, Mustela nigripes", "split": "train", "train_index": 289}
+{"original_id": "pt_000360", "text": "a photo of otter", "split": "train", "train_index": 290}
+{"original_id": "pt_000361", "text": "a photo of skunk, polecat, wood pussy", "split": "train", "train_index": 291}
+{"original_id": "pt_000362", "text": "a photo of badger", "split": "train", "train_index": 292}
+{"original_id": "pt_000364", "text": "a photo of three-toed sloth, ai, Bradypus tridactylus", "split": "train", "train_index": 293}
+{"original_id": "pt_000365", "text": "a photo of orangutan, orang, orangutang, Pongo pygmaeus", "split": "train", "train_index": 294}
+{"original_id": "pt_000366", "text": "a photo of gorilla, Gorilla gorilla", "split": "train", "train_index": 295}
+{"original_id": "pt_000368", "text": "a photo of gibbon, Hylobates lar", "split": "train", "train_index": 296}
+{"original_id": "pt_000369", "text": "a photo of siamang, Hylobates syndactylus, Symphalangus syndactylus", "split": "train", "train_index": 297}
+{"original_id": "pt_000371", "text": "a photo of patas, hussar monkey, Erythrocebus patas", "split": "train", "train_index": 298}
+{"original_id": "pt_000372", "text": "a photo of baboon", "split": "train", "train_index": 299}
+{"original_id": "pt_000374", "text": "a photo of langur", "split": "train", "train_index": 300}
+{"original_id": "pt_000375", "text": "a photo of colobus, colobus monkey", "split": "train", "train_index": 301}
+{"original_id": "pt_000376", "text": "a photo of proboscis monkey, Nasalis larvatus", "split": "train", "train_index": 302}
+{"original_id": "pt_000377", "text": "a photo of marmoset", "split": "train", "train_index": 303}
+{"original_id": "pt_000378", "text": "a photo of capuchin, ringtail, Cebus capucinus", "split": "train", "train_index": 304}
+{"original_id": "pt_000380", "text": "a photo of titi, titi monkey", "split": "train", "train_index": 305}
+{"original_id": "pt_000381", "text": "a photo of spider monkey, Ateles geoffroyi", "split": "train", "train_index": 306}
+{"original_id": "pt_000382", "text": "a photo of squirrel monkey, Saimiri sciureus", "split": "train", "train_index": 307}
+{"original_id": "pt_000383", "text": "a photo of Madagascar cat, ring-tailed lemur, Lemur catta", "split": "train", "train_index": 308}
+{"original_id": "pt_000384", "text": "a photo of indri, indris, Indri indri, Indri brevicaudatus", "split": "train", "train_index": 309}
+{"original_id": "pt_000385", "text": "a photo of Indian elephant, Elephas maximus", "split": "train", "train_index": 310}
+{"original_id": "pt_000386", "text": "a photo of African elephant, Loxodonta africana", "split": "train", "train_index": 311}
+{"original_id": "pt_000391", "text": "a photo of coho, cohoe, coho salmon, blue jack, silver salmon, Oncorhynchus kisutch", "split": "train", "train_index": 312}
+{"original_id": "pt_000392", "text": "a photo of rock beauty, Holocanthus tricolor", "split": "train", "train_index": 313}
+{"original_id": "pt_000393", "text": "a photo of anemone fish", "split": "train", "train_index": 314}
+{"original_id": "pt_000395", "text": "a photo of gar, garfish, garpike, billfish, Lepisosteus osseus", "split": "train", "train_index": 315}
+{"original_id": "pt_000396", "text": "a photo of lionfish", "split": "train", "train_index": 316}
+{"original_id": "pt_000397", "text": "a photo of puffer, pufferfish, blowfish, globefish", "split": "train", "train_index": 317}
+{"original_id": "pt_000398", "text": "a photo of abacus", "split": "train", "train_index": 318}
+{"original_id": "pt_000399", "text": "a photo of abaya", "split": "train", "train_index": 319}
+{"original_id": "pt_000400", "text": "a photo of academic gown, academic robe, judge's robe", "split": "train", "train_index": 320}
+{"original_id": "pt_000401", "text": "a photo of accordion, piano accordion, squeeze box", "split": "train", "train_index": 321}
+{"original_id": "pt_000402", "text": "a photo of acoustic guitar", "split": "train", "train_index": 322}
+{"original_id": "pt_000403", "text": "a photo of aircraft carrier, carrier, flattop, attack aircraft carrier", "split": "train", "train_index": 323}
+{"original_id": "pt_000404", "text": "a photo of airliner", "split": "train", "train_index": 324}
+{"original_id": "pt_000406", "text": "a photo of altar", "split": "train", "train_index": 325}
+{"original_id": "pt_000407", "text": "a photo of ambulance", "split": "train", "train_index": 326}
+{"original_id": "pt_000409", "text": "a photo of analog clock", "split": "train", "train_index": 327}
+{"original_id": "pt_000411", "text": "a photo of apron", "split": "train", "train_index": 328}
+{"original_id": "pt_000412", "text": "a photo of ashcan, trash can, garbage can, wastebin, ash bin, ash-bin, ashbin, dustbin, trash barrel, trash bin", "split": "train", "train_index": 329}
+{"original_id": "pt_000413", "text": "a photo of assault rifle, assault gun", "split": "train", "train_index": 330}
+{"original_id": "pt_000414", "text": "a photo of backpack, back pack, knapsack, packsack, rucksack, haversack", "split": "train", "train_index": 331}
+{"original_id": "pt_000415", "text": "a photo of bakery, bakeshop, bakehouse", "split": "train", "train_index": 332}
+{"original_id": "pt_000416", "text": "a photo of balance beam, beam", "split": "train", "train_index": 333}
+{"original_id": "pt_000417", "text": "a photo of balloon", "split": "train", "train_index": 334}
+{"original_id": "pt_000418", "text": "a photo of ballpoint, ballpoint pen, ballpen, Biro", "split": "train", "train_index": 335}
+{"original_id": "pt_000419", "text": "a photo of Band Aid", "split": "train", "train_index": 336}
+{"original_id": "pt_000420", "text": "a photo of banjo", "split": "train", "train_index": 337}
+{"original_id": "pt_000421", "text": "a photo of bannister, banister, balustrade, balusters, handrail", "split": "train", "train_index": 338}
+{"original_id": "pt_000422", "text": "a photo of barbell", "split": "train", "train_index": 339}
+{"original_id": "pt_000423", "text": "a photo of barber chair", "split": "train", "train_index": 340}
+{"original_id": "pt_000424", "text": "a photo of barbershop", "split": "train", "train_index": 341}
+{"original_id": "pt_000425", "text": "a photo of barn", "split": "train", "train_index": 342}
+{"original_id": "pt_000426", "text": "a photo of barometer", "split": "train", "train_index": 343}
+{"original_id": "pt_000427", "text": "a photo of barrel, cask", "split": "train", "train_index": 344}
+{"original_id": "pt_000428", "text": "a photo of barrow, garden cart, lawn cart, wheelbarrow", "split": "train", "train_index": 345}
+{"original_id": "pt_000430", "text": "a photo of basketball", "split": "train", "train_index": 346}
+{"original_id": "pt_000431", "text": "a photo of bassinet", "split": "train", "train_index": 347}
+{"original_id": "pt_000433", "text": "a photo of bathing cap, swimming cap", "split": "train", "train_index": 348}
+{"original_id": "pt_000434", "text": "a photo of bath towel", "split": "train", "train_index": 349}
+{"original_id": "pt_000435", "text": "a photo of bathtub, bathing tub, bath, tub", "split": "train", "train_index": 350}
+{"original_id": "pt_000436", "text": "a photo of beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon", "split": "train", "train_index": 351}
+{"original_id": "pt_000437", "text": "a photo of beacon, lighthouse, beacon light, pharos", "split": "train", "train_index": 352}
+{"original_id": "pt_000439", "text": "a photo of bearskin, busby, shako", "split": "train", "train_index": 353}
+{"original_id": "pt_000440", "text": "a photo of beer bottle", "split": "train", "train_index": 354}
+{"original_id": "pt_000441", "text": "a photo of beer glass", "split": "train", "train_index": 355}
+{"original_id": "pt_000442", "text": "a photo of bell cote, bell cot", "split": "train", "train_index": 356}
+{"original_id": "pt_000443", "text": "a photo of bib", "split": "train", "train_index": 357}
+{"original_id": "pt_000444", "text": "a photo of bicycle-built-for-two, tandem bicycle, tandem", "split": "train", "train_index": 358}
+{"original_id": "pt_000446", "text": "a photo of binder, ring-binder", "split": "train", "train_index": 359}
+{"original_id": "pt_000447", "text": "a photo of binoculars, field glasses, opera glasses", "split": "train", "train_index": 360}
+{"original_id": "pt_000448", "text": "a photo of birdhouse", "split": "train", "train_index": 361}
+{"original_id": "pt_000449", "text": "a photo of boathouse", "split": "train", "train_index": 362}
+{"original_id": "pt_000450", "text": "a photo of bobsled, bobsleigh, bob", "split": "train", "train_index": 363}
+{"original_id": "pt_000451", "text": "a photo of bolo tie, bolo, bola tie, bola", "split": "train", "train_index": 364}
+{"original_id": "pt_000452", "text": "a photo of bonnet, poke bonnet", "split": "train", "train_index": 365}
+{"original_id": "pt_000453", "text": "a photo of bookcase", "split": "train", "train_index": 366}
+{"original_id": "pt_000454", "text": "a photo of bookshop, bookstore, bookstall", "split": "train", "train_index": 367}
+{"original_id": "pt_000455", "text": "a photo of bottlecap", "split": "train", "train_index": 368}
+{"original_id": "pt_000456", "text": "a photo of bow", "split": "train", "train_index": 369}
+{"original_id": "pt_000457", "text": "a photo of bow tie, bow-tie, bowtie", "split": "train", "train_index": 370}
+{"original_id": "pt_000458", "text": "a photo of brass, memorial tablet, plaque", "split": "train", "train_index": 371}
+{"original_id": "pt_000460", "text": "a photo of breakwater, groin, groyne, mole, bulwark, seawall, jetty", "split": "train", "train_index": 372}
+{"original_id": "pt_000461", "text": "a photo of breastplate, aegis, egis", "split": "train", "train_index": 373}
+{"original_id": "pt_000462", "text": "a photo of broom", "split": "train", "train_index": 374}
+{"original_id": "pt_000463", "text": "a photo of bucket, pail", "split": "train", "train_index": 375}
+{"original_id": "pt_000465", "text": "a photo of bulletproof vest", "split": "train", "train_index": 376}
+{"original_id": "pt_000466", "text": "a photo of bullet train, bullet", "split": "train", "train_index": 377}
+{"original_id": "pt_000467", "text": "a photo of butcher shop, meat market", "split": "train", "train_index": 378}
+{"original_id": "pt_000468", "text": "a photo of cab, hack, taxi, taxicab", "split": "train", "train_index": 379}
+{"original_id": "pt_000471", "text": "a photo of cannon", "split": "train", "train_index": 380}
+{"original_id": "pt_000472", "text": "a photo of canoe", "split": "train", "train_index": 381}
+{"original_id": "pt_000474", "text": "a photo of cardigan", "split": "train", "train_index": 382}
+{"original_id": "pt_000475", "text": "a photo of car mirror", "split": "train", "train_index": 383}
+{"original_id": "pt_000476", "text": "a photo of carousel, carrousel, merry-go-round, roundabout, whirligig", "split": "train", "train_index": 384}
+{"original_id": "pt_000477", "text": "a photo of carpenter's kit, tool kit", "split": "train", "train_index": 385}
+{"original_id": "pt_000478", "text": "a photo of carton", "split": "train", "train_index": 386}
+{"original_id": "pt_000480", "text": "a photo of cash machine, cash dispenser, automated teller machine, automatic teller machine, automated teller, automatic teller, ATM", "split": "train", "train_index": 387}
+{"original_id": "pt_000481", "text": "a photo of cassette", "split": "train", "train_index": 388}
+{"original_id": "pt_000482", "text": "a photo of cassette player", "split": "train", "train_index": 389}
+{"original_id": "pt_000483", "text": "a photo of castle", "split": "train", "train_index": 390}
+{"original_id": "pt_000484", "text": "a photo of catamaran", "split": "train", "train_index": 391}
+{"original_id": "pt_000485", "text": "a photo of CD player", "split": "train", "train_index": 392}
+{"original_id": "pt_000486", "text": "a photo of cello, violoncello", "split": "train", "train_index": 393}
+{"original_id": "pt_000487", "text": "a photo of cellular telephone, cellular phone, cellphone, cell, mobile phone", "split": "train", "train_index": 394}
+{"original_id": "pt_000488", "text": "a photo of chain", "split": "train", "train_index": 395}
+{"original_id": "pt_000489", "text": "a photo of chainlink fence", "split": "train", "train_index": 396}
+{"original_id": "pt_000490", "text": "a photo of chain mail, ring mail, mail, chain armor, chain armour, ring armor, ring armour", "split": "train", "train_index": 397}
+{"original_id": "pt_000491", "text": "a photo of chain saw, chainsaw", "split": "train", "train_index": 398}
+{"original_id": "pt_000492", "text": "a photo of chest", "split": "train", "train_index": 399}
+{"original_id": "pt_000493", "text": "a photo of chiffonier, commode", "split": "train", "train_index": 400}
+{"original_id": "pt_000494", "text": "a photo of chime, bell, gong", "split": "train", "train_index": 401}
+{"original_id": "pt_000495", "text": "a photo of china cabinet, china closet", "split": "train", "train_index": 402}
+{"original_id": "pt_000496", "text": "a photo of Christmas stocking", "split": "train", "train_index": 403}
+{"original_id": "pt_000497", "text": "a photo of church, church building", "split": "train", "train_index": 404}
+{"original_id": "pt_000498", "text": "a photo of cinema, movie theater, movie theatre, movie house, picture palace", "split": "train", "train_index": 405}
+{"original_id": "pt_000499", "text": "a photo of cleaver, meat cleaver, chopper", "split": "train", "train_index": 406}
+{"original_id": "pt_000500", "text": "a photo of cliff dwelling", "split": "train", "train_index": 407}
+{"original_id": "pt_000501", "text": "a photo of cloak", "split": "train", "train_index": 408}
+{"original_id": "pt_000502", "text": "a photo of clog, geta, patten, sabot", "split": "train", "train_index": 409}
+{"original_id": "pt_000503", "text": "a photo of cocktail shaker", "split": "train", "train_index": 410}
+{"original_id": "pt_000504", "text": "a photo of coffee mug", "split": "train", "train_index": 411}
+{"original_id": "pt_000506", "text": "a photo of coil, spiral, volute, whorl, helix", "split": "train", "train_index": 412}
+{"original_id": "pt_000507", "text": "a photo of combination lock", "split": "train", "train_index": 413}
+{"original_id": "pt_000508", "text": "a photo of computer keyboard, keypad", "split": "train", "train_index": 414}
+{"original_id": "pt_000509", "text": "a photo of confectionery, confectionary, candy store", "split": "train", "train_index": 415}
+{"original_id": "pt_000510", "text": "a photo of container ship, containership, container vessel", "split": "train", "train_index": 416}
+{"original_id": "pt_000512", "text": "a photo of corkscrew, bottle screw", "split": "train", "train_index": 417}
+{"original_id": "pt_000513", "text": "a photo of cornet, horn, trumpet, trump", "split": "train", "train_index": 418}
+{"original_id": "pt_000514", "text": "a photo of cowboy boot", "split": "train", "train_index": 419}
+{"original_id": "pt_000515", "text": "a photo of cowboy hat, ten-gallon hat", "split": "train", "train_index": 420}
+{"original_id": "pt_000516", "text": "a photo of cradle", "split": "train", "train_index": 421}
+{"original_id": "pt_000518", "text": "a photo of crash helmet", "split": "train", "train_index": 422}
+{"original_id": "pt_000519", "text": "a photo of crate", "split": "train", "train_index": 423}
+{"original_id": "pt_000520", "text": "a photo of crib, cot", "split": "train", "train_index": 424}
+{"original_id": "pt_000522", "text": "a photo of croquet ball", "split": "train", "train_index": 425}
+{"original_id": "pt_000523", "text": "a photo of crutch", "split": "train", "train_index": 426}
+{"original_id": "pt_000524", "text": "a photo of cuirass", "split": "train", "train_index": 427}
+{"original_id": "pt_000525", "text": "a photo of dam, dike, dyke", "split": "train", "train_index": 428}
+{"original_id": "pt_000526", "text": "a photo of desk", "split": "train", "train_index": 429}
+{"original_id": "pt_000527", "text": "a photo of desktop computer", "split": "train", "train_index": 430}
+{"original_id": "pt_000528", "text": "a photo of dial telephone, dial phone", "split": "train", "train_index": 431}
+{"original_id": "pt_000529", "text": "a photo of diaper, nappy, napkin", "split": "train", "train_index": 432}
+{"original_id": "pt_000530", "text": "a photo of digital clock", "split": "train", "train_index": 433}
+{"original_id": "pt_000531", "text": "a photo of digital watch", "split": "train", "train_index": 434}
+{"original_id": "pt_000532", "text": "a photo of dining table, board", "split": "train", "train_index": 435}
+{"original_id": "pt_000533", "text": "a photo of dishrag, dishcloth", "split": "train", "train_index": 436}
+{"original_id": "pt_000534", "text": "a photo of dishwasher, dish washer, dishwashing machine", "split": "train", "train_index": 437}
+{"original_id": "pt_000535", "text": "a photo of disk brake, disc brake", "split": "train", "train_index": 438}
+{"original_id": "pt_000536", "text": "a photo of dock, dockage, docking facility", "split": "train", "train_index": 439}
+{"original_id": "pt_000537", "text": "a photo of dogsled, dog sled, dog sleigh", "split": "train", "train_index": 440}
+{"original_id": "pt_000538", "text": "a photo of dome", "split": "train", "train_index": 441}
+{"original_id": "pt_000539", "text": "a photo of doormat, welcome mat", "split": "train", "train_index": 442}
+{"original_id": "pt_000540", "text": "a photo of drilling platform, offshore rig", "split": "train", "train_index": 443}
+{"original_id": "pt_000542", "text": "a photo of drumstick", "split": "train", "train_index": 444}
+{"original_id": "pt_000543", "text": "a photo of dumbbell", "split": "train", "train_index": 445}
+{"original_id": "pt_000544", "text": "a photo of Dutch oven", "split": "train", "train_index": 446}
+{"original_id": "pt_000545", "text": "a photo of electric fan, blower", "split": "train", "train_index": 447}
+{"original_id": "pt_000547", "text": "a photo of electric locomotive", "split": "train", "train_index": 448}
+{"original_id": "pt_000548", "text": "a photo of entertainment center", "split": "train", "train_index": 449}
+{"original_id": "pt_000550", "text": "a photo of espresso maker", "split": "train", "train_index": 450}
+{"original_id": "pt_000552", "text": "a photo of feather boa, boa", "split": "train", "train_index": 451}
+{"original_id": "pt_000553", "text": "a photo of file, file cabinet, filing cabinet", "split": "train", "train_index": 452}
+{"original_id": "pt_000554", "text": "a photo of fireboat", "split": "train", "train_index": 453}
+{"original_id": "pt_000555", "text": "a photo of fire engine, fire truck", "split": "train", "train_index": 454}
+{"original_id": "pt_000556", "text": "a photo of fire screen, fireguard", "split": "train", "train_index": 455}
+{"original_id": "pt_000557", "text": "a photo of flagpole, flagstaff", "split": "train", "train_index": 456}
+{"original_id": "pt_000559", "text": "a photo of folding chair", "split": "train", "train_index": 457}
+{"original_id": "pt_000560", "text": "a photo of football helmet", "split": "train", "train_index": 458}
+{"original_id": "pt_000561", "text": "a photo of forklift", "split": "train", "train_index": 459}
+{"original_id": "pt_000562", "text": "a photo of fountain", "split": "train", "train_index": 460}
+{"original_id": "pt_000563", "text": "a photo of fountain pen", "split": "train", "train_index": 461}
+{"original_id": "pt_000564", "text": "a photo of four-poster", "split": "train", "train_index": 462}
+{"original_id": "pt_000567", "text": "a photo of frying pan, frypan, skillet", "split": "train", "train_index": 463}
+{"original_id": "pt_000568", "text": "a photo of fur coat", "split": "train", "train_index": 464}
+{"original_id": "pt_000569", "text": "a photo of garbage truck, dustcart", "split": "train", "train_index": 465}
+{"original_id": "pt_000571", "text": "a photo of gas pump, gasoline pump, petrol pump, island dispenser", "split": "train", "train_index": 466}
+{"original_id": "pt_000572", "text": "a photo of goblet", "split": "train", "train_index": 467}
+{"original_id": "pt_000573", "text": "a photo of go-kart", "split": "train", "train_index": 468}
+{"original_id": "pt_000575", "text": "a photo of golfcart, golf cart", "split": "train", "train_index": 469}
+{"original_id": "pt_000576", "text": "a photo of gondola", "split": "train", "train_index": 470}
+{"original_id": "pt_000577", "text": "a photo of gong, tam-tam", "split": "train", "train_index": 471}
+{"original_id": "pt_000578", "text": "a photo of gown", "split": "train", "train_index": 472}
+{"original_id": "pt_000579", "text": "a photo of grand piano, grand", "split": "train", "train_index": 473}
+{"original_id": "pt_000581", "text": "a photo of grille, radiator grille", "split": "train", "train_index": 474}
+{"original_id": "pt_000582", "text": "a photo of grocery store, grocery, food market, market", "split": "train", "train_index": 475}
+{"original_id": "pt_000583", "text": "a photo of guillotine", "split": "train", "train_index": 476}
+{"original_id": "pt_000584", "text": "a photo of hair slide", "split": "train", "train_index": 477}
+{"original_id": "pt_000585", "text": "a photo of hair spray", "split": "train", "train_index": 478}
+{"original_id": "pt_000586", "text": "a photo of half track", "split": "train", "train_index": 479}
+{"original_id": "pt_000587", "text": "a photo of hammer", "split": "train", "train_index": 480}
+{"original_id": "pt_000588", "text": "a photo of hamper", "split": "train", "train_index": 481}
+{"original_id": "pt_000589", "text": "a photo of hand blower, blow dryer, blow drier, hair dryer, hair drier", "split": "train", "train_index": 482}
+{"original_id": "pt_000590", "text": "a photo of hand-held computer, hand-held microcomputer", "split": "train", "train_index": 483}
+{"original_id": "pt_000592", "text": "a photo of hard disc, hard disk, fixed disk", "split": "train", "train_index": 484}
+{"original_id": "pt_000593", "text": "a photo of harmonica, mouth organ, harp, mouth harp", "split": "train", "train_index": 485}
+{"original_id": "pt_000594", "text": "a photo of harp", "split": "train", "train_index": 486}
+{"original_id": "pt_000595", "text": "a photo of harvester, reaper", "split": "train", "train_index": 487}
+{"original_id": "pt_000596", "text": "a photo of hatchet", "split": "train", "train_index": 488}
+{"original_id": "pt_000599", "text": "a photo of honeycomb", "split": "train", "train_index": 489}
+{"original_id": "pt_000600", "text": "a photo of hook, claw", "split": "train", "train_index": 490}
+{"original_id": "pt_000601", "text": "a photo of hoopskirt, crinoline", "split": "train", "train_index": 491}
+{"original_id": "pt_000602", "text": "a photo of horizontal bar, high bar", "split": "train", "train_index": 492}
+{"original_id": "pt_000605", "text": "a photo of iPod", "split": "train", "train_index": 493}
+{"original_id": "pt_000606", "text": "a photo of iron, smoothing iron", "split": "train", "train_index": 494}
+{"original_id": "pt_000607", "text": "a photo of jack-o'-lantern", "split": "train", "train_index": 495}
+{"original_id": "pt_000608", "text": "a photo of jean, blue jean, denim", "split": "train", "train_index": 496}
+{"original_id": "pt_000609", "text": "a photo of jeep, landrover", "split": "train", "train_index": 497}
+{"original_id": "pt_000611", "text": "a photo of jigsaw puzzle", "split": "train", "train_index": 498}
+{"original_id": "pt_000612", "text": "a photo of jinrikisha, ricksha, rickshaw", "split": "train", "train_index": 499}
+{"original_id": "pt_000613", "text": "a photo of joystick", "split": "train", "train_index": 500}
+{"original_id": "pt_000614", "text": "a photo of kimono", "split": "train", "train_index": 501}
+{"original_id": "pt_000615", "text": "a photo of knee pad", "split": "train", "train_index": 502}
+{"original_id": "pt_000617", "text": "a photo of lab coat, laboratory coat", "split": "train", "train_index": 503}
+{"original_id": "pt_000619", "text": "a photo of lampshade, lamp shade", "split": "train", "train_index": 504}
+{"original_id": "pt_000620", "text": "a photo of laptop, laptop computer", "split": "train", "train_index": 505}
+{"original_id": "pt_000621", "text": "a photo of lawn mower, mower", "split": "train", "train_index": 506}
+{"original_id": "pt_000622", "text": "a photo of lens cap, lens cover", "split": "train", "train_index": 507}
+{"original_id": "pt_000624", "text": "a photo of library", "split": "train", "train_index": 508}
+{"original_id": "pt_000625", "text": "a photo of lifeboat", "split": "train", "train_index": 509}
+{"original_id": "pt_000626", "text": "a photo of lighter, light, igniter, ignitor", "split": "train", "train_index": 510}
+{"original_id": "pt_000627", "text": "a photo of limousine, limo", "split": "train", "train_index": 511}
+{"original_id": "pt_000628", "text": "a photo of liner, ocean liner", "split": "train", "train_index": 512}
+{"original_id": "pt_000629", "text": "a photo of lipstick, lip rouge", "split": "train", "train_index": 513}
+{"original_id": "pt_000630", "text": "a photo of Loafer", "split": "train", "train_index": 514}
+{"original_id": "pt_000631", "text": "a photo of lotion", "split": "train", "train_index": 515}
+{"original_id": "pt_000632", "text": "a photo of loudspeaker, speaker, speaker unit, loudspeaker system, speaker system", "split": "train", "train_index": 516}
+{"original_id": "pt_000634", "text": "a photo of lumbermill, sawmill", "split": "train", "train_index": 517}
+{"original_id": "pt_000635", "text": "a photo of magnetic compass", "split": "train", "train_index": 518}
+{"original_id": "pt_000636", "text": "a photo of mailbag, postbag", "split": "train", "train_index": 519}
+{"original_id": "pt_000637", "text": "a photo of mailbox, letter box", "split": "train", "train_index": 520}
+{"original_id": "pt_000638", "text": "a photo of maillot", "split": "train", "train_index": 521}
+{"original_id": "pt_000639", "text": "a photo of maillot, tank suit", "split": "train", "train_index": 522}
+{"original_id": "pt_000640", "text": "a photo of manhole cover", "split": "train", "train_index": 523}
+{"original_id": "pt_000641", "text": "a photo of maraca", "split": "train", "train_index": 524}
+{"original_id": "pt_000644", "text": "a photo of matchstick", "split": "train", "train_index": 525}
+{"original_id": "pt_000645", "text": "a photo of maypole", "split": "train", "train_index": 526}
+{"original_id": "pt_000646", "text": "a photo of maze, labyrinth", "split": "train", "train_index": 527}
+{"original_id": "pt_000647", "text": "a photo of measuring cup", "split": "train", "train_index": 528}
+{"original_id": "pt_000648", "text": "a photo of medicine chest, medicine cabinet", "split": "train", "train_index": 529}
+{"original_id": "pt_000649", "text": "a photo of megalith, megalithic structure", "split": "train", "train_index": 530}
+{"original_id": "pt_000651", "text": "a photo of microwave, microwave oven", "split": "train", "train_index": 531}
+{"original_id": "pt_000652", "text": "a photo of military uniform", "split": "train", "train_index": 532}
+{"original_id": "pt_000653", "text": "a photo of milk can", "split": "train", "train_index": 533}
+{"original_id": "pt_000657", "text": "a photo of missile", "split": "train", "train_index": 534}
+{"original_id": "pt_000659", "text": "a photo of mixing bowl", "split": "train", "train_index": 535}
+{"original_id": "pt_000660", "text": "a photo of mobile home, manufactured home", "split": "train", "train_index": 536}
+{"original_id": "pt_000661", "text": "a photo of Model T", "split": "train", "train_index": 537}
+{"original_id": "pt_000662", "text": "a photo of modem", "split": "train", "train_index": 538}
+{"original_id": "pt_000664", "text": "a photo of monitor", "split": "train", "train_index": 539}
+{"original_id": "pt_000666", "text": "a photo of mortar", "split": "train", "train_index": 540}
+{"original_id": "pt_000667", "text": "a photo of mortarboard", "split": "train", "train_index": 541}
+{"original_id": "pt_000668", "text": "a photo of mosque", "split": "train", "train_index": 542}
+{"original_id": "pt_000669", "text": "a photo of mosquito net", "split": "train", "train_index": 543}
+{"original_id": "pt_000670", "text": "a photo of motor scooter, scooter", "split": "train", "train_index": 544}
+{"original_id": "pt_000672", "text": "a photo of mountain tent", "split": "train", "train_index": 545}
+{"original_id": "pt_000673", "text": "a photo of mouse, computer mouse", "split": "train", "train_index": 546}
+{"original_id": "pt_000674", "text": "a photo of mousetrap", "split": "train", "train_index": 547}
+{"original_id": "pt_000675", "text": "a photo of moving van", "split": "train", "train_index": 548}
+{"original_id": "pt_000676", "text": "a photo of muzzle", "split": "train", "train_index": 549}
+{"original_id": "pt_000678", "text": "a photo of neck brace", "split": "train", "train_index": 550}
+{"original_id": "pt_000679", "text": "a photo of necklace", "split": "train", "train_index": 551}
+{"original_id": "pt_000680", "text": "a photo of nipple", "split": "train", "train_index": 552}
+{"original_id": "pt_000681", "text": "a photo of notebook, notebook computer", "split": "train", "train_index": 553}
+{"original_id": "pt_000682", "text": "a photo of obelisk", "split": "train", "train_index": 554}
+{"original_id": "pt_000683", "text": "a photo of oboe, hautboy, hautbois", "split": "train", "train_index": 555}
+{"original_id": "pt_000684", "text": "a photo of ocarina, sweet potato", "split": "train", "train_index": 556}
+{"original_id": "pt_000685", "text": "a photo of odometer, hodometer, mileometer, milometer", "split": "train", "train_index": 557}
+{"original_id": "pt_000687", "text": "a photo of organ, pipe organ", "split": "train", "train_index": 558}
+{"original_id": "pt_000688", "text": "a photo of oscilloscope, scope, cathode-ray oscilloscope, CRO", "split": "train", "train_index": 559}
+{"original_id": "pt_000689", "text": "a photo of overskirt", "split": "train", "train_index": 560}
+{"original_id": "pt_000690", "text": "a photo of oxcart", "split": "train", "train_index": 561}
+{"original_id": "pt_000691", "text": "a photo of oxygen mask", "split": "train", "train_index": 562}
+{"original_id": "pt_000693", "text": "a photo of paddle, boat paddle", "split": "train", "train_index": 563}
+{"original_id": "pt_000694", "text": "a photo of paddlewheel, paddle wheel", "split": "train", "train_index": 564}
+{"original_id": "pt_000695", "text": "a photo of padlock", "split": "train", "train_index": 565}
+{"original_id": "pt_000697", "text": "a photo of pajama, pyjama, pj's, jammies", "split": "train", "train_index": 566}
+{"original_id": "pt_000700", "text": "a photo of paper towel", "split": "train", "train_index": 567}
+{"original_id": "pt_000702", "text": "a photo of parallel bars, bars", "split": "train", "train_index": 568}
+{"original_id": "pt_000703", "text": "a photo of park bench", "split": "train", "train_index": 569}
+{"original_id": "pt_000705", "text": "a photo of passenger car, coach, carriage", "split": "train", "train_index": 570}
+{"original_id": "pt_000706", "text": "a photo of patio, terrace", "split": "train", "train_index": 571}
+{"original_id": "pt_000707", "text": "a photo of pay-phone, pay-station", "split": "train", "train_index": 572}
+{"original_id": "pt_000708", "text": "a photo of pedestal, plinth, footstall", "split": "train", "train_index": 573}
+{"original_id": "pt_000709", "text": "a photo of pencil box, pencil case", "split": "train", "train_index": 574}
+{"original_id": "pt_000710", "text": "a photo of pencil sharpener", "split": "train", "train_index": 575}
+{"original_id": "pt_000711", "text": "a photo of perfume, essence", "split": "train", "train_index": 576}
+{"original_id": "pt_000712", "text": "a photo of Petri dish", "split": "train", "train_index": 577}
+{"original_id": "pt_000713", "text": "a photo of photocopier", "split": "train", "train_index": 578}
+{"original_id": "pt_000715", "text": "a photo of pickelhaube", "split": "train", "train_index": 579}
+{"original_id": "pt_000716", "text": "a photo of picket fence, paling", "split": "train", "train_index": 580}
+{"original_id": "pt_000717", "text": "a photo of pickup, pickup truck", "split": "train", "train_index": 581}
+{"original_id": "pt_000719", "text": "a photo of piggy bank, penny bank", "split": "train", "train_index": 582}
+{"original_id": "pt_000720", "text": "a photo of pill bottle", "split": "train", "train_index": 583}
+{"original_id": "pt_000722", "text": "a photo of ping-pong ball", "split": "train", "train_index": 584}
+{"original_id": "pt_000723", "text": "a photo of pinwheel", "split": "train", "train_index": 585}
+{"original_id": "pt_000724", "text": "a photo of pirate, pirate ship", "split": "train", "train_index": 586}
+{"original_id": "pt_000725", "text": "a photo of pitcher, ewer", "split": "train", "train_index": 587}
+{"original_id": "pt_000726", "text": "a photo of plane, carpenter's plane, woodworking plane", "split": "train", "train_index": 588}
+{"original_id": "pt_000727", "text": "a photo of planetarium", "split": "train", "train_index": 589}
+{"original_id": "pt_000728", "text": "a photo of plastic bag", "split": "train", "train_index": 590}
+{"original_id": "pt_000729", "text": "a photo of plate rack", "split": "train", "train_index": 591}
+{"original_id": "pt_000730", "text": "a photo of plow, plough", "split": "train", "train_index": 592}
+{"original_id": "pt_000731", "text": "a photo of plunger, plumber's helper", "split": "train", "train_index": 593}
+{"original_id": "pt_000732", "text": "a photo of Polaroid camera, Polaroid Land camera", "split": "train", "train_index": 594}
+{"original_id": "pt_000734", "text": "a photo of police van, police wagon, paddy wagon, patrol wagon, wagon, black Maria", "split": "train", "train_index": 595}
+{"original_id": "pt_000737", "text": "a photo of pop bottle, soda bottle", "split": "train", "train_index": 596}
+{"original_id": "pt_000740", "text": "a photo of power drill", "split": "train", "train_index": 597}
+{"original_id": "pt_000741", "text": "a photo of prayer rug, prayer mat", "split": "train", "train_index": 598}
+{"original_id": "pt_000742", "text": "a photo of printer", "split": "train", "train_index": 599}
+{"original_id": "pt_000743", "text": "a photo of prison, prison house", "split": "train", "train_index": 600}
+{"original_id": "pt_000744", "text": "a photo of projectile, missile", "split": "train", "train_index": 601}
+{"original_id": "pt_000745", "text": "a photo of projector", "split": "train", "train_index": 602}
+{"original_id": "pt_000748", "text": "a photo of purse", "split": "train", "train_index": 603}
+{"original_id": "pt_000749", "text": "a photo of quill, quill pen", "split": "train", "train_index": 604}
+{"original_id": "pt_000750", "text": "a photo of quilt, comforter, comfort, puff", "split": "train", "train_index": 605}
+{"original_id": "pt_000751", "text": "a photo of racer, race car, racing car", "split": "train", "train_index": 606}
+{"original_id": "pt_000752", "text": "a photo of racket, racquet", "split": "train", "train_index": 607}
+{"original_id": "pt_000753", "text": "a photo of radiator", "split": "train", "train_index": 608}
+{"original_id": "pt_000755", "text": "a photo of radio telescope, radio reflector", "split": "train", "train_index": 609}
+{"original_id": "pt_000756", "text": "a photo of rain barrel", "split": "train", "train_index": 610}
+{"original_id": "pt_000757", "text": "a photo of recreational vehicle, RV, R.V.", "split": "train", "train_index": 611}
+{"original_id": "pt_000760", "text": "a photo of refrigerator, icebox", "split": "train", "train_index": 612}
+{"original_id": "pt_000761", "text": "a photo of remote control, remote", "split": "train", "train_index": 613}
+{"original_id": "pt_000763", "text": "a photo of revolver, six-gun, six-shooter", "split": "train", "train_index": 614}
+{"original_id": "pt_000765", "text": "a photo of rocking chair, rocker", "split": "train", "train_index": 615}
+{"original_id": "pt_000766", "text": "a photo of rotisserie", "split": "train", "train_index": 616}
+{"original_id": "pt_000767", "text": "a photo of rubber eraser, rubber, pencil eraser", "split": "train", "train_index": 617}
+{"original_id": "pt_000769", "text": "a photo of rule, ruler", "split": "train", "train_index": 618}
+{"original_id": "pt_000770", "text": "a photo of running shoe", "split": "train", "train_index": 619}
+{"original_id": "pt_000771", "text": "a photo of safe", "split": "train", "train_index": 620}
+{"original_id": "pt_000772", "text": "a photo of safety pin", "split": "train", "train_index": 621}
+{"original_id": "pt_000774", "text": "a photo of sandal", "split": "train", "train_index": 622}
+{"original_id": "pt_000775", "text": "a photo of sarong", "split": "train", "train_index": 623}
+{"original_id": "pt_000776", "text": "a photo of sax, saxophone", "split": "train", "train_index": 624}
+{"original_id": "pt_000778", "text": "a photo of scale, weighing machine", "split": "train", "train_index": 625}
+{"original_id": "pt_000779", "text": "a photo of school bus", "split": "train", "train_index": 626}
+{"original_id": "pt_000780", "text": "a photo of schooner", "split": "train", "train_index": 627}
+{"original_id": "pt_000782", "text": "a photo of screen, CRT screen", "split": "train", "train_index": 628}
+{"original_id": "pt_000783", "text": "a photo of screw", "split": "train", "train_index": 629}
+{"original_id": "pt_000784", "text": "a photo of screwdriver", "split": "train", "train_index": 630}
+{"original_id": "pt_000785", "text": "a photo of seat belt, seatbelt", "split": "train", "train_index": 631}
+{"original_id": "pt_000788", "text": "a photo of shoe shop, shoe-shop, shoe store", "split": "train", "train_index": 632}
+{"original_id": "pt_000789", "text": "a photo of shoji", "split": "train", "train_index": 633}
+{"original_id": "pt_000790", "text": "a photo of shopping basket", "split": "train", "train_index": 634}
+{"original_id": "pt_000792", "text": "a photo of shovel", "split": "train", "train_index": 635}
+{"original_id": "pt_000793", "text": "a photo of shower cap", "split": "train", "train_index": 636}
+{"original_id": "pt_000795", "text": "a photo of ski", "split": "train", "train_index": 637}
+{"original_id": "pt_000796", "text": "a photo of ski mask", "split": "train", "train_index": 638}
+{"original_id": "pt_000797", "text": "a photo of sleeping bag", "split": "train", "train_index": 639}
+{"original_id": "pt_000798", "text": "a photo of slide rule, slipstick", "split": "train", "train_index": 640}
+{"original_id": "pt_000799", "text": "a photo of sliding door", "split": "train", "train_index": 641}
+{"original_id": "pt_000800", "text": "a photo of slot, one-armed bandit", "split": "train", "train_index": 642}
+{"original_id": "pt_000801", "text": "a photo of snorkel", "split": "train", "train_index": 643}
+{"original_id": "pt_000802", "text": "a photo of snowmobile", "split": "train", "train_index": 644}
+{"original_id": "pt_000803", "text": "a photo of snowplow, snowplough", "split": "train", "train_index": 645}
+{"original_id": "pt_000804", "text": "a photo of soap dispenser", "split": "train", "train_index": 646}
+{"original_id": "pt_000805", "text": "a photo of soccer ball", "split": "train", "train_index": 647}
+{"original_id": "pt_000806", "text": "a photo of sock", "split": "train", "train_index": 648}
+{"original_id": "pt_000807", "text": "a photo of solar dish, solar collector, solar furnace", "split": "train", "train_index": 649}
+{"original_id": "pt_000808", "text": "a photo of sombrero", "split": "train", "train_index": 650}
+{"original_id": "pt_000809", "text": "a photo of soup bowl", "split": "train", "train_index": 651}
+{"original_id": "pt_000810", "text": "a photo of space bar", "split": "train", "train_index": 652}
+{"original_id": "pt_000812", "text": "a photo of space shuttle", "split": "train", "train_index": 653}
+{"original_id": "pt_000813", "text": "a photo of spatula", "split": "train", "train_index": 654}
+{"original_id": "pt_000814", "text": "a photo of speedboat", "split": "train", "train_index": 655}
+{"original_id": "pt_000815", "text": "a photo of spider web, spider's web", "split": "train", "train_index": 656}
+{"original_id": "pt_000816", "text": "a photo of spindle", "split": "train", "train_index": 657}
+{"original_id": "pt_000817", "text": "a photo of sports car, sport car", "split": "train", "train_index": 658}
+{"original_id": "pt_000818", "text": "a photo of spotlight, spot", "split": "train", "train_index": 659}
+{"original_id": "pt_000819", "text": "a photo of stage", "split": "train", "train_index": 660}
+{"original_id": "pt_000820", "text": "a photo of steam locomotive", "split": "train", "train_index": 661}
+{"original_id": "pt_000821", "text": "a photo of steel arch bridge", "split": "train", "train_index": 662}
+{"original_id": "pt_000822", "text": "a photo of steel drum", "split": "train", "train_index": 663}
+{"original_id": "pt_000823", "text": "a photo of stethoscope", "split": "train", "train_index": 664}
+{"original_id": "pt_000827", "text": "a photo of stove", "split": "train", "train_index": 665}
+{"original_id": "pt_000829", "text": "a photo of streetcar, tram, tramcar, trolley, trolley car", "split": "train", "train_index": 666}
+{"original_id": "pt_000831", "text": "a photo of studio couch, day bed", "split": "train", "train_index": 667}
+{"original_id": "pt_000832", "text": "a photo of stupa, tope", "split": "train", "train_index": 668}
+{"original_id": "pt_000833", "text": "a photo of submarine, pigboat, sub, U-boat", "split": "train", "train_index": 669}
+{"original_id": "pt_000834", "text": "a photo of suit, suit of clothes", "split": "train", "train_index": 670}
+{"original_id": "pt_000835", "text": "a photo of sundial", "split": "train", "train_index": 671}
+{"original_id": "pt_000836", "text": "a photo of sunglass", "split": "train", "train_index": 672}
+{"original_id": "pt_000837", "text": "a photo of sunglasses, dark glasses, shades", "split": "train", "train_index": 673}
+{"original_id": "pt_000838", "text": "a photo of sunscreen, sunblock, sun blocker", "split": "train", "train_index": 674}
+{"original_id": "pt_000839", "text": "a photo of suspension bridge", "split": "train", "train_index": 675}
+{"original_id": "pt_000840", "text": "a photo of swab, swob, mop", "split": "train", "train_index": 676}
+{"original_id": "pt_000842", "text": "a photo of swimming trunks, bathing trunks", "split": "train", "train_index": 677}
+{"original_id": "pt_000843", "text": "a photo of swing", "split": "train", "train_index": 678}
+{"original_id": "pt_000844", "text": "a photo of switch, electric switch, electrical switch", "split": "train", "train_index": 679}
+{"original_id": "pt_000845", "text": "a photo of syringe", "split": "train", "train_index": 680}
+{"original_id": "pt_000846", "text": "a photo of table lamp", "split": "train", "train_index": 681}
+{"original_id": "pt_000847", "text": "a photo of tank, army tank, armored combat vehicle, armoured combat vehicle", "split": "train", "train_index": 682}
+{"original_id": "pt_000848", "text": "a photo of tape player", "split": "train", "train_index": 683}
+{"original_id": "pt_000850", "text": "a photo of teddy, teddy bear", "split": "train", "train_index": 684}
+{"original_id": "pt_000851", "text": "a photo of television, television system", "split": "train", "train_index": 685}
+{"original_id": "pt_000852", "text": "a photo of tennis ball", "split": "train", "train_index": 686}
+{"original_id": "pt_000853", "text": "a photo of thatch, thatched roof", "split": "train", "train_index": 687}
+{"original_id": "pt_000855", "text": "a photo of thimble", "split": "train", "train_index": 688}
+{"original_id": "pt_000856", "text": "a photo of thresher, thrasher, threshing machine", "split": "train", "train_index": 689}
+{"original_id": "pt_000857", "text": "a photo of throne", "split": "train", "train_index": 690}
+{"original_id": "pt_000858", "text": "a photo of tile roof", "split": "train", "train_index": 691}
+{"original_id": "pt_000859", "text": "a photo of toaster", "split": "train", "train_index": 692}
+{"original_id": "pt_000860", "text": "a photo of tobacco shop, tobacconist shop, tobacconist", "split": "train", "train_index": 693}
+{"original_id": "pt_000861", "text": "a photo of toilet seat", "split": "train", "train_index": 694}
+{"original_id": "pt_000862", "text": "a photo of torch", "split": "train", "train_index": 695}
+{"original_id": "pt_000864", "text": "a photo of tow truck, tow car, wrecker", "split": "train", "train_index": 696}
+{"original_id": "pt_000865", "text": "a photo of toyshop", "split": "train", "train_index": 697}
+{"original_id": "pt_000866", "text": "a photo of tractor", "split": "train", "train_index": 698}
+{"original_id": "pt_000868", "text": "a photo of tray", "split": "train", "train_index": 699}
+{"original_id": "pt_000869", "text": "a photo of trench coat", "split": "train", "train_index": 700}
+{"original_id": "pt_000870", "text": "a photo of tricycle, trike, velocipede", "split": "train", "train_index": 701}
+{"original_id": "pt_000871", "text": "a photo of trimaran", "split": "train", "train_index": 702}
+{"original_id": "pt_000872", "text": "a photo of tripod", "split": "train", "train_index": 703}
+{"original_id": "pt_000873", "text": "a photo of triumphal arch", "split": "train", "train_index": 704}
+{"original_id": "pt_000874", "text": "a photo of trolleybus, trolley coach, trackless trolley", "split": "train", "train_index": 705}
+{"original_id": "pt_000876", "text": "a photo of tub, vat", "split": "train", "train_index": 706}
+{"original_id": "pt_000877", "text": "a photo of turnstile", "split": "train", "train_index": 707}
+{"original_id": "pt_000878", "text": "a photo of typewriter keyboard", "split": "train", "train_index": 708}
+{"original_id": "pt_000879", "text": "a photo of umbrella", "split": "train", "train_index": 709}
+{"original_id": "pt_000880", "text": "a photo of unicycle, monocycle", "split": "train", "train_index": 710}
+{"original_id": "pt_000883", "text": "a photo of vase", "split": "train", "train_index": 711}
+{"original_id": "pt_000884", "text": "a photo of vault", "split": "train", "train_index": 712}
+{"original_id": "pt_000885", "text": "a photo of velvet", "split": "train", "train_index": 713}
+{"original_id": "pt_000886", "text": "a photo of vending machine", "split": "train", "train_index": 714}
+{"original_id": "pt_000888", "text": "a photo of viaduct", "split": "train", "train_index": 715}
+{"original_id": "pt_000889", "text": "a photo of violin, fiddle", "split": "train", "train_index": 716}
+{"original_id": "pt_000891", "text": "a photo of waffle iron", "split": "train", "train_index": 717}
+{"original_id": "pt_000892", "text": "a photo of wall clock", "split": "train", "train_index": 718}
+{"original_id": "pt_000893", "text": "a photo of wallet, billfold, notecase, pocketbook", "split": "train", "train_index": 719}
+{"original_id": "pt_000894", "text": "a photo of wardrobe, closet, press", "split": "train", "train_index": 720}
+{"original_id": "pt_000895", "text": "a photo of warplane, military plane", "split": "train", "train_index": 721}
+{"original_id": "pt_000896", "text": "a photo of washbasin, handbasin, washbowl, lavabo, wash-hand basin", "split": "train", "train_index": 722}
+{"original_id": "pt_000897", "text": "a photo of washer, automatic washer, washing machine", "split": "train", "train_index": 723}
+{"original_id": "pt_000898", "text": "a photo of water bottle", "split": "train", "train_index": 724}
+{"original_id": "pt_000900", "text": "a photo of water tower", "split": "train", "train_index": 725}
+{"original_id": "pt_000901", "text": "a photo of whiskey jug", "split": "train", "train_index": 726}
+{"original_id": "pt_000902", "text": "a photo of whistle", "split": "train", "train_index": 727}
+{"original_id": "pt_000903", "text": "a photo of wig", "split": "train", "train_index": 728}
+{"original_id": "pt_000904", "text": "a photo of window screen", "split": "train", "train_index": 729}
+{"original_id": "pt_000905", "text": "a photo of window shade", "split": "train", "train_index": 730}
+{"original_id": "pt_000909", "text": "a photo of wok", "split": "train", "train_index": 731}
+{"original_id": "pt_000910", "text": "a photo of wooden spoon", "split": "train", "train_index": 732}
+{"original_id": "pt_000911", "text": "a photo of wool, woolen, woollen", "split": "train", "train_index": 733}
+{"original_id": "pt_000912", "text": "a photo of worm fence, snake fence, snake-rail fence, Virginia fence", "split": "train", "train_index": 734}
+{"original_id": "pt_000914", "text": "a photo of yawl", "split": "train", "train_index": 735}
+{"original_id": "pt_000915", "text": "a photo of yurt", "split": "train", "train_index": 736}
+{"original_id": "pt_000916", "text": "a photo of web site, website, internet site, site", "split": "train", "train_index": 737}
+{"original_id": "pt_000917", "text": "a photo of comic book", "split": "train", "train_index": 738}
+{"original_id": "pt_000918", "text": "a photo of crossword puzzle, crossword", "split": "train", "train_index": 739}
+{"original_id": "pt_000919", "text": "a photo of street sign", "split": "train", "train_index": 740}
+{"original_id": "pt_000920", "text": "a photo of traffic light, traffic signal, stoplight", "split": "train", "train_index": 741}
+{"original_id": "pt_000921", "text": "a photo of book jacket, dust cover, dust jacket, dust wrapper", "split": "train", "train_index": 742}
+{"original_id": "pt_000922", "text": "a photo of menu", "split": "train", "train_index": 743}
+{"original_id": "pt_000923", "text": "a photo of plate", "split": "train", "train_index": 744}
+{"original_id": "pt_000924", "text": "a photo of guacamole", "split": "train", "train_index": 745}
+{"original_id": "pt_000926", "text": "a photo of hot pot, hotpot", "split": "train", "train_index": 746}
+{"original_id": "pt_000927", "text": "a photo of trifle", "split": "train", "train_index": 747}
+{"original_id": "pt_000928", "text": "a photo of ice cream, icecream", "split": "train", "train_index": 748}
+{"original_id": "pt_000929", "text": "a photo of ice lolly, lolly, lollipop, popsicle", "split": "train", "train_index": 749}
+{"original_id": "pt_000932", "text": "a photo of pretzel", "split": "train", "train_index": 750}
+{"original_id": "pt_000933", "text": "a photo of cheeseburger", "split": "train", "train_index": 751}
+{"original_id": "pt_000934", "text": "a photo of hotdog, hot dog, red hot", "split": "train", "train_index": 752}
+{"original_id": "pt_000935", "text": "a photo of mashed potato", "split": "train", "train_index": 753}
+{"original_id": "pt_000937", "text": "a photo of broccoli", "split": "train", "train_index": 754}
+{"original_id": "pt_000938", "text": "a photo of cauliflower", "split": "train", "train_index": 755}
+{"original_id": "pt_000939", "text": "a photo of zucchini, courgette", "split": "train", "train_index": 756}
+{"original_id": "pt_000940", "text": "a photo of spaghetti squash", "split": "train", "train_index": 757}
+{"original_id": "pt_000941", "text": "a photo of acorn squash", "split": "train", "train_index": 758}
+{"original_id": "pt_000942", "text": "a photo of butternut squash", "split": "train", "train_index": 759}
+{"original_id": "pt_000943", "text": "a photo of cucumber, cuke", "split": "train", "train_index": 760}
+{"original_id": "pt_000944", "text": "a photo of artichoke, globe artichoke", "split": "train", "train_index": 761}
+{"original_id": "pt_000945", "text": "a photo of bell pepper", "split": "train", "train_index": 762}
+{"original_id": "pt_000946", "text": "a photo of cardoon", "split": "train", "train_index": 763}
+{"original_id": "pt_000948", "text": "a photo of Granny Smith", "split": "train", "train_index": 764}
+{"original_id": "pt_000949", "text": "a photo of strawberry", "split": "train", "train_index": 765}
+{"original_id": "pt_000950", "text": "a photo of orange", "split": "train", "train_index": 766}
+{"original_id": "pt_000951", "text": "a photo of lemon", "split": "train", "train_index": 767}
+{"original_id": "pt_000952", "text": "a photo of fig", "split": "train", "train_index": 768}
+{"original_id": "pt_000953", "text": "a photo of pineapple, ananas", "split": "train", "train_index": 769}
+{"original_id": "pt_000957", "text": "a photo of pomegranate", "split": "train", "train_index": 770}
+{"original_id": "pt_000959", "text": "a photo of carbonara", "split": "train", "train_index": 771}
+{"original_id": "pt_000960", "text": "a photo of chocolate sauce, chocolate syrup", "split": "train", "train_index": 772}
+{"original_id": "pt_000961", "text": "a photo of dough", "split": "train", "train_index": 773}
+{"original_id": "pt_000962", "text": "a photo of meat loaf, meatloaf", "split": "train", "train_index": 774}
+{"original_id": "pt_000965", "text": "a photo of burrito", "split": "train", "train_index": 775}
+{"original_id": "pt_000966", "text": "a photo of red wine", "split": "train", "train_index": 776}
+{"original_id": "pt_000967", "text": "a photo of espresso", "split": "train", "train_index": 777}
+{"original_id": "pt_000968", "text": "a photo of cup", "split": "train", "train_index": 778}
+{"original_id": "pt_000969", "text": "a photo of eggnog", "split": "train", "train_index": 779}
+{"original_id": "pt_000971", "text": "a photo of bubble", "split": "train", "train_index": 780}
+{"original_id": "pt_000972", "text": "a photo of cliff, drop, drop-off", "split": "train", "train_index": 781}
+{"original_id": "pt_000973", "text": "a photo of coral reef", "split": "train", "train_index": 782}
+{"original_id": "pt_000975", "text": "a photo of lakeside, lakeshore", "split": "train", "train_index": 783}
+{"original_id": "pt_000976", "text": "a photo of promontory, headland, head, foreland", "split": "train", "train_index": 784}
+{"original_id": "pt_000977", "text": "a photo of sandbar, sand bar", "split": "train", "train_index": 785}
+{"original_id": "pt_000979", "text": "a photo of valley, vale", "split": "train", "train_index": 786}
+{"original_id": "pt_000980", "text": "a photo of volcano", "split": "train", "train_index": 787}
+{"original_id": "pt_000981", "text": "a photo of ballplayer, baseball player", "split": "train", "train_index": 788}
+{"original_id": "pt_000984", "text": "a photo of rapeseed", "split": "train", "train_index": 789}
+{"original_id": "pt_000985", "text": "a photo of daisy", "split": "train", "train_index": 790}
+{"original_id": "pt_000987", "text": "a photo of corn", "split": "train", "train_index": 791}
+{"original_id": "pt_000988", "text": "a photo of acorn", "split": "train", "train_index": 792}
+{"original_id": "pt_000989", "text": "a photo of hip, rose hip, rosehip", "split": "train", "train_index": 793}
+{"original_id": "pt_000991", "text": "a photo of coral fungus", "split": "train", "train_index": 794}
+{"original_id": "pt_000993", "text": "a photo of gyromitra", "split": "train", "train_index": 795}
+{"original_id": "pt_000995", "text": "a photo of earthstar", "split": "train", "train_index": 796}
+{"original_id": "pt_000996", "text": "a photo of hen-of-the-woods, hen of the woods, Polyporus frondosus, Grifola frondosa", "split": "train", "train_index": 797}
+{"original_id": "pt_000997", "text": "a photo of bolete", "split": "train", "train_index": 798}
+{"original_id": "pt_000999", "text": "a photo of toilet tissue, toilet paper, bathroom tissue", "split": "train", "train_index": 799}
+{"original_id": "pt_000003", "text": "a photo of tiger shark, Galeocerdo cuvieri", "split": "heldout", "train_index": null}
+{"original_id": "pt_000006", "text": "a photo of stingray", "split": "heldout", "train_index": null}
+{"original_id": "pt_000011", "text": "a photo of goldfinch, Carduelis carduelis", "split": "heldout", "train_index": null}
+{"original_id": "pt_000025", "text": "a photo of European fire salamander, Salamandra salamandra", "split": "heldout", "train_index": null}
+{"original_id": "pt_000027", "text": "a photo of eft", "split": "heldout", "train_index": null}
+{"original_id": "pt_000030", "text": "a photo of bullfrog, Rana catesbeiana", "split": "heldout", "train_index": null}
+{"original_id": "pt_000032", "text": "a photo of tailed frog, bell toad, ribbed toad, tailed toad, Ascaphus trui", "split": "heldout", "train_index": null}
+{"original_id": "pt_000044", "text": "a photo of alligator lizard", "split": "heldout", "train_index": null}
+{"original_id": "pt_000046", "text": "a photo of green lizard, Lacerta viridis", "split": "heldout", "train_index": null}
+{"original_id": "pt_000048", "text": "a photo of Komodo dragon, Komodo lizard, dragon lizard, giant lizard, Varanus komodoensis", "split": "heldout", "train_index": null}
+{"original_id": "pt_000057", "text": "a photo of garter snake, grass snake", "split": "heldout", "train_index": null}
+{"original_id": "pt_000065", "text": "a photo of sea snake", "split": "heldout", "train_index": null}
+{"original_id": "pt_000067", "text": "a photo of diamondback, diamondback rattlesnake, Crotalus adamanteus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000071", "text": "a photo of scorpion", "split": "heldout", "train_index": null}
+{"original_id": "pt_000073", "text": "a photo of barn spider, Araneus cavaticus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000080", "text": "a photo of black grouse", "split": "heldout", "train_index": null}
+{"original_id": "pt_000081", "text": "a photo of ptarmigan", "split": "heldout", "train_index": null}
+{"original_id": "pt_000089", "text": "a photo of sulphur-crested cockatoo, Kakatoe galerita, Cacatua galerita", "split": "heldout", "train_index": null}
+{"original_id": "pt_000093", "text": "a photo of hornbill", "split": "heldout", "train_index": null}
+{"original_id": "pt_000094", "text": "a photo of hummingbird", "split": "heldout", "train_index": null}
+{"original_id": "pt_000095", "text": "a photo of jacamar", "split": "heldout", "train_index": null}
+{"original_id": "pt_000099", "text": "a photo of goose", "split": "heldout", "train_index": null}
+{"original_id": "pt_000103", "text": "a photo of platypus, duckbill, duckbilled platypus, duck-billed platypus, Ornithorhynchus anatinus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000104", "text": "a photo of wallaby, brush kangaroo", "split": "heldout", "train_index": null}
+{"original_id": "pt_000112", "text": "a photo of conch", "split": "heldout", "train_index": null}
+{"original_id": "pt_000114", "text": "a photo of slug", "split": "heldout", "train_index": null}
+{"original_id": "pt_000117", "text": "a photo of chambered nautilus, pearly nautilus, nautilus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000127", "text": "a photo of white stork, Ciconia ciconia", "split": "heldout", "train_index": null}
+{"original_id": "pt_000141", "text": "a photo of redshank, Tringa totanus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000142", "text": "a photo of dowitcher", "split": "heldout", "train_index": null}
+{"original_id": "pt_000146", "text": "a photo of albatross, mollymawk", "split": "heldout", "train_index": null}
+{"original_id": "pt_000156", "text": "a photo of Blenheim spaniel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000159", "text": "a photo of Rhodesian ridgeback", "split": "heldout", "train_index": null}
+{"original_id": "pt_000161", "text": "a photo of basset, basset hound", "split": "heldout", "train_index": null}
+{"original_id": "pt_000163", "text": "a photo of bloodhound, sleuthhound", "split": "heldout", "train_index": null}
+{"original_id": "pt_000166", "text": "a photo of Walker hound, Walker foxhound", "split": "heldout", "train_index": null}
+{"original_id": "pt_000167", "text": "a photo of English foxhound", "split": "heldout", "train_index": null}
+{"original_id": "pt_000175", "text": "a photo of otterhound, otter hound", "split": "heldout", "train_index": null}
+{"original_id": "pt_000196", "text": "a photo of miniature schnauzer", "split": "heldout", "train_index": null}
+{"original_id": "pt_000203", "text": "a photo of West Highland white terrier", "split": "heldout", "train_index": null}
+{"original_id": "pt_000214", "text": "a photo of Gordon setter", "split": "heldout", "train_index": null}
+{"original_id": "pt_000216", "text": "a photo of clumber, clumber spaniel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000217", "text": "a photo of English springer, English springer spaniel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000220", "text": "a photo of Sussex spaniel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000223", "text": "a photo of schipperke", "split": "heldout", "train_index": null}
+{"original_id": "pt_000224", "text": "a photo of groenendael", "split": "heldout", "train_index": null}
+{"original_id": "pt_000225", "text": "a photo of malinois", "split": "heldout", "train_index": null}
+{"original_id": "pt_000228", "text": "a photo of komondor", "split": "heldout", "train_index": null}
+{"original_id": "pt_000233", "text": "a photo of Bouvier des Flandres, Bouviers des Flandres", "split": "heldout", "train_index": null}
+{"original_id": "pt_000234", "text": "a photo of Rottweiler", "split": "heldout", "train_index": null}
+{"original_id": "pt_000238", "text": "a photo of Greater Swiss Mountain dog", "split": "heldout", "train_index": null}
+{"original_id": "pt_000250", "text": "a photo of Siberian husky", "split": "heldout", "train_index": null}
+{"original_id": "pt_000252", "text": "a photo of affenpinscher, monkey pinscher, monkey dog", "split": "heldout", "train_index": null}
+{"original_id": "pt_000257", "text": "a photo of Great Pyrenees", "split": "heldout", "train_index": null}
+{"original_id": "pt_000269", "text": "a photo of timber wolf, grey wolf, gray wolf, Canis lupus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000270", "text": "a photo of white wolf, Arctic wolf, Canis lupus tundrarum", "split": "heldout", "train_index": null}
+{"original_id": "pt_000271", "text": "a photo of red wolf, maned wolf, Canis rufus, Canis niger", "split": "heldout", "train_index": null}
+{"original_id": "pt_000273", "text": "a photo of dingo, warrigal, warragal, Canis dingo", "split": "heldout", "train_index": null}
+{"original_id": "pt_000274", "text": "a photo of dhole, Cuon alpinus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000276", "text": "a photo of hyena, hyaena", "split": "heldout", "train_index": null}
+{"original_id": "pt_000281", "text": "a photo of tabby, tabby cat", "split": "heldout", "train_index": null}
+{"original_id": "pt_000284", "text": "a photo of Siamese cat, Siamese", "split": "heldout", "train_index": null}
+{"original_id": "pt_000296", "text": "a photo of ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000300", "text": "a photo of tiger beetle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000322", "text": "a photo of ringlet, ringlet butterfly", "split": "heldout", "train_index": null}
+{"original_id": "pt_000323", "text": "a photo of monarch, monarch butterfly, milkweed butterfly, Danaus plexippus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000332", "text": "a photo of Angora, Angora rabbit", "split": "heldout", "train_index": null}
+{"original_id": "pt_000344", "text": "a photo of hippopotamus, hippo, river horse, Hippopotamus amphibius", "split": "heldout", "train_index": null}
+{"original_id": "pt_000348", "text": "a photo of ram, tup", "split": "heldout", "train_index": null}
+{"original_id": "pt_000352", "text": "a photo of impala, Aepyceros melampus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000363", "text": "a photo of armadillo", "split": "heldout", "train_index": null}
+{"original_id": "pt_000367", "text": "a photo of chimpanzee, chimp, Pan troglodytes", "split": "heldout", "train_index": null}
+{"original_id": "pt_000370", "text": "a photo of guenon, guenon monkey", "split": "heldout", "train_index": null}
+{"original_id": "pt_000373", "text": "a photo of macaque", "split": "heldout", "train_index": null}
+{"original_id": "pt_000379", "text": "a photo of howler monkey, howler", "split": "heldout", "train_index": null}
+{"original_id": "pt_000387", "text": "a photo of lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens", "split": "heldout", "train_index": null}
+{"original_id": "pt_000388", "text": "a photo of giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca", "split": "heldout", "train_index": null}
+{"original_id": "pt_000389", "text": "a photo of barracouta, snoek", "split": "heldout", "train_index": null}
+{"original_id": "pt_000390", "text": "a photo of eel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000394", "text": "a photo of sturgeon", "split": "heldout", "train_index": null}
+{"original_id": "pt_000405", "text": "a photo of airship, dirigible", "split": "heldout", "train_index": null}
+{"original_id": "pt_000408", "text": "a photo of amphibian, amphibious vehicle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000410", "text": "a photo of apiary, bee house", "split": "heldout", "train_index": null}
+{"original_id": "pt_000429", "text": "a photo of baseball", "split": "heldout", "train_index": null}
+{"original_id": "pt_000432", "text": "a photo of bassoon", "split": "heldout", "train_index": null}
+{"original_id": "pt_000438", "text": "a photo of beaker", "split": "heldout", "train_index": null}
+{"original_id": "pt_000445", "text": "a photo of bikini, two-piece", "split": "heldout", "train_index": null}
+{"original_id": "pt_000459", "text": "a photo of brassiere, bra, bandeau", "split": "heldout", "train_index": null}
+{"original_id": "pt_000464", "text": "a photo of buckle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000469", "text": "a photo of caldron, cauldron", "split": "heldout", "train_index": null}
+{"original_id": "pt_000470", "text": "a photo of candle, taper, wax light", "split": "heldout", "train_index": null}
+{"original_id": "pt_000473", "text": "a photo of can opener, tin opener", "split": "heldout", "train_index": null}
+{"original_id": "pt_000479", "text": "a photo of car wheel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000505", "text": "a photo of coffeepot", "split": "heldout", "train_index": null}
+{"original_id": "pt_000511", "text": "a photo of convertible", "split": "heldout", "train_index": null}
+{"original_id": "pt_000517", "text": "a photo of crane2", "split": "heldout", "train_index": null}
+{"original_id": "pt_000521", "text": "a photo of Crock Pot", "split": "heldout", "train_index": null}
+{"original_id": "pt_000541", "text": "a photo of drum, membranophone, tympan", "split": "heldout", "train_index": null}
+{"original_id": "pt_000546", "text": "a photo of electric guitar", "split": "heldout", "train_index": null}
+{"original_id": "pt_000549", "text": "a photo of envelope", "split": "heldout", "train_index": null}
+{"original_id": "pt_000551", "text": "a photo of face powder", "split": "heldout", "train_index": null}
+{"original_id": "pt_000558", "text": "a photo of flute, transverse flute", "split": "heldout", "train_index": null}
+{"original_id": "pt_000565", "text": "a photo of freight car", "split": "heldout", "train_index": null}
+{"original_id": "pt_000566", "text": "a photo of French horn, horn", "split": "heldout", "train_index": null}
+{"original_id": "pt_000570", "text": "a photo of gasmask, respirator, gas helmet", "split": "heldout", "train_index": null}
+{"original_id": "pt_000574", "text": "a photo of golf ball", "split": "heldout", "train_index": null}
+{"original_id": "pt_000580", "text": "a photo of greenhouse, nursery, glasshouse", "split": "heldout", "train_index": null}
+{"original_id": "pt_000591", "text": "a photo of handkerchief, hankie, hanky, hankey", "split": "heldout", "train_index": null}
+{"original_id": "pt_000597", "text": "a photo of holster", "split": "heldout", "train_index": null}
+{"original_id": "pt_000598", "text": "a photo of home theater, home theatre", "split": "heldout", "train_index": null}
+{"original_id": "pt_000603", "text": "a photo of horse cart, horse-cart", "split": "heldout", "train_index": null}
+{"original_id": "pt_000604", "text": "a photo of hourglass", "split": "heldout", "train_index": null}
+{"original_id": "pt_000610", "text": "a photo of jersey, T-shirt, tee shirt", "split": "heldout", "train_index": null}
+{"original_id": "pt_000616", "text": "a photo of knot", "split": "heldout", "train_index": null}
+{"original_id": "pt_000618", "text": "a photo of ladle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000623", "text": "a photo of letter opener, paper knife, paperknife", "split": "heldout", "train_index": null}
+{"original_id": "pt_000633", "text": "a photo of loupe, jeweler's loupe", "split": "heldout", "train_index": null}
+{"original_id": "pt_000642", "text": "a photo of marimba, xylophone", "split": "heldout", "train_index": null}
+{"original_id": "pt_000643", "text": "a photo of mask", "split": "heldout", "train_index": null}
+{"original_id": "pt_000650", "text": "a photo of microphone, mike", "split": "heldout", "train_index": null}
+{"original_id": "pt_000654", "text": "a photo of minibus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000655", "text": "a photo of miniskirt, mini", "split": "heldout", "train_index": null}
+{"original_id": "pt_000656", "text": "a photo of minivan", "split": "heldout", "train_index": null}
+{"original_id": "pt_000658", "text": "a photo of mitten", "split": "heldout", "train_index": null}
+{"original_id": "pt_000663", "text": "a photo of monastery", "split": "heldout", "train_index": null}
+{"original_id": "pt_000665", "text": "a photo of moped", "split": "heldout", "train_index": null}
+{"original_id": "pt_000671", "text": "a photo of mountain bike, all-terrain bike, off-roader", "split": "heldout", "train_index": null}
+{"original_id": "pt_000677", "text": "a photo of nail", "split": "heldout", "train_index": null}
+{"original_id": "pt_000686", "text": "a photo of oil filter", "split": "heldout", "train_index": null}
+{"original_id": "pt_000692", "text": "a photo of packet", "split": "heldout", "train_index": null}
+{"original_id": "pt_000696", "text": "a photo of paintbrush", "split": "heldout", "train_index": null}
+{"original_id": "pt_000698", "text": "a photo of palace", "split": "heldout", "train_index": null}
+{"original_id": "pt_000699", "text": "a photo of panpipe, pandean pipe, syrinx", "split": "heldout", "train_index": null}
+{"original_id": "pt_000701", "text": "a photo of parachute, chute", "split": "heldout", "train_index": null}
+{"original_id": "pt_000704", "text": "a photo of parking meter", "split": "heldout", "train_index": null}
+{"original_id": "pt_000714", "text": "a photo of pick, plectrum, plectron", "split": "heldout", "train_index": null}
+{"original_id": "pt_000718", "text": "a photo of pier", "split": "heldout", "train_index": null}
+{"original_id": "pt_000721", "text": "a photo of pillow", "split": "heldout", "train_index": null}
+{"original_id": "pt_000733", "text": "a photo of pole", "split": "heldout", "train_index": null}
+{"original_id": "pt_000735", "text": "a photo of poncho", "split": "heldout", "train_index": null}
+{"original_id": "pt_000736", "text": "a photo of pool table, billiard table, snooker table", "split": "heldout", "train_index": null}
+{"original_id": "pt_000738", "text": "a photo of pot, flowerpot", "split": "heldout", "train_index": null}
+{"original_id": "pt_000739", "text": "a photo of potter's wheel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000746", "text": "a photo of puck, hockey puck", "split": "heldout", "train_index": null}
+{"original_id": "pt_000747", "text": "a photo of punching bag, punch bag, punching ball, punchball", "split": "heldout", "train_index": null}
+{"original_id": "pt_000754", "text": "a photo of radio, wireless", "split": "heldout", "train_index": null}
+{"original_id": "pt_000758", "text": "a photo of reel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000759", "text": "a photo of reflex camera", "split": "heldout", "train_index": null}
+{"original_id": "pt_000762", "text": "a photo of restaurant, eating house, eating place, eatery", "split": "heldout", "train_index": null}
+{"original_id": "pt_000764", "text": "a photo of rifle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000768", "text": "a photo of rugby ball", "split": "heldout", "train_index": null}
+{"original_id": "pt_000773", "text": "a photo of saltshaker, salt shaker", "split": "heldout", "train_index": null}
+{"original_id": "pt_000777", "text": "a photo of scabbard", "split": "heldout", "train_index": null}
+{"original_id": "pt_000781", "text": "a photo of scoreboard", "split": "heldout", "train_index": null}
+{"original_id": "pt_000786", "text": "a photo of sewing machine", "split": "heldout", "train_index": null}
+{"original_id": "pt_000787", "text": "a photo of shield, buckler", "split": "heldout", "train_index": null}
+{"original_id": "pt_000791", "text": "a photo of shopping cart", "split": "heldout", "train_index": null}
+{"original_id": "pt_000794", "text": "a photo of shower curtain", "split": "heldout", "train_index": null}
+{"original_id": "pt_000811", "text": "a photo of space heater", "split": "heldout", "train_index": null}
+{"original_id": "pt_000824", "text": "a photo of stole", "split": "heldout", "train_index": null}
+{"original_id": "pt_000825", "text": "a photo of stone wall", "split": "heldout", "train_index": null}
+{"original_id": "pt_000826", "text": "a photo of stopwatch, stop watch", "split": "heldout", "train_index": null}
+{"original_id": "pt_000828", "text": "a photo of strainer", "split": "heldout", "train_index": null}
+{"original_id": "pt_000830", "text": "a photo of stretcher", "split": "heldout", "train_index": null}
+{"original_id": "pt_000841", "text": "a photo of sweatshirt", "split": "heldout", "train_index": null}
+{"original_id": "pt_000849", "text": "a photo of teapot", "split": "heldout", "train_index": null}
+{"original_id": "pt_000854", "text": "a photo of theater curtain, theatre curtain", "split": "heldout", "train_index": null}
+{"original_id": "pt_000863", "text": "a photo of totem pole", "split": "heldout", "train_index": null}
+{"original_id": "pt_000867", "text": "a photo of trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi", "split": "heldout", "train_index": null}
+{"original_id": "pt_000875", "text": "a photo of trombone", "split": "heldout", "train_index": null}
+{"original_id": "pt_000881", "text": "a photo of upright, upright piano", "split": "heldout", "train_index": null}
+{"original_id": "pt_000882", "text": "a photo of vacuum, vacuum cleaner", "split": "heldout", "train_index": null}
+{"original_id": "pt_000887", "text": "a photo of vestment", "split": "heldout", "train_index": null}
+{"original_id": "pt_000890", "text": "a photo of volleyball", "split": "heldout", "train_index": null}
+{"original_id": "pt_000899", "text": "a photo of water jug", "split": "heldout", "train_index": null}
+{"original_id": "pt_000906", "text": "a photo of Windsor tie", "split": "heldout", "train_index": null}
+{"original_id": "pt_000907", "text": "a photo of wine bottle", "split": "heldout", "train_index": null}
+{"original_id": "pt_000908", "text": "a photo of wing", "split": "heldout", "train_index": null}
+{"original_id": "pt_000913", "text": "a photo of wreck", "split": "heldout", "train_index": null}
+{"original_id": "pt_000925", "text": "a photo of consomme", "split": "heldout", "train_index": null}
+{"original_id": "pt_000930", "text": "a photo of French loaf", "split": "heldout", "train_index": null}
+{"original_id": "pt_000931", "text": "a photo of bagel, beigel", "split": "heldout", "train_index": null}
+{"original_id": "pt_000936", "text": "a photo of head cabbage", "split": "heldout", "train_index": null}
+{"original_id": "pt_000947", "text": "a photo of mushroom", "split": "heldout", "train_index": null}
+{"original_id": "pt_000954", "text": "a photo of banana", "split": "heldout", "train_index": null}
+{"original_id": "pt_000955", "text": "a photo of jackfruit, jak, jack", "split": "heldout", "train_index": null}
+{"original_id": "pt_000956", "text": "a photo of custard apple", "split": "heldout", "train_index": null}
+{"original_id": "pt_000958", "text": "a photo of hay", "split": "heldout", "train_index": null}
+{"original_id": "pt_000963", "text": "a photo of pizza, pizza pie", "split": "heldout", "train_index": null}
+{"original_id": "pt_000964", "text": "a photo of potpie", "split": "heldout", "train_index": null}
+{"original_id": "pt_000970", "text": "a photo of alp", "split": "heldout", "train_index": null}
+{"original_id": "pt_000974", "text": "a photo of geyser", "split": "heldout", "train_index": null}
+{"original_id": "pt_000978", "text": "a photo of seashore, coast, seacoast, sea-coast", "split": "heldout", "train_index": null}
+{"original_id": "pt_000982", "text": "a photo of groom, bridegroom", "split": "heldout", "train_index": null}
+{"original_id": "pt_000983", "text": "a photo of scuba diver", "split": "heldout", "train_index": null}
+{"original_id": "pt_000986", "text": "a photo of yellow lady's slipper, yellow lady-slipper, Cypripedium calceolus, Cypripedium parviflorum", "split": "heldout", "train_index": null}
+{"original_id": "pt_000990", "text": "a photo of buckeye, horse chestnut, conker", "split": "heldout", "train_index": null}
+{"original_id": "pt_000992", "text": "a photo of agaric", "split": "heldout", "train_index": null}
+{"original_id": "pt_000994", "text": "a photo of stinkhorn, carrion fungus", "split": "heldout", "train_index": null}
+{"original_id": "pt_000998", "text": "a photo of ear, spike, capitulum", "split": "heldout", "train_index": null}

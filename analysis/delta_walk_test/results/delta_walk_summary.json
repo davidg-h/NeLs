@@ -1,0 +1,268 @@
+{
+  "per_walk": {
+    "dir1_fox_cyberpunk_near": {
+      "run_id": "dir1_fox_cyberpunk_near",
+      "source_point_ids": [
+        "pt_000000",
+        "pt_000001",
+        "pt_000002"
+      ],
+      "source_texts": [
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting",
+        "an anthropomorphic fox, fursona!!!! trending on furaffinity, by kawacy, trending on artstation"
+      ],
+      "consecutive_lpips_mean": 0.6364616950352987,
+      "consecutive_lpips_max": 0.7966983914375305,
+      "consecutive_lpips_max_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 1.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9835865000883738,
+      "consecutive_cosine_similarity_min": 0.979761004447937,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.6219274401664734,
+        "-1.0": 0.5973808765411377,
+        "0.0": 0.0,
+        "1.0": 0.7966983914375305,
+        "2.0": 0.7883728742599487,
+        "3.0": 0.8202094435691833,
+        "4.0": 0.8181660175323486
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9327965378761292,
+        "-1.0": 0.9811882376670837,
+        "0.0": 1.0,
+        "1.0": 0.979761004447937,
+        "2.0": 0.923096776008606,
+        "3.0": 0.8432734608650208,
+        "4.0": 0.755510687828064
+      },
+      "baseline_lpips_max": 0.8202094435691833,
+      "baseline_lpips_max_alpha": 3.0,
+      "direction": 1,
+      "direction_label": "add cyberpunk styling (reused from Section 5.3 pair 2)",
+      "context": "near"
+    },
+    "dir1_fox_cyberpunk_far": {
+      "run_id": "dir1_fox_cyberpunk_far",
+      "source_point_ids": [
+        "pt_000000",
+        "pt_000001",
+        "pt_000003"
+      ],
+      "source_texts": [
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting",
+        "a seaside village, detailed, fantasy style, stormy day, trending on artstation"
+      ],
+      "consecutive_lpips_mean": 0.5736369291941324,
+      "consecutive_lpips_max": 0.5967150926589966,
+      "consecutive_lpips_max_step": {
+        "alpha_from": 3.0,
+        "alpha_to": 4.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9878799120585123,
+      "consecutive_cosine_similarity_min": 0.984531044960022,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.5844542980194092,
+        "-1.0": 0.526098370552063,
+        "0.0": 0.0,
+        "1.0": 0.5712162256240845,
+        "2.0": 0.5623862147331238,
+        "3.0": 0.597477376461029,
+        "4.0": 0.6061146259307861
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9401473999023438,
+        "-1.0": 0.984531044960022,
+        "0.0": 0.9999999403953552,
+        "1.0": 0.9855664968490601,
+        "2.0": 0.9474466443061829,
+        "3.0": 0.8951526880264282,
+        "4.0": 0.8373022079467773
+      },
+      "baseline_lpips_max": 0.6061146259307861,
+      "baseline_lpips_max_alpha": 4.0,
+      "direction": 1,
+      "direction_label": "add cyberpunk styling (reused from Section 5.3 pair 2)",
+      "context": "far"
+    },
+    "dir2_zombie_jacket_near": {
+      "run_id": "dir2_zombie_jacket_near",
+      "source_point_ids": [
+        "pt_000004",
+        "pt_000005",
+        "pt_000006"
+      ],
+      "source_texts": [
+        "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "zombie skateboard full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+      ],
+      "consecutive_lpips_mean": 0.5647207150856653,
+      "consecutive_lpips_max": 0.7069191932678223,
+      "consecutive_lpips_max_step": {
+        "alpha_from": -2.0,
+        "alpha_to": -1.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9923044939835867,
+      "consecutive_cosine_similarity_min": 0.9903876781463623,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.8457517027854919,
+        "-1.0": 0.7058109641075134,
+        "0.0": 0.0,
+        "1.0": 0.3304438292980194,
+        "2.0": 0.6433455944061279,
+        "3.0": 0.5834758877754211,
+        "4.0": 0.7869985699653625
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9619742035865784,
+        "-1.0": 0.9905079007148743,
+        "0.0": 1.0000001192092896,
+        "1.0": 0.9912973642349243,
+        "2.0": 0.9678232669830322,
+        "3.0": 0.9341790080070496,
+        "4.0": 0.8947991728782654
+      },
+      "baseline_lpips_max": 0.8457517027854919,
+      "baseline_lpips_max_alpha": -2.0,
+      "direction": 2,
+      "direction_label": "clothing-item focus shift, shoes to jacket (reused from Section 5.3 pair 1)",
+      "context": "near"
+    },
+    "dir2_zombie_jacket_far": {
+      "run_id": "dir2_zombie_jacket_far",
+      "source_point_ids": [
+        "pt_000004",
+        "pt_000005",
+        "pt_000007"
+      ],
+      "source_texts": [
+        "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "new stormtrooper/clone trooper helmet design, concept art"
+      ],
+      "consecutive_lpips_mean": 0.5430644949277242,
+      "consecutive_lpips_max": 0.6418622732162476,
+      "consecutive_lpips_max_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 1.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9943766991297404,
+      "consecutive_cosine_similarity_min": 0.9934980273246765,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.5835791826248169,
+        "-1.0": 0.535312294960022,
+        "0.0": 0.0,
+        "1.0": 0.6418622732162476,
+        "2.0": 0.7103532552719116,
+        "3.0": 0.7096587419509888,
+        "4.0": 0.6958526372909546
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9740777015686035,
+        "-1.0": 0.9934980273246765,
+        "0.0": 1.0,
+        "1.0": 0.9938225746154785,
+        "2.0": 0.9765345454216003,
+        "3.0": 0.9505602717399597,
+        "4.0": 0.9185894131660461
+      },
+      "baseline_lpips_max": 0.7103532552719116,
+      "baseline_lpips_max_alpha": 2.0,
+      "direction": 2,
+      "direction_label": "clothing-item focus shift, shoes to jacket (reused from Section 5.3 pair 1)",
+      "context": "far"
+    },
+    "dir3_identity_swap_near": {
+      "run_id": "dir3_identity_swap_near",
+      "source_point_ids": [
+        "pt_000008",
+        "pt_000009",
+        "pt_000010"
+      ],
+      "source_texts": [
+        "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,",
+        "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,",
+        "Sofia Vergara as a battle sister from Warhammer 40k, highly detailed, intricate, concept art, artstation"
+      ],
+      "consecutive_lpips_mean": 0.579052080710729,
+      "consecutive_lpips_max": 0.6427355408668518,
+      "consecutive_lpips_max_step": {
+        "alpha_from": -2.0,
+        "alpha_to": -1.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9815652966499329,
+      "consecutive_cosine_similarity_min": 0.9763786196708679,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.6361882090568542,
+        "-1.0": 0.5349512696266174,
+        "0.0": 0.0,
+        "1.0": 0.5388257503509521,
+        "2.0": 0.6160070300102234,
+        "3.0": 0.6509373188018799,
+        "4.0": 0.6639311909675598
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9155003428459167,
+        "-1.0": 0.9765943288803101,
+        "0.0": 1.0,
+        "1.0": 0.9763786196708679,
+        "2.0": 0.9140816926956177,
+        "3.0": 0.8318988084793091,
+        "4.0": 0.7464228868484497
+      },
+      "baseline_lpips_max": 0.6639311909675598,
+      "baseline_lpips_max_alpha": 4.0,
+      "direction": 3,
+      "direction_label": "named-identity swap, Tessa Thompson to Rihanna (new)",
+      "context": "near"
+    },
+    "dir3_identity_swap_far": {
+      "run_id": "dir3_identity_swap_far",
+      "source_point_ids": [
+        "pt_000008",
+        "pt_000009",
+        "pt_000011"
+      ],
+      "source_texts": [
+        "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,",
+        "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,",
+        "An umbrella, extreme detailed, wet, photorealistic, octane render, 8k, by greg rutkowski and studio ghibli"
+      ],
+      "consecutive_lpips_mean": 0.6470292607943217,
+      "consecutive_lpips_max": 0.6959888935089111,
+      "consecutive_lpips_max_step": {
+        "alpha_from": 1.0,
+        "alpha_to": 2.0
+      },
+      "consecutive_cosine_similarity_mean": 0.9820271829764048,
+      "consecutive_cosine_similarity_min": 0.9771382808685303,
+      "baseline_lpips_by_alpha": {
+        "-2.0": 0.7043720483779907,
+        "-1.0": 0.6218692064285278,
+        "0.0": 0.0,
+        "1.0": 0.6389006972312927,
+        "2.0": 0.749280571937561,
+        "3.0": 0.789918065071106,
+        "4.0": 0.7543280124664307
+      },
+      "baseline_cosine_by_alpha": {
+        "-2.0": 0.9196906089782715,
+        "-1.0": 0.9776954054832458,
+        "0.0": 0.9999999403953552,
+        "1.0": 0.9771382808685303,
+        "2.0": 0.9159983396530151,
+        "3.0": 0.834135890007019,
+        "4.0": 0.7479540705680847
+      },
+      "baseline_lpips_max": 0.789918065071106,
+      "baseline_lpips_max_alpha": 3.0,
+      "direction": 3,
+      "direction_label": "named-identity swap, Tessa Thompson to Rihanna (new)",
+      "context": "far"
+    }
+  }
+}

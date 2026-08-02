@@ -1,0 +1,13 @@
+# Packages needed to run scripts under analysis/
+#
+# Scripts that instead need ComfyUI's own stack (UMAP/FAISS/TensorFlow/comfy.*)
+# run via python_embeded; it should have installed comfyui-nels-plugin\requirements.txt and 
+# dependencies are NOT covered by this file.
+
+numpy
+matplotlib       
+datasets         
+huggingface_hub  
+torch            # analysis: LPIPS backend
+lpips            
+Pillow           # analysis: loading step images for LPIPS

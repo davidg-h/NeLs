@@ -1,0 +1,292 @@
+{
+  "operation": "delta_walk",
+  "request_id": "run_1784752401246_fcc6fee9",
+  "source_point_ids": [
+    "pt_000004",
+    "pt_000005",
+    "pt_000006"
+  ],
+  "source_texts": [
+    "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie skateboard full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+  ],
+  "state_revision": 45,
+  "trajectory": [
+    {
+      "alpha": -2.0,
+      "id": "delta_walk_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9780125617980957,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9585567116737366,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.9474263787269592,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 153.580078125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": -1.0,
+      "id": "delta_walk_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9911091923713684,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9869054555892944,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.9786550998687744,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 154.32342529296875,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.0,
+      "id": "delta_walk_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9962828755378723,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.9910511374473572,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9852490425109863,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 156.8885955810547,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "delta_walk_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9875363111495972,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.9852883219718933,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9621062874794006,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 161.14669799804688,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 2.0,
+      "id": "delta_walk_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.964633047580719,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9640792608261108,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.9256988167762756,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 166.71742248535156,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 3.0,
+      "id": "delta_walk_0005",
+      "index": 5,
+      "nearest_top_k": [
+        {
+          "distance": 0.9335767030715942,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9304986596107483,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.8809113502502441,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 173.1573944091797,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 4.0,
+      "id": "delta_walk_0006",
+      "index": 6,
+      "nearest_top_k": [
+        {
+          "distance": 0.8964987397193909,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.8912137746810913,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        },
+        {
+          "distance": 0.8321898579597473,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 180.03079223632812,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": -2.0,
+      "coords_2d": [
+        19.856212615966797,
+        23.897502899169922
+      ],
+      "coords_3d": [
+        -2.245605230331421,
+        10.944504737854004,
+        17.729934692382812
+      ],
+      "id": "delta_walk_0000"
+    },
+    {
+      "alpha": -1.0,
+      "coords_2d": [
+        18.96205711364746,
+        23.011857986450195
+      ],
+      "coords_3d": [
+        -2.7275567054748535,
+        10.602323532104492,
+        17.79680061340332
+      ],
+      "id": "delta_walk_0001"
+    },
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        19.208999633789062,
+        23.430959701538086
+      ],
+      "coords_3d": [
+        -2.2760918140411377,
+        10.009298324584961,
+        18.252540588378906
+      ],
+      "id": "delta_walk_0002"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        18.998226165771484,
+        23.055402755737305
+      ],
+      "coords_3d": [
+        -3.4375789165496826,
+        10.171972274780273,
+        18.037723541259766
+      ],
+      "id": "delta_walk_0003"
+    },
+    {
+      "alpha": 2.0,
+      "coords_2d": [
+        20.11962127685547,
+        24.005746841430664
+      ],
+      "coords_3d": [
+        -1.544736623764038,
+        10.62012004852295,
+        18.025548934936523
+      ],
+      "id": "delta_walk_0004"
+    },
+    {
+      "alpha": 3.0,
+      "coords_2d": [
+        19.99612808227539,
+        24.00220489501953
+      ],
+      "coords_3d": [
+        -2.4602549076080322,
+        11.526585578918457,
+        17.652212142944336
+      ],
+      "id": "delta_walk_0005"
+    },
+    {
+      "alpha": 4.0,
+      "coords_2d": [
+        20.221410751342773,
+        24.092897415161133
+      ],
+      "coords_3d": [
+        -0.9391703605651855,
+        11.229745864868164,
+        18.37972068786621
+      ],
+      "id": "delta_walk_0006"
+    }
+  ]
+}

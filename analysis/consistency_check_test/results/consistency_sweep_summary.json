@@ -1,0 +1,855 @@
+{
+  "seeds": [
+    {
+      "label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_prompt": "a photo of goldfish, Carassius auratus",
+      "dataset_path": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\imagenet1k_labels_classic"
+    },
+    {
+      "label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_prompt": "dwayne johnson holding a purple lightsaber wearing brown jedi robes, concept art, ultra realistic",
+      "dataset_path": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\gustavosta_sd_prompts_v2_two_pass"
+    },
+    {
+      "label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_prompt": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+      "dataset_path": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\datasets\\gustavosta_sd_prompts_v2_two_pass"
+    }
+  ],
+  "strengths": [
+    0.05,
+    0.2,
+    0.3,
+    0.35,
+    0.5,
+    0.7,
+    0.9
+  ],
+  "variant_count": 5,
+  "llm_strength_threshold": 0.35,
+  "llm_model_used": "Qwen/Qwen2.5-3B-Instruct",
+  "runs": [
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.05,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.3426455936967912,
+      "mean_intra": 0.009768784046173096,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 0.8,
+      "variants": [
+        {
+          "text": "a photo of goldfish, Carassius",
+          "cosine_sim": 0.9939422607421875,
+          "cluster_id": 1
+        },
+        {
+          "text": "photo of goldfish, Carassius auratus",
+          "cosine_sim": 0.9949405193328857,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo goldfish, Carassius auratus",
+          "cosine_sim": 0.9934711456298828,
+          "cluster_id": 1
+        },
+        {
+          "text": "a of goldfish, Carassius auratus",
+          "cosine_sim": 0.9798688888549805,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo of goldfish, auratus",
+          "cosine_sim": 0.988933265209198,
+          "cluster_id": null
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.2,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.3426455936967912,
+      "mean_intra": 0.009768784046173096,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 0.8,
+      "variants": [
+        {
+          "text": "a photo of goldfish, Carassius",
+          "cosine_sim": 0.9939422607421875,
+          "cluster_id": 1
+        },
+        {
+          "text": "photo of goldfish, Carassius auratus",
+          "cosine_sim": 0.9949405193328857,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo goldfish, Carassius auratus",
+          "cosine_sim": 0.9934711456298828,
+          "cluster_id": 1
+        },
+        {
+          "text": "a of goldfish, Carassius auratus",
+          "cosine_sim": 0.9798688888549805,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo of goldfish, auratus",
+          "cosine_sim": 0.988933265209198,
+          "cluster_id": null
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.3,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.3426455936967912,
+      "mean_intra": 0.009768784046173096,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 0.8,
+      "variants": [
+        {
+          "text": "a photo of goldfish, Carassius",
+          "cosine_sim": 0.9939422607421875,
+          "cluster_id": 1
+        },
+        {
+          "text": "photo of goldfish, Carassius auratus",
+          "cosine_sim": 0.9949405193328857,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo goldfish, Carassius auratus",
+          "cosine_sim": 0.9934711456298828,
+          "cluster_id": 1
+        },
+        {
+          "text": "a of goldfish, Carassius auratus",
+          "cosine_sim": 0.9798688888549805,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo of goldfish, auratus",
+          "cosine_sim": 0.988933265209198,
+          "cluster_id": null
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.35,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.3351200308047155,
+      "mean_intra": 0.0095542311668396,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "image of goldfish, Carassius auratus",
+          "cosine_sim": 0.9898111820220947,
+          "cluster_id": 1
+        },
+        {
+          "text": "picture of common carp, Carassius carassius",
+          "cosine_sim": 0.975322425365448,
+          "cluster_id": 1
+        },
+        {
+          "text": "snapshot of goldfish, Carassius auratus",
+          "cosine_sim": 0.987094521522522,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo of goldfish, Carassius auratus",
+          "cosine_sim": 1.0000003576278687,
+          "cluster_id": 1
+        },
+        {
+          "text": "a photo of goldfish, Carassius auratus",
+          "cosine_sim": 1.0000003576278687,
+          "cluster_id": 1
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.5,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.3831142057062733,
+      "mean_intra": 0.010922539234161376,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "photo of Carassius auratus goldfish",
+          "cosine_sim": 0.9926477670669556,
+          "cluster_id": 1
+        },
+        {
+          "text": "image of Carassius auratus goldfish",
+          "cosine_sim": 0.9895637035369873,
+          "cluster_id": 1
+        },
+        {
+          "text": "goldfish Carassius auratus in photo",
+          "cosine_sim": 0.9860389828681946,
+          "cluster_id": 1
+        },
+        {
+          "text": "goldfish Carassius auratus in image",
+          "cosine_sim": 0.987565279006958,
+          "cluster_id": 1
+        },
+        {
+          "text": "image showing goldfish, Carassius auratus",
+          "cosine_sim": 0.9895715713500977,
+          "cluster_id": 1
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.7,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 1.0644176559456318,
+      "mean_intra": 0.03034641742706299,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 0.6,
+      "variants": [
+        {
+          "text": "goldfish Carassius auratus snapshot",
+          "cosine_sim": 0.9841932058334351,
+          "cluster_id": 1
+        },
+        {
+          "text": "snapshot of colorful goldfish",
+          "cosine_sim": 0.9430496096611023,
+          "cluster_id": null
+        },
+        {
+          "text": "snapshot of goldfish Carassius auratus",
+          "cosine_sim": 0.9717938899993896,
+          "cluster_id": 1
+        },
+        {
+          "text": "image of colorful goldfish carp",
+          "cosine_sim": 0.9691417813301086,
+          "cluster_id": 0
+        },
+        {
+          "text": "colorful goldfish Carassius auratus snap",
+          "cosine_sim": 0.9800894260406494,
+          "cluster_id": 1
+        }
+      ]
+    },
+    {
+      "seed_label": "short",
+      "seed_point_id": "pt_000001",
+      "seed_word_count": 6,
+      "strength": 0.9,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 1.0644176559456318,
+      "mean_intra": 0.03034641742706299,
+      "mean_inter": 0.028509877920150757,
+      "seed_cluster_id": 1,
+      "cluster_stability": 0.6,
+      "variants": [
+        {
+          "text": "goldfish Carassius auratus snapshot",
+          "cosine_sim": 0.9841932058334351,
+          "cluster_id": 1
+        },
+        {
+          "text": "snapshot of colorful goldfish",
+          "cosine_sim": 0.9430496096611023,
+          "cluster_id": null
+        },
+        {
+          "text": "snapshot of goldfish Carassius auratus",
+          "cosine_sim": 0.9717938899993896,
+          "cluster_id": 1
+        },
+        {
+          "text": "image of colorful goldfish carp",
+          "cosine_sim": 0.9691417813301086,
+          "cluster_id": 0
+        },
+        {
+          "text": "colorful goldfish Carassius auratus snap",
+          "cosine_sim": 0.9800894260406494,
+          "cluster_id": 1
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.05,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.22958176502834982,
+      "mean_intra": 0.03105396032333374,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.2,
+      "variants": [
+        {
+          "text": "dwayne johnson holding a purple lightsaber wearing brown jedi robes, art, ultra realistic",
+          "cosine_sim": 0.9935097694396973,
+          "cluster_id": 134
+        },
+        {
+          "text": "dwayne holding a purple lightsaber wearing brown jedi robes, concept art, ultra realistic",
+          "cosine_sim": 0.9524907469749451,
+          "cluster_id": 27
+        },
+        {
+          "text": "johnson holding a purple lightsaber wearing brown jedi robes, concept art, ultra realistic",
+          "cosine_sim": 0.9061843156814575,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne johnson holding a purple lightsaber wearing brown jedi robes, concept ultra realistic",
+          "cosine_sim": 0.995762825012207,
+          "cluster_id": null
+        },
+        {
+          "text": "dwayne johnson holding a lightsaber wearing brown jedi robes, concept art, ultra realistic",
+          "cosine_sim": 0.9967825412750244,
+          "cluster_id": 132
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.2,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.3081082212973638,
+      "mean_intra": 0.04167569875717163,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.2,
+      "variants": [
+        {
+          "text": "holding a purple lightsaber wearing brown jedi robes, art, ultra realistic",
+          "cosine_sim": 0.9179619550704956,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne johnson holding lightsaber wearing brown jedi robes, concept ultra realistic",
+          "cosine_sim": 0.992581307888031,
+          "cluster_id": 134
+        },
+        {
+          "text": "dwayne johnson purple lightsaber wearing brown jedi robes, concept ultra realistic",
+          "cosine_sim": 0.993708610534668,
+          "cluster_id": 132
+        },
+        {
+          "text": "dwayne holding a purple lightsaber wearing brown jedi robes, ultra realistic",
+          "cosine_sim": 0.9420599937438965,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne holding a purple lightsaber wearing brown concept art, ultra realistic",
+          "cosine_sim": 0.9453096389770508,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.3,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.3081082212973638,
+      "mean_intra": 0.04167569875717163,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.2,
+      "variants": [
+        {
+          "text": "holding a purple lightsaber wearing brown jedi robes, art, ultra realistic",
+          "cosine_sim": 0.9179619550704956,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne johnson holding lightsaber wearing brown jedi robes, concept ultra realistic",
+          "cosine_sim": 0.992581307888031,
+          "cluster_id": 134
+        },
+        {
+          "text": "dwayne johnson purple lightsaber wearing brown jedi robes, concept ultra realistic",
+          "cosine_sim": 0.993708610534668,
+          "cluster_id": 132
+        },
+        {
+          "text": "dwayne holding a purple lightsaber wearing brown jedi robes, ultra realistic",
+          "cosine_sim": 0.9420599937438965,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne holding a purple lightsaber wearing brown concept art, ultra realistic",
+          "cosine_sim": 0.9453096389770508,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.35,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.13457773998078135,
+      "mean_intra": 0.01820341348648071,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.2,
+      "variants": [
+        {
+          "text": "purple lightsaber in hand for dwayne johnson, brown robes, jedi style, ultra detailed concept art",
+          "cosine_sim": 0.9598261117935181,
+          "cluster_id": 27
+        },
+        {
+          "text": "dwayne johnson wielding purple lightsaber in brown robes, concept art, ultra detail",
+          "cosine_sim": 0.9861286878585815,
+          "cluster_id": 132
+        },
+        {
+          "text": "dwayne johnson with purple lightsaber and brown robes, concept art, ultra realism",
+          "cosine_sim": 0.9832988977432251,
+          "cluster_id": 132
+        },
+        {
+          "text": "dwayne johnson with purple lightsaber and brown robes, concept art, ultra detail",
+          "cosine_sim": 0.9797280430793762,
+          "cluster_id": null
+        },
+        {
+          "text": "dwayne johnson holding a purple lightsaber wearing brown jedi robes, concept art, ultra realistic",
+          "cosine_sim": 1.0000011920928955,
+          "cluster_id": 134
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.5,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.1802657446198754,
+      "mean_intra": 0.024383318424224854,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.2,
+      "variants": [
+        {
+          "text": "ultra-realistic Dwayne Johnson in purple lightsaber costume, Jedi robes, concept art",
+          "cosine_sim": 0.9794150590896606,
+          "cluster_id": 134
+        },
+        {
+          "text": "dwayne johnson with a purple lightsaber, brown robes, concept art, ultra-realistic",
+          "cosine_sim": 0.9778967499732971,
+          "cluster_id": null
+        },
+        {
+          "text": "ultra-realistic dwayne johnson wielding a purple lightsaber in brown robes, concept art",
+          "cosine_sim": 0.9697213768959045,
+          "cluster_id": 132
+        },
+        {
+          "text": "ultra-realistic dwayne johnson with a purple lightsaber and brown robes, concept art",
+          "cosine_sim": 0.9722340106964111,
+          "cluster_id": null
+        },
+        {
+          "text": "ultra-realistic dwayne johnson with purple lightsaber and brown robes, concept art",
+          "cosine_sim": 0.9788162112236023,
+          "cluster_id": null
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.7,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.4690356530325271,
+      "mean_intra": 0.06344325542449951,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.4,
+      "variants": [
+        {
+          "text": "purple-hued dwayne johnson lightsaber wielding in brown robe, futuristic concept, highly detailed",
+          "cosine_sim": 0.9728702306747437,
+          "cluster_id": 134
+        },
+        {
+          "text": "purple-hued lightsaber wielder in brown robes, futuristic concept, ultra-realistic art",
+          "cosine_sim": 0.8428820371627808,
+          "cluster_id": 27
+        },
+        {
+          "text": "purple-hued lightsaber with dwayne johnson in brown robes, futuristic design, high detail",
+          "cosine_sim": 0.9355953931808472,
+          "cluster_id": 27
+        },
+        {
+          "text": "purple-hued lightsaber and brown robe clad dwayne johnson, futuristic concept, hyper-realistic art",
+          "cosine_sim": 0.9729180335998535,
+          "cluster_id": 134
+        },
+        {
+          "text": "purple-hued lightsaber, dwayne johnson in brown robes, futuristic concept, hyper-realistic art",
+          "cosine_sim": 0.9585180282592773,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "medium",
+      "seed_point_id": "pt_000092",
+      "seed_word_count": 14,
+      "strength": 0.9,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.4690356530325271,
+      "mean_intra": 0.06344325542449951,
+      "mean_inter": 0.13526318311691285,
+      "seed_cluster_id": 134,
+      "cluster_stability": 0.4,
+      "variants": [
+        {
+          "text": "purple-hued dwayne johnson lightsaber wielding in brown robe, futuristic concept, highly detailed",
+          "cosine_sim": 0.9728702306747437,
+          "cluster_id": 134
+        },
+        {
+          "text": "purple-hued lightsaber wielder in brown robes, futuristic concept, ultra-realistic art",
+          "cosine_sim": 0.8428820371627808,
+          "cluster_id": 27
+        },
+        {
+          "text": "purple-hued lightsaber with dwayne johnson in brown robes, futuristic design, high detail",
+          "cosine_sim": 0.9355953931808472,
+          "cluster_id": 27
+        },
+        {
+          "text": "purple-hued lightsaber and brown robe clad dwayne johnson, futuristic concept, hyper-realistic art",
+          "cosine_sim": 0.9729180335998535,
+          "cluster_id": 134
+        },
+        {
+          "text": "purple-hued lightsaber, dwayne johnson in brown robes, futuristic concept, hyper-realistic art",
+          "cosine_sim": 0.9585180282592773,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.05,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.059922596123517864,
+      "mean_intra": 0.006259191036224365,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "portrait of a woman by greg rutkowski, jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, foccus ilustration, artstation hq",
+          "cosine_sim": 0.9972900152206421,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9932595491409302,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9976826906204224,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg a commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9831990003585815,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, painting, artstation, concept art, smooth, sharp foccus ilustration, hq",
+          "cosine_sim": 0.997272789478302,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.2,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.2696962485451501,
+      "mean_intra": 0.028171014785766602,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "portrait a woman by greg commander, mara jade, wearing the of galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, painting, artstation, concept art, smooth, foccus ilustration, artstation hq",
+          "cosine_sim": 0.9626178741455078,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait woman by rutkowski, a jedi commander, mara jade, wearing gear of the galactic alliance, star wars expanded universe, she is about 0 years old, highly portrait, digital painting, artstation, art, smooth, sharp foccus ilustration, artstation",
+          "cosine_sim": 0.9705132246017456,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait a woman by greg rutkowski, a jedi commander, mara jade, the gear of galactic alliance, star wars expanded universe, she is 4 years old, highly detailed portrait, artstation, concept smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9774800539016724,
+          "cluster_id": 27
+        },
+        {
+          "text": "of a woman by greg a jedi jade, wearing tactical gear of galactic alliance, star expanded universe, she is about 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp ilustration, artstation hq",
+          "cosine_sim": 0.9661730527877808,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of woman by a jedi commander, mara jade, wearing the tactical gear the galactic alliance, star wars universe, is about 4 0 old, highly detailed portrait, digital painting, artstation, concept smooth, sharp ilustration, artstation hq",
+          "cosine_sim": 0.9823607206344604,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.3,
+      "generation_strategy": "word_dropout",
+      "consistency_score": 0.2696962485451501,
+      "mean_intra": 0.028171014785766602,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "portrait a woman by greg commander, mara jade, wearing the of galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, painting, artstation, concept art, smooth, foccus ilustration, artstation hq",
+          "cosine_sim": 0.9626178741455078,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait woman by rutkowski, a jedi commander, mara jade, wearing gear of the galactic alliance, star wars expanded universe, she is about 0 years old, highly portrait, digital painting, artstation, art, smooth, sharp foccus ilustration, artstation",
+          "cosine_sim": 0.9705132246017456,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait a woman by greg rutkowski, a jedi commander, mara jade, the gear of galactic alliance, star wars expanded universe, she is 4 years old, highly detailed portrait, artstation, concept smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9774800539016724,
+          "cluster_id": 27
+        },
+        {
+          "text": "of a woman by greg a jedi jade, wearing tactical gear of galactic alliance, star expanded universe, she is about 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp ilustration, artstation hq",
+          "cosine_sim": 0.9661730527877808,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of woman by a jedi commander, mara jade, wearing the tactical gear the galactic alliance, star wars universe, is about 4 0 old, highly detailed portrait, digital painting, artstation, concept smooth, sharp ilustration, artstation hq",
+          "cosine_sim": 0.9823607206344604,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.35,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.2252247551003307,
+      "mean_intra": 0.023525762557983398,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 0.6,
+      "variants": [
+        {
+          "text": "digital portrait of a young woman, Mara Jade, dressed as a Jedi Commander from the Galactic Alliance, in the Star Wars expanded universe, by Greg Rutkowski, highly detailed, smooth, sharp focus illustration, art style reminiscent of ArtStation high quality images",
+          "cosine_sim": 0.9619042277336121,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, resembling mara jade, a jedi commander from the galactic alliance, in tactical gear, star wars expanded universe, aged approximately 40, highly detailed digital painting, smooth, sharp focus illustration, artstyle akin to artstation high quality images",
+          "cosine_sim": 0.9597371220588684,
+          "cluster_id": null
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, resembling mara jade, a jedi commander from the galactic alliance, in tactical gear, star wars expanded universe, aged approximately 40, highly detailed digital painting, smooth, sharp focus illustration, art style akin to artstation high quality images",
+          "cosine_sim": 0.960730791091919,
+          "cluster_id": null
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9999995231628418,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9999995231628418,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.5,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.2111670100749094,
+      "mean_intra": 0.022057366371154786,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 1.0,
+      "variants": [
+        {
+          "text": "A detailed digital painting of Mara Jade, a Jedi Commander, in tactical gear from the Galactic Alliance, aged approximately 4 years, by Greg Rutkowski, in high detail and sharp focus, as seen on ArtStation.",
+          "cosine_sim": 0.9636435508728027,
+          "cluster_id": 27
+        },
+        {
+          "text": "Digital painting of Mara Jade, a Jedi Commander from the Galactic Alliance, circa 4 years old, by Greg Rutkowski, in high detail and sharp focus, as seen on ArtStation.",
+          "cosine_sim": 0.9581080675125122,
+          "cluster_id": 27
+        },
+        {
+          "text": "Highly detailed digital painting of Mara Jade, a Jedi Commander from the Galactic Alliance, aged about 4 years, wearing tactical gear, by Greg Rutkowski, in sharp focus, as seen on ArtStation.",
+          "cosine_sim": 0.9679625034332275,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9999995231628418,
+          "cluster_id": 27
+        },
+        {
+          "text": "portrait of a woman by greg rutkowski, a jedi commander, mara jade, wearing the tactical gear of the galactic alliance, star wars expanded universe, she is about 4 0 years old, highly detailed portrait, digital painting, artstation, concept art, smooth, sharp foccus ilustration, artstation hq",
+          "cosine_sim": 0.9999995231628418,
+          "cluster_id": 27
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.7,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.47134599473442285,
+      "mean_intra": 0.04923425912857056,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 0.0,
+      "variants": [
+        {
+          "text": "A young Jedi Mara Jade in tactical gear, digitally painted by Greg Rutkowski, from the Star Wars universe, art illustration on ArtStation, ultra-detailed and sharp focus, high resolution concept art",
+          "cosine_sim": 0.952572226524353,
+          "cluster_id": null
+        },
+        {
+          "text": "Digital painting of Mara Jade, a Jedi Commander, clad in Galactic Alliance tactical gear, circa 40 years old, by Greg Rutkowski, from the Star Wars expanded universe, ultra-detailed and sharply focused, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9457415342330933,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital painting of Mara Jade, a 40-year-old Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9562992453575134,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital portrait of Mara Jade, a 40-year-old Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9498019218444824,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital portrait of Mara Jade, a 40-ish Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9494137763977051,
+          "cluster_id": null
+        }
+      ]
+    },
+    {
+      "seed_label": "long",
+      "seed_point_id": "pt_000043",
+      "seed_word_count": 45,
+      "strength": 0.9,
+      "generation_strategy": "llm_paraphrase",
+      "consistency_score": 0.47134599473442285,
+      "mean_intra": 0.04923425912857056,
+      "mean_inter": 0.10445460379123687,
+      "seed_cluster_id": 27,
+      "cluster_stability": 0.0,
+      "variants": [
+        {
+          "text": "A young Jedi Mara Jade in tactical gear, digitally painted by Greg Rutkowski, from the Star Wars universe, art illustration on ArtStation, ultra-detailed and sharp focus, high resolution concept art",
+          "cosine_sim": 0.952572226524353,
+          "cluster_id": null
+        },
+        {
+          "text": "Digital painting of Mara Jade, a Jedi Commander, clad in Galactic Alliance tactical gear, circa 40 years old, by Greg Rutkowski, from the Star Wars expanded universe, ultra-detailed and sharply focused, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9457415342330933,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital painting of Mara Jade, a 40-year-old Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9562992453575134,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital portrait of Mara Jade, a 40-year-old Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9498019218444824,
+          "cluster_id": null
+        },
+        {
+          "text": "Greg Rutkowski's digital portrait of Mara Jade, a 40-ish Jedi Commander in Galactic Alliance gear, from the Star Wars expanded universe, ultra-detailed and sharp focus, high-resolution concept art on ArtStation",
+          "cosine_sim": 0.9494137763977051,
+          "cluster_id": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "runs": [
+    {
+      "id": "pt_000570",
+      "true_text": "a photo of gasmask, respirator, gas helmet",
+      "recovery_cosine_2d": 0.963433563709259,
+      "seed_texts": [
+        "a photo of tricycle, trike, velocipede",
+        "a photo of streetcar, tram, tramcar, trolley, trolley car",
+        "a photo of barrow, garden cart, lawn cart, wheelbarrow",
+        "a photo of dogsled, dog sled, dog sleigh",
+        "a photo of submarine, pigboat, sub, U-boat",
+        "a photo of trolleybus, trolley coach, trackless trolley",
+        "a photo of passenger car, coach, carriage",
+        "a photo of thresher, thrasher, threshing machine",
+        "a photo of bannister, banister, balustrade, balusters, handrail",
+        "a photo of traffic light, traffic signal, stoplight",
+        "a photo of cab, hack, taxi, taxicab",
+        "a photo of unicycle, monocycle",
+        "a photo of oboe, hautboy, hautbois",
+        "a photo of skunk, polecat, wood pussy",
+        "a photo of accordion, piano accordion, squeeze box"
+      ],
+      "negative_texts": [
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of American chameleon, anole, Anolis carolinensis",
+        "a photo of indri, indris, Indri indri, Indri brevicaudatus",
+        "a photo of horned viper, cerastes, sand viper, horned asp, Cerastes cornutus",
+        "a photo of breakwater, groin, groyne, mole, bulwark, seawall, jetty"
+      ],
+      "noise_texts": [
+        "a photo of gong, tam-tam",
+        "a photo of bath towel",
+        "a photo of American coot, marsh hen, mud hen, water hen, Fulica americana",
+        "a photo of starfish, sea star",
+        "a photo of assault rifle, assault gun"
+      ],
+      "reconstructed_text": "a photo of antique trolleybus, horse trolley, horse tramcar",
+      "cosine_to_q": 0.9861157536506653,
+      "cosine_to_true_original": 0.9564492106437683,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 3,
+          "text": "a photo of antique trolleybus, horse trolley, horse tramcar",
+          "cosine_sim": 0.9861157536506653
+        }
+      ]
+    },
+    {
+      "id": "pt_000032",
+      "true_text": "a photo of tailed frog, bell toad, ribbed toad, tailed toad, Ascaphus trui",
+      "recovery_cosine_2d": 0.9683306813240051,
+      "seed_texts": [
+        "a photo of black-footed ferret, ferret, Mustela nigripes",
+        "a photo of ruffed grouse, partridge, Bonasa umbellus",
+        "a photo of axolotl, mud puppy, Ambystoma mexicanum",
+        "a photo of American egret, great white heron, Egretta albus",
+        "a photo of jaguar, panther, Panthera onca, Felis onca",
+        "a photo of great grey owl, great gray owl, Strix nebulosa",
+        "a photo of little blue heron, Egretta caerulea",
+        "a photo of black and gold garden spider, Argiope aurantia",
+        "a photo of water buffalo, water ox, Asiatic buffalo, Bubalus bubalis",
+        "a photo of koala, koala bear, kangaroo bear, native bear, Phascolarctos cinereus",
+        "a photo of sidewinder, horned rattlesnake, Crotalus cerastes",
+        "a photo of American coot, marsh hen, mud hen, water hen, Fulica americana",
+        "a photo of loggerhead, loggerhead turtle, Caretta caretta",
+        "a photo of indri, indris, Indri indri, Indri brevicaudatus",
+        "a photo of capuchin, ringtail, Cebus capucinus"
+      ],
+      "negative_texts": [
+        "a photo of lawn mower, mower",
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of Norwich terrier",
+        "a photo of crossword puzzle, crossword",
+        "a photo of projector"
+      ],
+      "noise_texts": [
+        "a photo of altar",
+        "a photo of overskirt",
+        "a photo of wall clock",
+        "a photo of Gila monster, Heloderma suspectum",
+        "a photo of kimono"
+      ],
+      "reconstructed_text": "a photo of weathered ship's wheel",
+      "cosine_to_q": 0.9504313468933105,
+      "cosine_to_true_original": 0.9071483612060547,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 4,
+          "text": "a photo of weathered ship's wheel",
+          "cosine_sim": 0.9504313468933105
+        }
+      ]
+    },
+    {
+      "id": "pt_000714",
+      "true_text": "a photo of pick, plectrum, plectron",
+      "recovery_cosine_2d": 0.9735093712806702,
+      "seed_texts": [
+        "a photo of hand blower, blow dryer, blow drier, hair dryer, hair drier",
+        "a photo of traffic light, traffic signal, stoplight",
+        "a photo of washbasin, handbasin, washbowl, lavabo, wash-hand basin",
+        "a photo of streetcar, tram, tramcar, trolley, trolley car",
+        "a photo of barrow, garden cart, lawn cart, wheelbarrow",
+        "a photo of ballpoint, ballpoint pen, ballpen, Biro",
+        "a photo of dishwasher, dish washer, dishwashing machine",
+        "a photo of container ship, containership, container vessel",
+        "a photo of dogsled, dog sled, dog sleigh",
+        "a photo of beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon",
+        "a photo of cab, hack, taxi, taxicab",
+        "a photo of loudspeaker, speaker, speaker unit, loudspeaker system, speaker system",
+        "a photo of backpack, back pack, knapsack, packsack, rucksack, haversack",
+        "a photo of sunscreen, sunblock, sun blocker",
+        "a photo of tricycle, trike, velocipede"
+      ],
+      "negative_texts": [
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of American chameleon, anole, Anolis carolinensis",
+        "a photo of clog, geta, patten, sabot",
+        "a photo of indri, indris, Indri indri, Indri brevicaudatus",
+        "a photo of Norwich terrier"
+      ],
+      "noise_texts": [
+        "a photo of wood rabbit, cottontail, cottontail rabbit",
+        "a photo of mobile home, manufactured home",
+        "a photo of sea slug, nudibranch",
+        "a photo of otter",
+        "a photo of half track"
+      ],
+      "reconstructed_text": "a photo of electric fan, desk fan, table fan",
+      "cosine_to_q": 0.9888996481895447,
+      "cosine_to_true_original": 0.9635121822357178,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 5,
+          "text": "a photo of electric fan, desk fan, table fan",
+          "cosine_sim": 0.9888996481895447
+        }
+      ]
+    },
+    {
+      "id": "pt_000721",
+      "true_text": "a photo of pillow",
+      "recovery_cosine_2d": 0.9975447058677673,
+      "seed_texts": [
+        "a photo of tray",
+        "a photo of canoe",
+        "a photo of bib",
+        "a photo of whistle",
+        "a photo of vase",
+        "a photo of ski",
+        "a photo of crane",
+        "a photo of apron",
+        "a photo of kite",
+        "a photo of fountain",
+        "a photo of cricket",
+        "a photo of hen",
+        "a photo of basketball",
+        "a photo of orange",
+        "a photo of gown"
+      ],
+      "negative_texts": [
+        "a photo of clog, geta, patten, sabot",
+        "a photo of breakwater, groin, groyne, mole, bulwark, seawall, jetty",
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of coil, spiral, volute, whorl, helix",
+        "a photo of American chameleon, anole, Anolis carolinensis"
+      ],
+      "noise_texts": [
+        "a photo of jigsaw puzzle",
+        "a photo of beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon",
+        "a photo of spiny lobster, langouste, rock lobster, crawfish, crayfish, sea crawfish",
+        "a photo of cab, hack, taxi, taxicab",
+        "a photo of sunscreen, sunblock, sun blocker"
+      ],
+      "reconstructed_text": "a photo of a hen with fluffy feathers",
+      "cosine_to_q": 0.9894444942474365,
+      "cosine_to_true_original": 0.9875067472457886,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 5,
+          "text": "a photo of a hen with fluffy feathers",
+          "cosine_sim": 0.9894444942474365
+        }
+      ]
+    },
+    {
+      "id": "pt_000890",
+      "true_text": "a photo of volleyball",
+      "recovery_cosine_2d": 0.9980887770652771,
+      "seed_texts": [
+        "a photo of kite",
+        "a photo of whistle",
+        "a photo of crane",
+        "a photo of canoe",
+        "a photo of cricket",
+        "a photo of basketball",
+        "a photo of vase",
+        "a photo of fountain",
+        "a photo of orange",
+        "a photo of tray",
+        "a photo of lemon",
+        "a photo of tractor",
+        "a photo of balloon",
+        "a photo of ski",
+        "a photo of strawberry"
+      ],
+      "negative_texts": [
+        "a photo of clog, geta, patten, sabot",
+        "a photo of breakwater, groin, groyne, mole, bulwark, seawall, jetty",
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of coil, spiral, volute, whorl, helix",
+        "a photo of American chameleon, anole, Anolis carolinensis"
+      ],
+      "noise_texts": [
+        "a photo of Airedale, Airedale terrier",
+        "a photo of soap dispenser",
+        "a photo of CD player",
+        "a photo of carousel, carrousel, merry-go-round, roundabout, whirligig",
+        "a photo of pill bottle"
+      ],
+      "reconstructed_text": "a photo of a basketball hoop with players",
+      "cosine_to_q": 0.9892908930778503,
+      "cosine_to_true_original": 0.9893155694007874,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 5,
+          "text": "a photo of a basketball hoop with players",
+          "cosine_sim": 0.9892908930778503
+        }
+      ]
+    },
+    {
+      "id": "pt_000429",
+      "true_text": "a photo of baseball",
+      "recovery_cosine_2d": 0.9982590675354004,
+      "seed_texts": [
+        "a photo of cricket",
+        "a photo of canoe",
+        "a photo of basketball",
+        "a photo of castle",
+        "a photo of whistle",
+        "a photo of crane",
+        "a photo of vase",
+        "a photo of ambulance",
+        "a photo of sea lion",
+        "a photo of radiator",
+        "a photo of kite",
+        "a photo of barn",
+        "a photo of orange",
+        "a photo of shovel",
+        "a photo of ski"
+      ],
+      "negative_texts": [
+        "a photo of clog, geta, patten, sabot",
+        "a photo of breakwater, groin, groyne, mole, bulwark, seawall, jetty",
+        "a photo of book jacket, dust cover, dust jacket, dust wrapper",
+        "a photo of coil, spiral, volute, whorl, helix",
+        "a photo of American chameleon, anole, Anolis carolinensis"
+      ],
+      "noise_texts": [
+        "a photo of mantis, mantid",
+        "a photo of monitor",
+        "a photo of suspension bridge",
+        "a photo of kimono",
+        "a photo of Bedlington terrier"
+      ],
+      "reconstructed_text": "a photo of a radiator with colorful flames",
+      "cosine_to_q": 0.9896255135536194,
+      "cosine_to_true_original": 0.9875961542129517,
+      "n_snapshots": 1,
+      "history": [
+        {
+          "step": 5,
+          "text": "a photo of a radiator with colorful flames",
+          "cosine_sim": 0.9896255135536194
+        }
+      ]
+    }
+  ]
+}

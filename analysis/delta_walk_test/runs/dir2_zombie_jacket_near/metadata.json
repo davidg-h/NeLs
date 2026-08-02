@@ -1,0 +1,35 @@
+{
+  "run_id": "dir2_zombie_jacket_near",
+  "timestamp": "2026-07-22T22:36:22.882793",
+  "operation": "delta_walk",
+  "source_point_ids": [
+    "pt_000004",
+    "pt_000005",
+    "pt_000006"
+  ],
+  "source_texts": [
+    "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie skateboard full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+  ],
+  "alpha_schedule": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0
+  ],
+  "steps": 7,
+  "files": [
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_000_alpha_-2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_001_alpha_-1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_002_alpha_0.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_003_alpha_1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_004_alpha_2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_005_alpha_3.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near\\step_006_alpha_4.000.png"
+  ],
+  "output_dir": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir2_zombie_jacket_near"
+}

@@ -1,0 +1,40 @@
+{
+  "purpose": "Illustrative image sequence for Section 5.6, rendered from exact variant texts already produced and measured by run_consistency_sweep.py for the 'medium' seed (pt_000092) - not a fresh live Consistency Check run, so the images match the reported numbers exactly.",
+  "generation_setup": "Section 5.1 shared setup: 512x512, Euler sampler, 'simple' scheduler, CFG 8.0, denoise 1.0, 20 steps, flux2-klein-4b unet + flux2-vae-4b-klein VAE (Section 4.5 model/encoder), seed wired from the same NELS Dataset Loader random_seed used throughout the chapter (resolved value 693735), one CLIP Text Encode per image (plain text-to-image, no NELS graph operation node), shared negative prompt 'bad quality and bad resolution image' reused from the main pipeline.",
+  "images": [
+    {
+      "file": "seed.png",
+      "role": "seed (alpha=0 reference)",
+      "prompt": "dwayne johnson holding a purple lightsaber wearing brown jedi robes, concept art, ultra realistic",
+      "source": "seed prompt itself, seed_point_id pt_000092"
+    },
+    {
+      "file": "strength_0.2.png",
+      "role": "word-dropout variant",
+      "prompt": "holding a purple lightsaber wearing brown jedi robes, art, ultra realistic",
+      "source": "run_consistency_sweep.py, seed_label=medium, strength=0.2, variant index 0",
+      "cosine_sim_to_seed": 0.9179619550704956,
+      "cluster_id": 27,
+      "seed_cluster_id": 134
+    },
+    {
+      "file": "strength_0.35.png",
+      "role": "LLM minor-rewording variant",
+      "prompt": "purple lightsaber in hand for dwayne johnson, brown robes, jedi style, ultra detailed concept art",
+      "source": "run_consistency_sweep.py, seed_label=medium, strength=0.35, variant index 0",
+      "cosine_sim_to_seed": 0.9598261117935181,
+      "cluster_id": 27,
+      "seed_cluster_id": 134
+    },
+    {
+      "file": "strength_0.7_0.9.png",
+      "role": "LLM aggressive-paraphrase variant (identical output at strength 0.7 and 0.9, same style bucket + deterministic decoding, see Section 5.6)",
+      "prompt": "purple-hued lightsaber wielder in brown robes, futuristic concept, ultra-realistic art",
+      "source": "run_consistency_sweep.py, seed_label=medium, strength=0.7 and 0.9 (identical), variant index 1",
+      "cosine_sim_to_seed": 0.8428820371627808,
+      "note": "lowest cosine similarity of any variant across the entire sweep (all seeds, all strengths)",
+      "cluster_id": 27,
+      "seed_cluster_id": 134
+    }
+  ]
+}

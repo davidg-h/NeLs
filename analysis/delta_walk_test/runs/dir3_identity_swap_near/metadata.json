@@ -1,0 +1,35 @@
+{
+  "run_id": "dir3_identity_swap_near",
+  "timestamp": "2026-07-22T22:44:23.436865",
+  "operation": "delta_walk",
+  "source_point_ids": [
+    "pt_000008",
+    "pt_000009",
+    "pt_000010"
+  ],
+  "source_texts": [
+    "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,",
+    "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,",
+    "Sofia Vergara as a battle sister from Warhammer 40k, highly detailed, intricate, concept art, artstation"
+  ],
+  "alpha_schedule": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0
+  ],
+  "steps": 7,
+  "files": [
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_000_alpha_-2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_001_alpha_-1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_002_alpha_0.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_003_alpha_1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_004_alpha_2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_005_alpha_3.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near\\step_006_alpha_4.000.png"
+  ],
+  "output_dir": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_near"
+}

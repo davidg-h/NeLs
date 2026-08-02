@@ -1,0 +1,213 @@
+{
+  "fallback_to_lerp": false,
+  "operation": "slerp",
+  "request_id": "run_1784738373448_e228e1db",
+  "source_point_ids": [
+    "pt_000006",
+    "pt_000007"
+  ],
+  "source_texts": [
+    "a ferocious grizzly bear monster with 4 arms, fantasy concept art, detailed, epic pose",
+    "Female in nurse suit. By Rembrandt and artstation trending"
+  ],
+  "state_revision": 81,
+  "trajectory": [
+    {
+      "alpha": 0.0,
+      "id": "slerp_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9946049451828003,
+          "id": "pt_000006",
+          "label": "a ferocious grizzly bear monster with 4 arms, fantasy concept ar"
+        },
+        {
+          "distance": 0.9027752876281738,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8648704886436462,
+          "id": "pt_000008",
+          "label": "garden gnome bartending in a medieval tavern, concept art, john"
+        }
+      ],
+      "norm": 165.8519744873047,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.25,
+      "id": "slerp_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9864392280578613,
+          "id": "pt_000006",
+          "label": "a ferocious grizzly bear monster with 4 arms, fantasy concept ar"
+        },
+        {
+          "distance": 0.928877592086792,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9110422730445862,
+          "id": "pt_000007",
+          "label": "Female in nurse suit. By Rembrandt and artstation trending"
+        }
+      ],
+      "norm": 157.956298828125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.5,
+      "id": "slerp_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9597139358520508,
+          "id": "pt_000006",
+          "label": "a ferocious grizzly bear monster with 4 arms, fantasy concept ar"
+        },
+        {
+          "distance": 0.9570553302764893,
+          "id": "pt_000007",
+          "label": "Female in nurse suit. By Rembrandt and artstation trending"
+        },
+        {
+          "distance": 0.9404187202453613,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 152.6793670654297,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.75,
+      "id": "slerp_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9859553575515747,
+          "id": "pt_000007",
+          "label": "Female in nurse suit. By Rembrandt and artstation trending"
+        },
+        {
+          "distance": 0.9334337711334229,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9248777627944946,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        }
+      ],
+      "norm": 150.31727600097656,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "slerp_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9942929744720459,
+          "id": "pt_000007",
+          "label": "Female in nurse suit. By Rembrandt and artstation trending"
+        },
+        {
+          "distance": 0.9115379452705383,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        },
+        {
+          "distance": 0.9113335013389587,
+          "id": "pt_000010",
+          "label": "a cute cute girl smiling, Tristan Eaton, victo ngai, artgerm, RH"
+        }
+      ],
+      "norm": 151.01556396484375,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        10.966838836669922,
+        9.116759300231934
+      ],
+      "coords_3d": [
+        12.869769096374512,
+        -7.687341213226318,
+        -7.693867206573486
+      ],
+      "id": "slerp_0000"
+    },
+    {
+      "alpha": 0.25,
+      "coords_2d": [
+        10.628251075744629,
+        10.318822860717773
+      ],
+      "coords_3d": [
+        13.274230003356934,
+        -6.414565086364746,
+        -5.571280002593994
+      ],
+      "id": "slerp_0001"
+    },
+    {
+      "alpha": 0.5,
+      "coords_2d": [
+        11.219520568847656,
+        11.376291275024414
+      ],
+      "coords_3d": [
+        13.014102935791016,
+        -6.48295783996582,
+        -4.573507785797119
+      ],
+      "id": "slerp_0002"
+    },
+    {
+      "alpha": 0.75,
+      "coords_2d": [
+        11.665224075317383,
+        11.813850402832031
+      ],
+      "coords_3d": [
+        12.518826484680176,
+        -6.6906208992004395,
+        -3.254395008087158
+      ],
+      "id": "slerp_0003"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        12.836326599121094,
+        12.480728149414062
+      ],
+      "coords_3d": [
+        10.967951774597168,
+        -7.342198848724365,
+        -2.352668046951294
+      ],
+      "id": "slerp_0004"
+    }
+  ]
+}

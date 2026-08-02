@@ -1,0 +1,29 @@
+{
+  "run_id": "pair5_low_lerp",
+  "timestamp": "2026-07-22T18:49:56.806403",
+  "operation": "lerp",
+  "source_point_ids": [
+    "pt_000008",
+    "pt_000009"
+  ],
+  "source_texts": [
+    "garden gnome bartending in a medieval tavern, concept art, john howe",
+    "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+  ],
+  "alpha_schedule": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "steps": 5,
+  "files": [
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp\\step_000_alpha_0.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp\\step_001_alpha_0.250.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp\\step_002_alpha_0.500.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp\\step_003_alpha_0.750.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp\\step_004_alpha_1.000.png"
+  ],
+  "output_dir": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\interpolation_test\\runs\\pair5_low_lerp"
+}

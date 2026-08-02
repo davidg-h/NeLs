@@ -1,0 +1,292 @@
+{
+  "operation": "delta_walk",
+  "request_id": "run_1784752183128_781ab1a6",
+  "source_point_ids": [
+    "pt_000000",
+    "pt_000001",
+    "pt_000003"
+  ],
+  "source_texts": [
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting",
+    "a seaside village, detailed, fantasy style, stormy day, trending on artstation"
+  ],
+  "state_revision": 36,
+  "trajectory": [
+    {
+      "alpha": -2.0,
+      "id": "delta_walk_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9326637983322144,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.8573338985443115,
+          "id": "pt_000000",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8490680456161499,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        }
+      ],
+      "norm": 173.77908325195312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": -1.0,
+      "id": "delta_walk_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9779841899871826,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.8598192930221558,
+          "id": "pt_000000",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8563977479934692,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        }
+      ],
+      "norm": 171.88006591796875,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.0,
+      "id": "delta_walk_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9946136474609375,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.8610144853591919,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8485110998153687,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        }
+      ],
+      "norm": 173.18899536132812,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "delta_walk_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9814595580101013,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.8432117700576782,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.829826295375824,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        }
+      ],
+      "norm": 177.70091247558594,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 2.0,
+      "id": "delta_walk_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9446144104003906,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.8056069612503052,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.7918505072593689,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        }
+      ],
+      "norm": 184.72000122070312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 3.0,
+      "id": "delta_walk_0005",
+      "index": 5,
+      "nearest_top_k": [
+        {
+          "distance": 0.8934959769248962,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.756584882736206,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.7469369173049927,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        }
+      ],
+      "norm": 193.3202667236328,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 4.0,
+      "id": "delta_walk_0006",
+      "index": 6,
+      "nearest_top_k": [
+        {
+          "distance": 0.8366740942001343,
+          "id": "pt_000003",
+          "label": "a seaside village, detailed, fantasy style, stormy day, trending"
+        },
+        {
+          "distance": 0.7035684585571289,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.6975730657577515,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        }
+      ],
+      "norm": 202.5256805419922,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": -2.0,
+      "coords_2d": [
+        22.900943756103516,
+        21.717782974243164
+      ],
+      "coords_3d": [
+        -1.2839299440383911,
+        14.148726463317871,
+        22.295948028564453
+      ],
+      "id": "delta_walk_0000"
+    },
+    {
+      "alpha": -1.0,
+      "coords_2d": [
+        23.00493621826172,
+        21.647932052612305
+      ],
+      "coords_3d": [
+        -1.340673804283142,
+        13.676666259765625,
+        22.88213539123535
+      ],
+      "id": "delta_walk_0001"
+    },
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        22.94904136657715,
+        20.299440383911133
+      ],
+      "coords_3d": [
+        -3.3742926120758057,
+        12.75256633758545,
+        23.946619033813477
+      ],
+      "id": "delta_walk_0002"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        22.33565902709961,
+        19.38230323791504
+      ],
+      "coords_3d": [
+        -3.4370956420898438,
+        12.931072235107422,
+        23.774402618408203
+      ],
+      "id": "delta_walk_0003"
+    },
+    {
+      "alpha": 2.0,
+      "coords_2d": [
+        23.093578338623047,
+        21.297502517700195
+      ],
+      "coords_3d": [
+        -2.0953962802886963,
+        13.120481491088867,
+        23.66929817199707
+      ],
+      "id": "delta_walk_0004"
+    },
+    {
+      "alpha": 3.0,
+      "coords_2d": [
+        20.96940803527832,
+        19.221776962280273
+      ],
+      "coords_3d": [
+        -1.9405957460403442,
+        12.04034423828125,
+        23.725688934326172
+      ],
+      "id": "delta_walk_0005"
+    },
+    {
+      "alpha": 4.0,
+      "coords_2d": [
+        23.033355712890625,
+        21.22747230529785
+      ],
+      "coords_3d": [
+        -2.21028470993042,
+        12.158276557922363,
+        23.825927734375
+      ],
+      "id": "delta_walk_0006"
+    }
+  ]
+}

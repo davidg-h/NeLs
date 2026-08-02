@@ -1,0 +1,35 @@
+{
+  "run_id": "dir3_identity_swap_far",
+  "timestamp": "2026-07-22T22:48:04.362549",
+  "operation": "delta_walk",
+  "source_point_ids": [
+    "pt_000008",
+    "pt_000009",
+    "pt_000011"
+  ],
+  "source_texts": [
+    "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,",
+    "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,",
+    "An umbrella, extreme detailed, wet, photorealistic, octane render, 8k, by greg rutkowski and studio ghibli"
+  ],
+  "alpha_schedule": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0
+  ],
+  "steps": 7,
+  "files": [
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_000_alpha_-2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_001_alpha_-1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_002_alpha_0.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_003_alpha_1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_004_alpha_2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_005_alpha_3.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far\\step_006_alpha_4.000.png"
+  ],
+  "output_dir": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir3_identity_swap_far"
+}

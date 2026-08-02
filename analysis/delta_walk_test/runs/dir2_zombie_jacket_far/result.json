@@ -1,0 +1,292 @@
+{
+  "operation": "delta_walk",
+  "request_id": "run_1784752657510_d2718a9f",
+  "source_point_ids": [
+    "pt_000004",
+    "pt_000005",
+    "pt_000007"
+  ],
+  "source_texts": [
+    "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "new stormtrooper/clone trooper helmet design, concept art"
+  ],
+  "state_revision": 49,
+  "trajectory": [
+    {
+      "alpha": -2.0,
+      "id": "delta_walk_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9667797684669495,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.8281041979789734,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.810064971446991,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 187.36221313476562,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": -1.0,
+      "id": "delta_walk_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9871584177017212,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.8449476957321167,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8209556341171265,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 188.2890167236328,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.0,
+      "id": "delta_walk_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9947018623352051,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.8508049249649048,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8281882405281067,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 190.26663208007812,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "delta_walk_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.989606499671936,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.8458655476570129,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8326929211616516,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 193.22900390625,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 2.0,
+      "id": "delta_walk_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9733965396881104,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.831454873085022,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.827423095703125,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 196.95249938964844,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 3.0,
+      "id": "delta_walk_0005",
+      "index": 5,
+      "nearest_top_k": [
+        {
+          "distance": 0.9484593272209167,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.8141627311706543,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.8096279501914978,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        }
+      ],
+      "norm": 201.1785888671875,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 4.0,
+      "id": "delta_walk_0006",
+      "index": 6,
+      "nearest_top_k": [
+        {
+          "distance": 0.9174582958221436,
+          "id": "pt_000007",
+          "label": "new stormtrooper/clone trooper helmet design, concept art"
+        },
+        {
+          "distance": 0.7950242161750793,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.7833458781242371,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        }
+      ],
+      "norm": 205.67906188964844,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": -2.0,
+      "coords_2d": [
+        19.31099510192871,
+        20.859922409057617
+      ],
+      "coords_3d": [
+        -5.122790813446045,
+        10.216365814208984,
+        20.51397132873535
+      ],
+      "id": "delta_walk_0000"
+    },
+    {
+      "alpha": -1.0,
+      "coords_2d": [
+        19.28683853149414,
+        21.107059478759766
+      ],
+      "coords_3d": [
+        -4.825355052947998,
+        9.92569637298584,
+        20.640962600708008
+      ],
+      "id": "delta_walk_0001"
+    },
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        19.175748825073242,
+        20.94720458984375
+      ],
+      "coords_3d": [
+        -3.9076151847839355,
+        9.135107040405273,
+        20.71013832092285
+      ],
+      "id": "delta_walk_0002"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        19.230457305908203,
+        20.99356460571289
+      ],
+      "coords_3d": [
+        -2.850264310836792,
+        8.891857147216797,
+        21.318126678466797
+      ],
+      "id": "delta_walk_0003"
+    },
+    {
+      "alpha": 2.0,
+      "coords_2d": [
+        19.15739631652832,
+        21.05618667602539
+      ],
+      "coords_3d": [
+        -3.71266770362854,
+        9.032732963562012,
+        20.67962074279785
+      ],
+      "id": "delta_walk_0004"
+    },
+    {
+      "alpha": 3.0,
+      "coords_2d": [
+        19.13715934753418,
+        21.132537841796875
+      ],
+      "coords_3d": [
+        -2.967615842819214,
+        8.871004104614258,
+        21.143329620361328
+      ],
+      "id": "delta_walk_0005"
+    },
+    {
+      "alpha": 4.0,
+      "coords_2d": [
+        19.16916847229004,
+        21.202674865722656
+      ],
+      "coords_3d": [
+        -4.2693047523498535,
+        9.185121536254883,
+        20.467090606689453
+      ],
+      "id": "delta_walk_0006"
+    }
+  ]
+}

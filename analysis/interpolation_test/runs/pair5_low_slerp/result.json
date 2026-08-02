@@ -1,0 +1,213 @@
+{
+  "fallback_to_lerp": false,
+  "operation": "slerp",
+  "request_id": "run_1784738997439_4a9ab28b",
+  "source_point_ids": [
+    "pt_000008",
+    "pt_000009"
+  ],
+  "source_texts": [
+    "garden gnome bartending in a medieval tavern, concept art, john howe",
+    "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+  ],
+  "state_revision": 95,
+  "trajectory": [
+    {
+      "alpha": 0.0,
+      "id": "slerp_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9959228038787842,
+          "id": "pt_000008",
+          "label": "garden gnome bartending in a medieval tavern, concept art, john"
+        },
+        {
+          "distance": 0.9189165830612183,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        },
+        {
+          "distance": 0.9170697927474976,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 176.3157958984375,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.25,
+      "id": "slerp_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9799752235412598,
+          "id": "pt_000008",
+          "label": "garden gnome bartending in a medieval tavern, concept art, john"
+        },
+        {
+          "distance": 0.9284539222717285,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9275565147399902,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 172.51345825195312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.5,
+      "id": "slerp_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9311186671257019,
+          "id": "pt_000008",
+          "label": "garden gnome bartending in a medieval tavern, concept art, john"
+        },
+        {
+          "distance": 0.9185659885406494,
+          "id": "pt_000009",
+          "label": "concept art of spacecraft arriving at the last habitable planet,"
+        },
+        {
+          "distance": 0.9126586318016052,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 174.1629180908203,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.75,
+      "id": "slerp_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.967643141746521,
+          "id": "pt_000009",
+          "label": "concept art of spacecraft arriving at the last habitable planet,"
+        },
+        {
+          "distance": 0.8691142797470093,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.8559094071388245,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 181.10182189941406,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "slerp_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.986661434173584,
+          "id": "pt_000009",
+          "label": "concept art of spacecraft arriving at the last habitable planet,"
+        },
+        {
+          "distance": 0.8070043325424194,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.7888250350952148,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 192.70632934570312,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        12.762104034423828,
+        8.2278413772583
+      ],
+      "coords_3d": [
+        10.847753524780273,
+        -10.501855850219727,
+        -5.700156211853027
+      ],
+      "id": "slerp_0000"
+    },
+    {
+      "alpha": 0.25,
+      "coords_2d": [
+        13.128718376159668,
+        8.211926460266113
+      ],
+      "coords_3d": [
+        10.901423454284668,
+        -10.50557804107666,
+        -5.7620625495910645
+      ],
+      "id": "slerp_0001"
+    },
+    {
+      "alpha": 0.5,
+      "coords_2d": [
+        13.868099212646484,
+        8.382644653320312
+      ],
+      "coords_3d": [
+        9.427515029907227,
+        -8.878952980041504,
+        -8.170690536499023
+      ],
+      "id": "slerp_0002"
+    },
+    {
+      "alpha": 0.75,
+      "coords_2d": [
+        14.137373924255371,
+        8.635334014892578
+      ],
+      "coords_3d": [
+        8.809776306152344,
+        -9.24189281463623,
+        -7.788939952850342
+      ],
+      "id": "slerp_0003"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        14.637624740600586,
+        9.058882713317871
+      ],
+      "coords_3d": [
+        7.9916815757751465,
+        -9.033377647399902,
+        -6.608135223388672
+      ],
+      "id": "slerp_0004"
+    }
+  ]
+}

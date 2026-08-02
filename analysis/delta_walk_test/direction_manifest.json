@@ -1,0 +1,61 @@
+{
+  "source_dataset": "gustavosta_sd_prompts_v2_two_pass",
+  "mini_dataset": "delta_walk_prompts_dataset",
+  "alpha_schedule": [-2, -1, 0, 1, 2, 3, 4],
+  "directions": [
+    {
+      "direction": 1,
+      "label": "add cyberpunk styling",
+      "point_a": {"id": "pt_000000", "real_id": "pt_052595", "text": "a fox fursona, trending on artstation, by kawacy, furry art, digital art"},
+      "point_b": {"id": "pt_000001", "real_id": "pt_028263", "text": "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting"},
+      "walks": [
+        {
+          "context": "near",
+          "point_c": {"id": "pt_000002", "real_id": "pt_009517", "text": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by kawacy, trending on artstation"},
+          "run_id": "dir1_fox_cyberpunk_near"
+        },
+        {
+          "context": "far",
+          "point_c": {"id": "pt_000003", "real_id": "pt_036560", "text": "a seaside village, detailed, fantasy style, stormy day, trending on artstation"},
+          "run_id": "dir1_fox_cyberpunk_far"
+        }
+      ]
+    },
+    {
+      "direction": 2,
+      "label": "clothing-item focus shift, shoes to jacket",
+      "point_a": {"id": "pt_000004", "real_id": "pt_005075", "text": "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"},
+      "point_b": {"id": "pt_000005", "real_id": "pt_025775", "text": "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"},
+      "walks": [
+        {
+          "context": "near",
+          "point_c": {"id": "pt_000006", "real_id": "pt_034865", "text": "zombie skateboard full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"},
+          "run_id": "dir2_zombie_jacket_near"
+        },
+        {
+          "context": "far",
+          "point_c": {"id": "pt_000007", "real_id": "pt_058478", "text": "new stormtrooper/clone trooper helmet design, concept art"},
+          "run_id": "dir2_zombie_jacket_far"
+        }
+      ]
+    },
+    {
+      "direction": 3,
+      "label": "named-identity swap, Tessa Thompson to Rhianna",
+      "point_a": {"id": "pt_000008", "real_id": "pt_013939", "text": "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,"},
+      "point_b": {"id": "pt_000009", "real_id": "pt_051351", "text": "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,"},
+      "walks": [
+        {
+          "context": "near",
+          "point_c": {"id": "pt_000010", "real_id": "pt_058786", "text": "Sofia Vergara as a battle sister from Warhammer 40k, highly detailed, intricate, concept art, artstation"},
+          "run_id": "dir3_identity_swap_near"
+        },
+        {
+          "context": "far",
+          "point_c": {"id": "pt_000011", "real_id": "pt_018807", "text": "An umbrella, extreme detailed, wet, photorealistic, octane render, 8k, by greg rutkowski and studio ghibli"},
+          "run_id": "dir3_identity_swap_far"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "fallback_to_lerp": false,
+  "operation": "slerp",
+  "request_id": "run_1784737976843_98d6e15c",
+  "source_point_ids": [
+    "pt_000004",
+    "pt_000005"
+  ],
+  "source_texts": [
+    "giancarlo esposito as dhalsim street fighter, 4 k, ultra realistic, detailed focused art by artgerm and greg rutkowski and alphonse mucha",
+    "a twisted grin, digital art, trending on artstation"
+  ],
+  "state_revision": 69,
+  "trajectory": [
+    {
+      "alpha": 0.0,
+      "id": "slerp_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9960809946060181,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        },
+        {
+          "distance": 0.9514018297195435,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9493386745452881,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 148.65101623535156,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.25,
+      "id": "slerp_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9908398389816284,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        },
+        {
+          "distance": 0.9588585495948792,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9574857354164124,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 149.0696258544922,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.5,
+      "id": "slerp_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9785844087600708,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        },
+        {
+          "distance": 0.9748537540435791,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        },
+        {
+          "distance": 0.955723762512207,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 150.99620056152344,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.75,
+      "id": "slerp_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9920231103897095,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        },
+        {
+          "distance": 0.9493861198425293,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        },
+        {
+          "distance": 0.9428625106811523,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 154.36720275878906,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "slerp_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9955037832260132,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        },
+        {
+          "distance": 0.9266417622566223,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9224811792373657,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 159.0785369873047,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        13.767110824584961,
+        8.369786262512207
+      ],
+      "coords_3d": [
+        9.369061470031738,
+        -9.890368461608887,
+        -4.783096790313721
+      ],
+      "id": "slerp_0000"
+    },
+    {
+      "alpha": 0.25,
+      "coords_2d": [
+        14.378128051757812,
+        8.654372215270996
+      ],
+      "coords_3d": [
+        9.590831756591797,
+        -9.847865104675293,
+        -4.386862277984619
+      ],
+      "id": "slerp_0001"
+    },
+    {
+      "alpha": 0.5,
+      "coords_2d": [
+        14.99699878692627,
+        10.772916793823242
+      ],
+      "coords_3d": [
+        9.74794864654541,
+        -9.627036094665527,
+        -4.057791233062744
+      ],
+      "id": "slerp_0002"
+    },
+    {
+      "alpha": 0.75,
+      "coords_2d": [
+        11.758349418640137,
+        12.001432418823242
+      ],
+      "coords_3d": [
+        10.0260009765625,
+        -9.523845672607422,
+        -3.7670748233795166
+      ],
+      "id": "slerp_0003"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        14.530266761779785,
+        11.67492961883545
+      ],
+      "coords_3d": [
+        9.403592109680176,
+        -8.169510841369629,
+        -2.9837825298309326
+      ],
+      "id": "slerp_0004"
+    }
+  ]
+}

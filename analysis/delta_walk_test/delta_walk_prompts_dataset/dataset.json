@@ -1,0 +1,50 @@
+{
+  "name": "delta_walk_prompts_dataset",
+  "sample_count": 12,
+  "encoder": "models\\text_encoders\\qwen_3_4b.safetensors",
+  "source_dataset": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\data\\delta_walk_prompts.txt",
+  "created": "2026-07-22T20:15:50.125052+00:00",
+  "source_loader": {
+    "input": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\data\\delta_walk_prompts.txt",
+    "hf_config": null,
+    "hf_split": "train",
+    "hf_column": "Prompt",
+    "text_template": null,
+    "encode_limit": 0,
+    "dedupe": false,
+    "min_words": 0,
+    "max_words": 0
+  },
+  "full_dim": [
+    1,
+    512,
+    7680
+  ],
+  "embedding_shape": [
+    7680
+  ],
+  "projection": {
+    "strategy": "classic",
+    "canonical": {
+      "umap_params": {
+        "n_neighbors": 5,
+        "min_dist": 0.1,
+        "random_state": 42
+      },
+      "cluster_params": {
+        "umap_dims": 3,
+        "umap_neighbors": 5,
+        "min_size": 2,
+        "min_samples": 1
+      }
+    }
+  },
+  "embedding_strategy": "mean_seq_fallback",
+  "clip_type": "FLUX2",
+  "cluster_labels": {
+    "2": "trend",
+    "3": "intricate",
+    "0": "zombie",
+    "1": "concept"
+  }
+}

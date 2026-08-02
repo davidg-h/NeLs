@@ -1,0 +1,48 @@
+{
+  "source_dataset": "gustavosta_sd_prompts_v2_two_pass",
+  "mini_dataset": "lerp_slerp_prompts_dataset",
+  "pairs": [
+    {
+      "pair": 1,
+      "tier": "high",
+      "run_ids": {"lerp": "pair1_high_lerp", "slerp": "pair1_high_slerp"},
+      "point_a": {"id": "pt_000000", "text": "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"},
+      "point_b": {"id": "pt_000001", "text": "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"}
+    },
+    {
+      "pair": 2,
+      "tier": "high",
+      "run_ids": {"lerp": "pair2_high_lerp", "slerp": "pair2_high_slerp"},
+      "point_a": {"id": "pt_000002", "text": "a fox fursona, trending on artstation, by kawacy, furry art, digital art"},
+      "point_b": {"id": "pt_000003", "text": "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting"}
+    },
+    {
+      "pair": 3,
+      "tier": "medium",
+      "run_ids": {"lerp": "pair3_med_lerp", "slerp": "pair3_med_slerp"},
+      "point_a": {"id": "pt_000004", "text": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realistic, detailed focused art by artgerm and greg rutkowski and alphonse mucha"},
+      "point_b": {"id": "pt_000005", "text": "a twisted grin, digital art, trending on artstation"}
+    },
+    {
+      "pair": 4,
+      "tier": "medium",
+      "run_ids": {"lerp": "pair4_med_lerp", "slerp": "pair4_med_slerp"},
+      "point_a": {"id": "pt_000006", "text": "a ferocious grizzly bear monster with 4 arms, fantasy concept art, detailed, epic pose"},
+      "point_b": {"id": "pt_000007", "text": "Female in nurse suit. By Rembrandt and artstation trending"}
+    },
+    {
+      "pair": 5,
+      "tier": "low",
+      "run_ids": {"lerp": "pair5_low_lerp", "slerp": "pair5_low_slerp"},
+      "point_a": {"id": "pt_000008", "text": "garden gnome bartending in a medieval tavern, concept art, john howe"},
+      "point_b": {"id": "pt_000009", "text": "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"}
+    },
+    {
+      "pair": 6,
+      "tier": "low",
+      "run_ids": {"lerp": "pair6_low_lerp", "slerp": "pair6_low_slerp"},
+      "point_a": {"id": "pt_000010", "text": "a cute cute girl smiling, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws"},
+      "point_b": {"id": "pt_000009", "text": "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"}
+    }
+  ]
+}

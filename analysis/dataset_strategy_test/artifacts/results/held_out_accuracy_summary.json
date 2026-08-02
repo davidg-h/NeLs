@@ -1,0 +1,85 @@
+{
+  "per_strategy": {
+    "classic": {
+      "n_heldout": 200,
+      "coord_dist_2d": {
+        "mean": 1.2278447789778253,
+        "median": 0.7981642765931878,
+        "std": 1.0558603238683437
+      },
+      "coord_dist_3d": {
+        "mean": 1.1196828318147647,
+        "median": 0.9975490532240621,
+        "std": 0.5685432775575182
+      },
+      "cluster_ari": 0.6791707422746812,
+      "noise_agreement": 0.985,
+      "procrustes_scale_2d": 1.034497395385623,
+      "procrustes_scale_3d": 1.1084393479297914,
+      "neighbor_recall_at_k": {
+        "k": 32,
+        "subset_2d": 0.39046875,
+        "subset_3d": 0.449375,
+        "canonical_2d": 0.39015625,
+        "canonical_3d": 0.43421875
+      },
+      "shares_canonical_basis_with": [
+        "classic",
+        "two_pass"
+      ]
+    },
+    "two_pass": {
+      "n_heldout": 200,
+      "coord_dist_2d": {
+        "mean": 36.160782684132464,
+        "median": 38.527370892610946,
+        "std": 5.363937762285577
+      },
+      "coord_dist_3d": {
+        "mean": 50.75125466531859,
+        "median": 51.78502547727068,
+        "std": 4.710131943997354
+      },
+      "cluster_ari": 0.6791707422746812,
+      "noise_agreement": 0.985,
+      "procrustes_scale_2d": 1.034497395385623,
+      "procrustes_scale_3d": 1.1084393479297914,
+      "neighbor_recall_at_k": {
+        "k": 32,
+        "subset_2d": 0.21890625,
+        "subset_3d": 0.286875,
+        "canonical_2d": 0.39015625,
+        "canonical_3d": 0.43421875
+      },
+      "shares_canonical_basis_with": [
+        "classic",
+        "two_pass"
+      ]
+    },
+    "parametric": {
+      "n_heldout": 200,
+      "coord_dist_2d": {
+        "mean": 1.3825417843798256,
+        "median": 1.0669150444590438,
+        "std": 1.239799641990327
+      },
+      "coord_dist_3d": {
+        "mean": 1.0144530376671026,
+        "median": 0.9366002701847909,
+        "std": 0.5319717381631351
+      },
+      "cluster_ari": 0.22195292369495434,
+      "noise_agreement": 0.78,
+      "procrustes_scale_2d": 1.1003488931934633,
+      "procrustes_scale_3d": 1.0484973775750621,
+      "neighbor_recall_at_k": {
+        "k": 32,
+        "subset_2d": 0.288125,
+        "subset_3d": 0.36984375,
+        "canonical_2d": 0.38640625,
+        "canonical_3d": 0.42140625
+      },
+      "shares_canonical_basis_with": null
+    }
+  }
+}

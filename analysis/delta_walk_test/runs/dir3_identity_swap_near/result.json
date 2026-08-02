@@ -1,0 +1,292 @@
+{
+  "operation": "delta_walk",
+  "request_id": "run_1784752893055_8dc7e5b2",
+  "source_point_ids": [
+    "pt_000008",
+    "pt_000009",
+    "pt_000010"
+  ],
+  "source_texts": [
+    "Tessa Thompson as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff, insane, intricate,",
+    "Rhianna as a sorceress , passionate , seductive, sweaty,  intricate dressed in ornate blue robes and staff,  intricate,",
+    "Sofia Vergara as a battle sister from Warhammer 40k, highly detailed, intricate, concept art, artstation"
+  ],
+  "state_revision": 56,
+  "trajectory": [
+    {
+      "alpha": -2.0,
+      "id": "delta_walk_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9141349792480469,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8674941658973694,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.8662543296813965,
+          "id": "pt_000006",
+          "label": "zombie skateboard full body hiphop streetwear drip, tristan eato"
+        }
+      ],
+      "norm": 170.4099884033203,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": -1.0,
+      "id": "delta_walk_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9738950729370117,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.9099547266960144,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9090626239776611,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 161.8503875732422,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.0,
+      "id": "delta_walk_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.995958685874939,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.9244372248649597,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9158892035484314,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 158.48179626464844,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "delta_walk_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9711794257164001,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.9073494672775269,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        },
+        {
+          "distance": 0.8963098526000977,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 161.04345703125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 2.0,
+      "id": "delta_walk_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.908035397529602,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8735314011573792,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        },
+        {
+          "distance": 0.8332041501998901,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 168.90673828125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 3.0,
+      "id": "delta_walk_0005",
+      "index": 5,
+      "nearest_top_k": [
+        {
+          "distance": 0.8253175616264343,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.8170077204704285,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        },
+        {
+          "distance": 0.7528814673423767,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 180.50804138183594,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 4.0,
+      "id": "delta_walk_0006",
+      "index": 6,
+      "nearest_top_k": [
+        {
+          "distance": 0.7529094219207764,
+          "id": "pt_000009",
+          "label": "Rhianna as a sorceress , passionate , seductive, sweaty,  intric"
+        },
+        {
+          "distance": 0.7395451664924622,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        },
+        {
+          "distance": 0.6706457138061523,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        }
+      ],
+      "norm": 194.05455017089844,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": -2.0,
+      "coords_2d": [
+        18.852375030517578,
+        22.359607696533203
+      ],
+      "coords_3d": [
+        -4.297698020935059,
+        10.36983585357666,
+        18.651798248291016
+      ],
+      "id": "delta_walk_0000"
+    },
+    {
+      "alpha": -1.0,
+      "coords_2d": [
+        18.928556442260742,
+        22.084455490112305
+      ],
+      "coords_3d": [
+        -4.497856616973877,
+        10.525216102600098,
+        18.774641036987305
+      ],
+      "id": "delta_walk_0001"
+    },
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        19.04258918762207,
+        21.86328887939453
+      ],
+      "coords_3d": [
+        -4.656824588775635,
+        10.269010543823242,
+        19.107755661010742
+      ],
+      "id": "delta_walk_0002"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        20.320262908935547,
+        19.457782745361328
+      ],
+      "coords_3d": [
+        -5.015124797821045,
+        12.272285461425781,
+        19.570171356201172
+      ],
+      "id": "delta_walk_0003"
+    },
+    {
+      "alpha": 2.0,
+      "coords_2d": [
+        20.495967864990234,
+        19.53095054626465
+      ],
+      "coords_3d": [
+        -3.9886481761932373,
+        14.165794372558594,
+        19.821983337402344
+      ],
+      "id": "delta_walk_0004"
+    },
+    {
+      "alpha": 3.0,
+      "coords_2d": [
+        23.166637420654297,
+        21.47883415222168
+      ],
+      "coords_3d": [
+        -4.1948161125183105,
+        13.99375057220459,
+        19.85304832458496
+      ],
+      "id": "delta_walk_0005"
+    },
+    {
+      "alpha": 4.0,
+      "coords_2d": [
+        20.553300857543945,
+        19.37175750732422
+      ],
+      "coords_3d": [
+        -2.3686163425445557,
+        14.818503379821777,
+        21.196369171142578
+      ],
+      "id": "delta_walk_0006"
+    }
+  ]
+}

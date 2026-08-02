@@ -1,0 +1,504 @@
+{
+  "per_run": {
+    "pair1_high_lerp": {
+      "run_id": "pair1_high_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000000",
+        "pt_000001"
+      ],
+      "source_texts": [
+        "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+      ],
+      "step_lpips": [
+        0.6377721428871155,
+        0.5499340295791626,
+        0.6999412178993225,
+        0.18994328379631042
+      ],
+      "step_cosine_similarity": [
+        0.999353289604187,
+        0.9993610978126526,
+        0.9993715286254883,
+        0.9993848204612732
+      ],
+      "lpips_mean": 0.5193976685404778,
+      "lpips_max": 0.6999412178993225,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9993676841259003,
+      "cosine_similarity_min": 0.999353289604187,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 1,
+      "tier": "high"
+    },
+    "pair1_high_slerp": {
+      "run_id": "pair1_high_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000000",
+        "pt_000001"
+      ],
+      "source_texts": [
+        "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+        "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+      ],
+      "step_lpips": [
+        0.6408584713935852,
+        0.5469887256622314,
+        0.7009962797164917,
+        0.18974822759628296
+      ],
+      "step_cosine_similarity": [
+        0.9993526935577393,
+        0.9993613362312317,
+        0.9993719458580017,
+        0.9993844628334045
+      ],
+      "lpips_mean": 0.5196479260921478,
+      "lpips_max": 0.7009962797164917,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9993676096200943,
+      "cosine_similarity_min": 0.9993526935577393,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 1,
+      "tier": "high"
+    },
+    "pair2_high_lerp": {
+      "run_id": "pair2_high_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000002",
+        "pt_000003"
+      ],
+      "source_texts": [
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting"
+      ],
+      "step_lpips": [
+        0.5966476798057556,
+        0.6529204249382019,
+        0.6314942836761475,
+        0.6057679653167725
+      ],
+      "step_cosine_similarity": [
+        0.998847246170044,
+        0.9988314509391785,
+        0.9988256096839905,
+        0.9988312721252441
+      ],
+      "lpips_mean": 0.6217075884342194,
+      "lpips_max": 0.6529204249382019,
+      "lpips_max_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "cosine_similarity_mean": 0.9988338947296143,
+      "cosine_similarity_min": 0.9988256096839905,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "pair": 2,
+      "tier": "high"
+    },
+    "pair2_high_slerp": {
+      "run_id": "pair2_high_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000002",
+        "pt_000003"
+      ],
+      "source_texts": [
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+        "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting"
+      ],
+      "step_lpips": [
+        0.5943647623062134,
+        0.651311993598938,
+        0.6305699348449707,
+        0.6006097197532654
+      ],
+      "step_cosine_similarity": [
+        0.9988457560539246,
+        0.9988323450088501,
+        0.9988272786140442,
+        0.9988297820091248
+      ],
+      "lpips_mean": 0.6192141026258469,
+      "lpips_max": 0.651311993598938,
+      "lpips_max_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "cosine_similarity_mean": 0.9988337904214859,
+      "cosine_similarity_min": 0.9988272786140442,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "pair": 2,
+      "tier": "high"
+    },
+    "pair3_med_lerp": {
+      "run_id": "pair3_med_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000004",
+        "pt_000005"
+      ],
+      "source_texts": [
+        "giancarlo esposito as dhalsim street fighter, 4 k, ultra realistic, detailed focused art by artgerm and greg rutkowski and alphonse mucha",
+        "a twisted grin, digital art, trending on artstation"
+      ],
+      "step_lpips": [
+        0.6101953387260437,
+        0.647581160068512,
+        0.6895816922187805,
+        0.5425326824188232
+      ],
+      "step_cosine_similarity": [
+        0.9944174885749817,
+        0.9945691823959351,
+        0.9949365854263306,
+        0.995456874370575
+      ],
+      "lpips_mean": 0.6224727183580399,
+      "lpips_max": 0.6895816922187805,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9948450326919556,
+      "cosine_similarity_min": 0.9944174885749817,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 3,
+      "tier": "medium"
+    },
+    "pair3_med_slerp": {
+      "run_id": "pair3_med_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000004",
+        "pt_000005"
+      ],
+      "source_texts": [
+        "giancarlo esposito as dhalsim street fighter, 4 k, ultra realistic, detailed focused art by artgerm and greg rutkowski and alphonse mucha",
+        "a twisted grin, digital art, trending on artstation"
+      ],
+      "step_lpips": [
+        0.6178585886955261,
+        0.6572810411453247,
+        0.6901785135269165,
+        0.5426201224327087
+      ],
+      "step_cosine_similarity": [
+        0.9944064617156982,
+        0.9945794343948364,
+        0.9949463605880737,
+        0.9954477548599243
+      ],
+      "lpips_mean": 0.626984566450119,
+      "lpips_max": 0.6901785135269165,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9948450028896332,
+      "cosine_similarity_min": 0.9944064617156982,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 3,
+      "tier": "medium"
+    },
+    "pair4_med_lerp": {
+      "run_id": "pair4_med_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000006",
+        "pt_000007"
+      ],
+      "source_texts": [
+        "a ferocious grizzly bear monster with 4 arms, fantasy concept art, detailed, epic pose",
+        "Female in nurse suit. By Rembrandt and artstation trending"
+      ],
+      "step_lpips": [
+        0.5127978920936584,
+        0.624200701713562,
+        0.6630073189735413,
+        0.5645261406898499
+      ],
+      "step_cosine_similarity": [
+        0.9920307397842407,
+        0.9905552268028259,
+        0.9895646572113037,
+        0.9893715977668762
+      ],
+      "lpips_mean": 0.5911330133676529,
+      "lpips_max": 0.6630073189735413,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9903805553913116,
+      "cosine_similarity_min": 0.9893715977668762,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.75,
+        "alpha_to": 1.0
+      },
+      "pair": 4,
+      "tier": "medium"
+    },
+    "pair4_med_slerp": {
+      "run_id": "pair4_med_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000006",
+        "pt_000007"
+      ],
+      "source_texts": [
+        "a ferocious grizzly bear monster with 4 arms, fantasy concept art, detailed, epic pose",
+        "Female in nurse suit. By Rembrandt and artstation trending"
+      ],
+      "step_lpips": [
+        0.5079233646392822,
+        0.6207258105278015,
+        0.664962887763977,
+        0.567628800868988
+      ],
+      "step_cosine_similarity": [
+        0.9920156002044678,
+        0.9905718564987183,
+        0.9895842671394348,
+        0.9893519878387451
+      ],
+      "lpips_mean": 0.5903102159500122,
+      "lpips_max": 0.664962887763977,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9903809279203415,
+      "cosine_similarity_min": 0.9893519878387451,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.75,
+        "alpha_to": 1.0
+      },
+      "pair": 4,
+      "tier": "medium"
+    },
+    "pair5_low_lerp": {
+      "run_id": "pair5_low_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000008",
+        "pt_000009"
+      ],
+      "source_texts": [
+        "garden gnome bartending in a medieval tavern, concept art, john howe",
+        "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+      ],
+      "step_lpips": [
+        0.5975375175476074,
+        0.579630434513092,
+        0.6397901177406311,
+        0.6248786449432373
+      ],
+      "step_cosine_similarity": [
+        0.9836865663528442,
+        0.9831352233886719,
+        0.9847114682197571,
+        0.9876351952552795
+      ],
+      "lpips_mean": 0.610459178686142,
+      "lpips_max": 0.6397901177406311,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.9847921133041382,
+      "cosine_similarity_min": 0.9831352233886719,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "pair": 5,
+      "tier": "low"
+    },
+    "pair5_low_slerp": {
+      "run_id": "pair5_low_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000008",
+        "pt_000009"
+      ],
+      "source_texts": [
+        "garden gnome bartending in a medieval tavern, concept art, john howe",
+        "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+      ],
+      "step_lpips": [
+        0.5968635082244873,
+        0.5836114883422852,
+        0.6469220519065857,
+        0.6240058541297913
+      ],
+      "step_cosine_similarity": [
+        0.9836165308952332,
+        0.9832053780555725,
+        0.9847729206085205,
+        0.9875797033309937
+      ],
+      "lpips_mean": 0.6128507256507874,
+      "lpips_max": 0.6469220519065857,
+      "lpips_max_step": {
+        "alpha_from": 0.5,
+        "alpha_to": 0.75
+      },
+      "cosine_similarity_mean": 0.98479363322258,
+      "cosine_similarity_min": 0.9832053780555725,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "pair": 5,
+      "tier": "low"
+    },
+    "pair6_low_lerp": {
+      "run_id": "pair6_low_lerp",
+      "operation": "lerp",
+      "source_point_ids": [
+        "pt_000010",
+        "pt_000009"
+      ],
+      "source_texts": [
+        "a cute cute girl smiling, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws",
+        "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+      ],
+      "step_lpips": [
+        0.5604581832885742,
+        0.7298524379730225,
+        0.6467716693878174,
+        0.6063436269760132
+      ],
+      "step_cosine_similarity": [
+        0.9776585102081299,
+        0.9790278077125549,
+        0.9831944704055786,
+        0.9879793524742126
+      ],
+      "lpips_mean": 0.6358564794063568,
+      "lpips_max": 0.7298524379730225,
+      "lpips_max_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "cosine_similarity_mean": 0.981965035200119,
+      "cosine_similarity_min": 0.9776585102081299,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 6,
+      "tier": "low"
+    },
+    "pair6_low_slerp": {
+      "run_id": "pair6_low_slerp",
+      "operation": "slerp",
+      "source_point_ids": [
+        "pt_000010",
+        "pt_000009"
+      ],
+      "source_texts": [
+        "a cute cute girl smiling, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws",
+        "concept art of spacecraft arriving at the last habitable planet, shot from a horror film"
+      ],
+      "step_lpips": [
+        0.5608070492744446,
+        0.7298004627227783,
+        0.6444406509399414,
+        0.6050952672958374
+      ],
+      "step_cosine_similarity": [
+        0.9775665998458862,
+        0.9791166186332703,
+        0.9832584857940674,
+        0.9879252314567566
+      ],
+      "lpips_mean": 0.6350358575582504,
+      "lpips_max": 0.7298004627227783,
+      "lpips_max_step": {
+        "alpha_from": 0.25,
+        "alpha_to": 0.5
+      },
+      "cosine_similarity_mean": 0.9819667339324951,
+      "cosine_similarity_min": 0.9775665998458862,
+      "cosine_similarity_min_step": {
+        "alpha_from": 0.0,
+        "alpha_to": 0.25
+      },
+      "pair": 6,
+      "tier": "low"
+    }
+  },
+  "per_tier": {
+    "high": {
+      "lerp": {
+        "lpips_mean": 0.5705526284873486,
+        "cosine_similarity_mean": 0.9991007894277573,
+        "lpips_max_mean": 0.6764308214187622,
+        "cosine_similarity_min_mean": 0.9990894496440887
+      },
+      "slerp": {
+        "lpips_mean": 0.5694310143589973,
+        "cosine_similarity_mean": 0.9991007000207901,
+        "lpips_max_mean": 0.6761541366577148,
+        "cosine_similarity_min_mean": 0.9990899860858917
+      }
+    },
+    "medium": {
+      "lerp": {
+        "lpips_mean": 0.6068028658628464,
+        "cosine_similarity_mean": 0.9926127940416336,
+        "lpips_max_mean": 0.6762945055961609,
+        "cosine_similarity_min_mean": 0.991894543170929
+      },
+      "slerp": {
+        "lpips_mean": 0.6086473912000656,
+        "cosine_similarity_mean": 0.9926129654049873,
+        "lpips_max_mean": 0.6775707006454468,
+        "cosine_similarity_min_mean": 0.9918792247772217
+      }
+    },
+    "low": {
+      "lerp": {
+        "lpips_mean": 0.6231578290462494,
+        "cosine_similarity_mean": 0.9833785742521286,
+        "lpips_max_mean": 0.6848212778568268,
+        "cosine_similarity_min_mean": 0.9803968667984009
+      },
+      "slerp": {
+        "lpips_mean": 0.6239432916045189,
+        "cosine_similarity_mean": 0.9833801835775375,
+        "lpips_max_mean": 0.688361257314682,
+        "cosine_similarity_min_mean": 0.9803859889507294
+      }
+    }
+  }
+}

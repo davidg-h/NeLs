@@ -1,0 +1,292 @@
+{
+  "operation": "delta_walk",
+  "request_id": "run_1784751758859_4c3b448c",
+  "source_point_ids": [
+    "pt_000000",
+    "pt_000001",
+    "pt_000002"
+  ],
+  "source_texts": [
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting",
+    "an anthropomorphic fox, fursona!!!! trending on furaffinity, by kawacy, trending on artstation"
+  ],
+  "state_revision": 27,
+  "trajectory": [
+    {
+      "alpha": -2.0,
+      "id": "delta_walk_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9293546676635742,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.9152588844299316,
+          "id": "pt_000000",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8327616453170776,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 163.84959411621094,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": -1.0,
+      "id": "delta_walk_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9772235155105591,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.9565298557281494,
+          "id": "pt_000000",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8918970227241516,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 155.66212463378906,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.0,
+      "id": "delta_walk_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9955938458442688,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.9683009386062622,
+          "id": "pt_000000",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9258471727371216,
+          "id": "pt_000004",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        }
+      ],
+      "norm": 150.81033325195312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "delta_walk_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9750734567642212,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.9675496220588684,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9254575967788696,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 150.17745971679688,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 2.0,
+      "id": "delta_walk_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9400885105133057,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9183160662651062,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.8941601514816284,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 153.6638946533203,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 3.0,
+      "id": "delta_walk_0005",
+      "index": 5,
+      "nearest_top_k": [
+        {
+          "distance": 0.8858679533004761,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.8385617733001709,
+          "id": "pt_000002",
+          "label": "an anthropomorphic fox, fursona!!!! trending on furaffinity, by"
+        },
+        {
+          "distance": 0.8379549384117126,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 160.4216766357422,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 4.0,
+      "id": "delta_walk_0006",
+      "index": 6,
+      "nearest_top_k": [
+        {
+          "distance": 0.8189148902893066,
+          "id": "pt_000001",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.7704328894615173,
+          "id": "pt_000005",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.7680262327194214,
+          "id": "pt_000010",
+          "label": "Sofia Vergara as a battle sister from Warhammer 40k, highly deta"
+        }
+      ],
+      "norm": 169.19676208496094,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": -2.0,
+      "coords_2d": [
+        19.1060791015625,
+        21.739511489868164
+      ],
+      "coords_3d": [
+        -0.7733007669448853,
+        13.217323303222656,
+        18.9049015045166
+      ],
+      "id": "delta_walk_0000"
+    },
+    {
+      "alpha": -1.0,
+      "coords_2d": [
+        19.201034545898438,
+        21.806066513061523
+      ],
+      "coords_3d": [
+        -1.080491304397583,
+        13.440893173217773,
+        18.830949783325195
+      ],
+      "id": "delta_walk_0001"
+    },
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        22.567550659179688,
+        22.68499183654785
+      ],
+      "coords_3d": [
+        -1.0008442401885986,
+        13.351126670837402,
+        18.88959312438965
+      ],
+      "id": "delta_walk_0002"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        19.11345100402832,
+        21.839614868164062
+      ],
+      "coords_3d": [
+        -1.0557630062103271,
+        13.243807792663574,
+        18.681074142456055
+      ],
+      "id": "delta_walk_0003"
+    },
+    {
+      "alpha": 2.0,
+      "coords_2d": [
+        21.993661880493164,
+        23.64522361755371
+      ],
+      "coords_3d": [
+        -1.5690268278121948,
+        12.036474227905273,
+        17.964160919189453
+      ],
+      "id": "delta_walk_0004"
+    },
+    {
+      "alpha": 3.0,
+      "coords_2d": [
+        18.790395736694336,
+        22.656055450439453
+      ],
+      "coords_3d": [
+        -4.396866798400879,
+        12.560632705688477,
+        18.69144630432129
+      ],
+      "id": "delta_walk_0005"
+    },
+    {
+      "alpha": 4.0,
+      "coords_2d": [
+        19.064586639404297,
+        20.767730712890625
+      ],
+      "coords_3d": [
+        -5.162423133850098,
+        11.271268844604492,
+        19.751924514770508
+      ],
+      "id": "delta_walk_0006"
+    }
+  ]
+}

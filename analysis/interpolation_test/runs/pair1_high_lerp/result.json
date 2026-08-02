@@ -1,0 +1,212 @@
+{
+  "operation": "lerp",
+  "request_id": "run_1784736913660_7a8a45f0",
+  "source_point_ids": [
+    "pt_000000",
+    "pt_000001"
+  ],
+  "source_texts": [
+    "zombie jordan shoes female hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws",
+    "zombie leather jacket full body hiphop streetwear drip, tristan eaton, victo ngai, artgerm, rhads, ross draws"
+  ],
+  "state_revision": 9,
+  "trajectory": [
+    {
+      "alpha": 0.0,
+      "id": "lerp_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.996456503868103,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9862329959869385,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9543138742446899,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 149.37115478515625,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.25,
+      "id": "lerp_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.996018648147583,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.990554928779602,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9555802941322327,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 149.71661376953125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.5,
+      "id": "lerp_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9943063259124756,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9935829639434814,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9556140899658203,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 150.25466918945312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.75,
+      "id": "lerp_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9953298568725586,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9913536310195923,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9544415473937988,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 150.98336791992188,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "lerp_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.995827317237854,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9872065782546997,
+          "id": "pt_000000",
+          "label": "zombie jordan shoes female hiphop streetwear drip, tristan eaton"
+        },
+        {
+          "distance": 0.9521001577377319,
+          "id": "pt_000004",
+          "label": "giancarlo esposito as dhalsim street fighter, 4 k, ultra realist"
+        }
+      ],
+      "norm": 151.89993286132812,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        15.001471519470215,
+        10.514984130859375
+      ],
+      "coords_3d": [
+        8.413786888122559,
+        -9.22036361694336,
+        -4.561471939086914
+      ],
+      "id": "lerp_0000"
+    },
+    {
+      "alpha": 0.25,
+      "coords_2d": [
+        15.08669376373291,
+        10.408153533935547
+      ],
+      "coords_3d": [
+        8.919629096984863,
+        -9.440900802612305,
+        -4.358689308166504
+      ],
+      "id": "lerp_0001"
+    },
+    {
+      "alpha": 0.5,
+      "coords_2d": [
+        14.881333351135254,
+        9.151041030883789
+      ],
+      "coords_3d": [
+        8.634772300720215,
+        -9.373377799987793,
+        -4.5141754150390625
+      ],
+      "id": "lerp_0002"
+    },
+    {
+      "alpha": 0.75,
+      "coords_2d": [
+        14.979473114013672,
+        10.330385208129883
+      ],
+      "coords_3d": [
+        9.061902046203613,
+        -9.573205947875977,
+        -4.341653347015381
+      ],
+      "id": "lerp_0003"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        11.559554100036621,
+        12.009746551513672
+      ],
+      "coords_3d": [
+        9.033392906188965,
+        -9.45533275604248,
+        -4.41956901550293
+      ],
+      "id": "lerp_0004"
+    }
+  ]
+}

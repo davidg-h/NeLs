@@ -1,0 +1,35 @@
+{
+  "run_id": "dir1_fox_cyberpunk_near",
+  "timestamp": "2026-07-22T22:26:17.449546",
+  "operation": "delta_walk",
+  "source_point_ids": [
+    "pt_000000",
+    "pt_000001",
+    "pt_000002"
+  ],
+  "source_texts": [
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting",
+    "an anthropomorphic fox, fursona!!!! trending on furaffinity, by kawacy, trending on artstation"
+  ],
+  "alpha_schedule": [
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0,
+    3.0,
+    4.0
+  ],
+  "steps": 7,
+  "files": [
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_000_alpha_-2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_001_alpha_-1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_002_alpha_0.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_003_alpha_1.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_004_alpha_2.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_005_alpha_3.000.png",
+    "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near\\step_006_alpha_4.000.png"
+  ],
+  "output_dir": "C:\\Users\\David\\Desktop\\thesis\\NeLs\\analysis\\delta_walk_test\\runs\\dir1_fox_cyberpunk_near"
+}

@@ -1,0 +1,213 @@
+{
+  "fallback_to_lerp": false,
+  "operation": "slerp",
+  "request_id": "run_1784737512872_fe594932",
+  "source_point_ids": [
+    "pt_000002",
+    "pt_000003"
+  ],
+  "source_texts": [
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art",
+    "a fox fursona, trending on artstation, by kawacy, furry art, digital art, cyberpunk, high quality, backlighting"
+  ],
+  "state_revision": 47,
+  "trajectory": [
+    {
+      "alpha": 0.0,
+      "id": "slerp_0000",
+      "index": 0,
+      "nearest_top_k": [
+        {
+          "distance": 0.9955658316612244,
+          "id": "pt_000002",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9221441745758057,
+          "id": "pt_000010",
+          "label": "a cute cute girl smiling, Tristan Eaton, victo ngai, artgerm, RH"
+        },
+        {
+          "distance": 0.9219503402709961,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        }
+      ],
+      "norm": 157.86181640625,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.25,
+      "id": "slerp_0001",
+      "index": 1,
+      "nearest_top_k": [
+        {
+          "distance": 0.9941256642341614,
+          "id": "pt_000002",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9266912937164307,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        },
+        {
+          "distance": 0.9261116981506348,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        }
+      ],
+      "norm": 157.28399658203125,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.5,
+      "id": "slerp_0002",
+      "index": 2,
+      "nearest_top_k": [
+        {
+          "distance": 0.9921958446502686,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9294870495796204,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9293001890182495,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        }
+      ],
+      "norm": 156.96951293945312,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 0.75,
+      "id": "slerp_0003",
+      "index": 3,
+      "nearest_top_k": [
+        {
+          "distance": 0.9947730898857117,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9306917190551758,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9297397136688232,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        }
+      ],
+      "norm": 156.9208526611328,
+      "tensor_shape": [
+        7680
+      ]
+    },
+    {
+      "alpha": 1.0,
+      "id": "slerp_0004",
+      "index": 4,
+      "nearest_top_k": [
+        {
+          "distance": 0.9950178861618042,
+          "id": "pt_000003",
+          "label": "a fox fursona, trending on artstation, by kawacy, furry art, dig"
+        },
+        {
+          "distance": 0.9297163486480713,
+          "id": "pt_000001",
+          "label": "zombie leather jacket full body hiphop streetwear drip, tristan"
+        },
+        {
+          "distance": 0.9280004501342773,
+          "id": "pt_000005",
+          "label": "a twisted grin, digital art, trending on artstation"
+        }
+      ],
+      "norm": 157.13824462890625,
+      "tensor_shape": [
+        7680
+      ]
+    }
+  ],
+  "trajectory_overlay": [
+    {
+      "alpha": 0.0,
+      "coords_2d": [
+        11.19799518585205,
+        11.37179183959961
+      ],
+      "coords_3d": [
+        11.218674659729004,
+        -4.592945575714111,
+        -5.5344648361206055
+      ],
+      "id": "slerp_0000"
+    },
+    {
+      "alpha": 0.25,
+      "coords_2d": [
+        11.123892784118652,
+        11.211153984069824
+      ],
+      "coords_3d": [
+        12.262290000915527,
+        -5.204553604125977,
+        -5.504806995391846
+      ],
+      "id": "slerp_0001"
+    },
+    {
+      "alpha": 0.5,
+      "coords_2d": [
+        11.264471054077148,
+        8.530802726745605
+      ],
+      "coords_3d": [
+        11.788110733032227,
+        -4.9619269371032715,
+        -6.117511749267578
+      ],
+      "id": "slerp_0002"
+    },
+    {
+      "alpha": 0.75,
+      "coords_2d": [
+        11.094390869140625,
+        11.403678894042969
+      ],
+      "coords_3d": [
+        10.695033073425293,
+        -5.088502883911133,
+        -7.071403503417969
+      ],
+      "id": "slerp_0003"
+    },
+    {
+      "alpha": 1.0,
+      "coords_2d": [
+        12.71157455444336,
+        8.030287742614746
+      ],
+      "coords_3d": [
+        11.857633590698242,
+        -5.587404727935791,
+        -7.2974700927734375
+      ],
+      "id": "slerp_0004"
+    }
+  ]
+}
