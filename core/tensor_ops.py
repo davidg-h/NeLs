@@ -1,10 +1,12 @@
 """Shared embedding-set contracts and tensor helpers for NELS nodes"""
 
 import copy
+import math
 import uuid
 from collections.abc import Iterable
 from typing import Any
 
+import numpy as np
 import torch
 
 from .defaults import EPS_NORM
@@ -186,8 +188,11 @@ def slerp(
     *,
     dot_threshold: float = 0.9995,
     eps: float = 1e-8,
-) -> torch.Tensor:
-    """Spherical linear interpolation between two tensors, reshaped to input shape"""
+) -> tuple[torch.Tensor, bool]:
+    """Spherical linear interpolation between two tensors, reshaped to input shape
+
+    Returns (interpolated_tensor, fell_back_to_lerp)
+    """
     start_vec = flatten_tensor(start)
     end_vec = flatten_tensor(end)
     if start_vec.shape != end_vec.shape:
@@ -198,21 +203,20 @@ def slerp(
     start_norm = torch.linalg.vector_norm(start_vec)
     end_norm = torch.linalg.vector_norm(end_vec)
     if float(start_norm) <= eps or float(end_norm) <= eps:
-        return torch.lerp(start, end, float(alpha))
+        return torch.lerp(start, end, float(alpha)), True
 
     start_unit = start_vec / start_norm.clamp_min(eps)
     end_unit = end_vec / end_norm.clamp_min(eps)
     dot = torch.clamp(torch.dot(start_unit, end_unit), -1.0, 1.0)
     if abs(float(dot)) > float(dot_threshold):
-        return torch.lerp(start, end, float(alpha))
+        return torch.lerp(start, end, float(alpha)), True
 
     theta = torch.acos(dot)
     sin_theta = torch.sin(theta).clamp_min(eps)
     left = torch.sin((1.0 - float(alpha)) * theta) / sin_theta
     right = torch.sin(float(alpha) * theta) / sin_theta
-    interpolated_direction = left * start_unit + right * end_unit
-    interpolated_norm = (1.0 - float(alpha)) * start_norm + float(alpha) * end_norm
-    return (interpolated_direction * interpolated_norm).reshape_as(start).to(start.dtype)
+    interpolated = left * start_vec + right * end_vec
+    return interpolated.reshape_as(start).to(start.dtype), False
 
 
 def normalize_tensor(value: torch.Tensor, eps: float = EPS_NORM) -> torch.Tensor:
@@ -227,6 +231,49 @@ def cosine_similarity(left: torch.Tensor, right: torch.Tensor, eps: float = EPS_
     left_vector = normalize_tensor(left, eps=eps)
     right_vector = normalize_tensor(right, eps=eps)
     return float(torch.dot(left_vector, right_vector).item())
+
+
+def normalize_l2_safe(matrix: np.ndarray) -> None:
+    """L2-normalize `matrix` in place for FAISS using numpy"""
+
+    # faiss.normalize_L2's SIMD routine (fvec_renorm_L2) can crash with a native access
+    # violation when TensorFlow has also been loaded into the process - both bundle their own OpenMP/oneDNN runtime with conflict
+    # normalizing in place instead
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    np.divide(matrix, norms, out=matrix, where=norms > 0)
+
+
+def build_faiss_ip_index(matrix: np.ndarray, *, batch_size: int = 10_000) -> Any:
+    """Build a FAISS inner-product index for a float32 matrix and process vectors in batches"""
+    import faiss
+
+    if matrix.ndim != 2:
+        raise ValueError(f"Expected a 2D matrix, got shape {matrix.shape}")
+    n, dim = matrix.shape
+
+    if n > 200_000:
+        nlist = round(math.sqrt(n))
+        quantizer = faiss.IndexFlatIP(dim)
+        index = faiss.IndexIVFFlat(quantizer, dim, nlist, faiss.METRIC_INNER_PRODUCT)
+        # Train the coarse quantizer on a representative random sample rather than the full matrix
+        _POINTS_PER_CENTROID_CAP = 256
+        train_size = min(n, min(round(n * 0.40), _POINTS_PER_CENTROID_CAP * nlist))
+        rng = np.random.default_rng(42)
+        train_idx = np.sort(rng.choice(n, size=train_size, replace=False))
+        train_sample = np.array(matrix[train_idx], dtype=np.float32, copy=True)
+        normalize_l2_safe(train_sample)
+        index.train(train_sample)
+        del train_sample
+        index.nprobe = max(1, round(nlist * 0.2))
+    else:
+        index = faiss.IndexFlatIP(dim)
+
+    for start in range(0, n, batch_size):
+        batch = np.array(matrix[start : start + batch_size], dtype=np.float32, copy=True)
+        normalize_l2_safe(batch)
+        index.add(batch)
+
+    return index
 
 
 def nearest_neighbors(
@@ -256,8 +303,11 @@ def lerp_cond(a: torch.Tensor, b: torch.Tensor, alpha: float) -> torch.Tensor:
     return torch.lerp(_pad_cond(a, max_len), _pad_cond(b, max_len), alpha)
 
 
-def slerp_cond(a: torch.Tensor, b: torch.Tensor, alpha: float) -> torch.Tensor:
-    """Spherically interpolate between two cond tensors, padding the shorter one with zeros if needed"""
+def slerp_cond(a: torch.Tensor, b: torch.Tensor, alpha: float) -> tuple[torch.Tensor, bool]:
+    """Spherically interpolate between two cond tensors, padding the shorter one with zeros if needed
+
+    Returns (interpolated_tensor, fell_back_to_lerp)
+    """
     max_len = max(a.shape[0], b.shape[0])
     return slerp(_pad_cond(a, max_len), _pad_cond(b, max_len), alpha)
 
@@ -333,6 +383,7 @@ def trajectory_payload(
     source_texts: list[str],
     request_id: str | None,
     state_revision: int | None,
+    fallback_to_lerp: bool | None = None,
 ) -> dict[str, Any]:
     """Format the full trajectory payload with metadata and tensor summaries"""
     return {
@@ -343,6 +394,7 @@ def trajectory_payload(
         "source_point_ids": list(source_point_ids),
         "source_texts": list(source_texts),
         "points": trajectory_points,
+        **({"fallback_to_lerp": fallback_to_lerp} if fallback_to_lerp is not None else {}),
     }
 
 
@@ -356,24 +408,13 @@ def _nearest_neighbors_faiss(
     limit: int,
 ) -> list[tuple[int, float]]:
     import faiss  # optional accelerated search, falls back to torch if unavailable
-    import numpy as np
 
     n = len(candidates)
-    dim = flatten_tensor(candidates[0]).shape[0]
-
     mat = np.stack([flatten_tensor(c).numpy() for c in candidates]).astype(np.float32)
     q = flatten_tensor(query).numpy().astype(np.float32).reshape(1, -1)
+    normalize_l2_safe(q)
 
-    faiss.normalize_L2(mat)
-    faiss.normalize_L2(q)
-    if n > 200_000:
-        nlist = 128
-        quantizer = faiss.IndexFlatIP(dim)
-        index = faiss.IndexIVFFlat(quantizer, dim, nlist, faiss.METRIC_INNER_PRODUCT)
-        index.train(mat)
-    else:
-        index = faiss.IndexFlatIP(dim)
-    index.add(mat)
+    index = build_faiss_ip_index(mat)
     scores, indices = index.search(q, min(limit, n))
     return [
         (int(indices[0, i]), float(scores[0, i]))

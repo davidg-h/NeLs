@@ -67,10 +67,11 @@ def build_interpolation_trajectory(
 
     alphas = validate_alpha_schedule(alpha_schedule)
     trajectory_points = []
+    fallback_to_lerp = None
     for index, alpha in enumerate(alphas):
         alpha_value = float(alpha)
         if method == "slerp":
-            cond = slerp_cond(cond_a, cond_b, alpha_value)
+            cond, fallback_to_lerp = slerp_cond(cond_a, cond_b, alpha_value)
             pooled_step = interpolate_optional_pooled(
                 pooled_a,
                 pooled_b,
@@ -95,6 +96,7 @@ def build_interpolation_trajectory(
         source_texts=source_texts,
         request_id=request_id,
         state_revision=state_revision,
+        fallback_to_lerp=fallback_to_lerp,
     )
 
 
