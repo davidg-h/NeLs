@@ -16,7 +16,6 @@ from ..encoding_ops import (
     set_optional_pooled_output,
 )
 from ..tensor_ops import (
-    flatten_tensor,
     lerp_cond,
     mean_cond,
     point_embedding,
@@ -63,7 +62,7 @@ def build_axis_projection(
     if not group_a or not group_b:
         raise ValueError("axis_projection: both groups must have at least one valid point")
 
-    all_raw = torch.stack([flatten_tensor(point_embedding(p)) for p in embedding_set["points"]])
+    all_raw = torch.stack([point_embedding(p) for p in embedding_set["points"]])
     id_to_idx = {str(p["id"]): i for i, p in enumerate(embedding_set["points"])}
     raw_centroid_a = all_raw[[id_to_idx[str(p["id"])] for p in group_a]].mean(dim=0)
     raw_centroid_b = all_raw[[id_to_idx[str(p["id"])] for p in group_b]].mean(dim=0)
@@ -91,11 +90,15 @@ def build_axis_projection(
 
     axis_1_support_n = _support_band_size(len(results))
     axis_1_support_b = results[:axis_1_support_n]
-    axis_1_support_a = results[-axis_1_support_n:]
+    axis_1_support_a = list(reversed(results[-axis_1_support_n:]))
     axis_1_clean_b = _coherent_axis_subset(axis_1_support_b, x_norm, id_to_idx)
     axis_1_clean_a = _coherent_axis_subset(axis_1_support_a, x_norm, id_to_idx)
-    axis_1_labels_b = _evenly_sample_labels(axis_1_clean_b, _AXIS_TRAJECTORY_EXAMPLES)
-    axis_1_labels_a = _evenly_sample_labels(axis_1_clean_a, _AXIS_TRAJECTORY_EXAMPLES)
+    axis_1_labels_b = _evenly_sample_texts(
+        axis_1_clean_b, _AXIS_TRAJECTORY_EXAMPLES, id_to_point
+    )
+    axis_1_labels_a = _evenly_sample_texts(
+        axis_1_clean_a, _AXIS_TRAJECTORY_EXAMPLES, id_to_point
+    )
     axis_1_anchor_points_a = _select_point_anchors(
         group_a,
         raw_centroid_a,
@@ -114,18 +117,18 @@ def build_axis_projection(
     axis_1_anchor_points_a = axis_1_anchor_points_a[:axis_1_anchor_count]
     axis_1_anchor_points_b = axis_1_anchor_points_b[:axis_1_anchor_count]
     mid = len(results) // 2
-    axis_1_neutral = [
-        r["label"]
-        for r in results[max(0, mid - _AXIS_NEUTRAL_EXAMPLES) : mid + _AXIS_NEUTRAL_EXAMPLES]
-    ]
+    axis_1_neutral = _entry_texts(
+        results[max(0, mid - _AXIS_NEUTRAL_EXAMPLES) : mid + _AXIS_NEUTRAL_EXAMPLES],
+        id_to_point,
+    )
     axis_1_keywords_a, axis_1_keywords_b = _extract_axis_keyword_sides(
-        [r["label"] for r in axis_1_support_a],
-        [r["label"] for r in axis_1_support_b],
+        _entry_texts(axis_1_support_a, id_to_point),
+        _entry_texts(axis_1_support_b, id_to_point),
         axis_1_neutral,
     )
     axis_1_llm_keywords_a, axis_1_llm_keywords_b = _extract_axis_keyword_sides(
-        [r["label"] for r in axis_1_clean_a],
-        [r["label"] for r in axis_1_clean_b],
+        _entry_texts(axis_1_clean_a, id_to_point),
+        _entry_texts(axis_1_clean_b, id_to_point),
         axis_1_neutral,
     )
 
@@ -148,6 +151,7 @@ def build_axis_projection(
     residuals = centered - proj1.unsqueeze(1) * axis_1.unsqueeze(0)
 
     components, variances = _svd_top_k_components(residuals, k=5)
+    top_residual_variance: float | None = variances[0] if variances else None
 
     axis_2: torch.Tensor | None = None
     axis_2_variance: float = 0.0
@@ -187,11 +191,15 @@ def build_axis_projection(
 
             axis_2_support_n = _support_band_size(len(axis_2_entries))
             axis_2_support_pos = axis_2_entries[:axis_2_support_n]
-            axis_2_support_neg = axis_2_entries[-axis_2_support_n:]
+            axis_2_support_neg = list(reversed(axis_2_entries[-axis_2_support_n:]))
             axis_2_clean_pos = _coherent_axis_subset(axis_2_support_pos, x_norm, id_to_idx)
             axis_2_clean_neg = _coherent_axis_subset(axis_2_support_neg, x_norm, id_to_idx)
-            axis_2_labels_pos = _evenly_sample_labels(axis_2_clean_pos, _AXIS_TRAJECTORY_EXAMPLES)
-            axis_2_labels_neg = _evenly_sample_labels(axis_2_clean_neg, _AXIS_TRAJECTORY_EXAMPLES)
+            axis_2_labels_pos = _evenly_sample_texts(
+                axis_2_clean_pos, _AXIS_TRAJECTORY_EXAMPLES, id_to_point
+            )
+            axis_2_labels_neg = _evenly_sample_texts(
+                axis_2_clean_neg, _AXIS_TRAJECTORY_EXAMPLES, id_to_point
+            )
             axis_2_clean_pos_points = _entries_to_points(axis_2_clean_pos, id_to_point)
             axis_2_clean_neg_points = _entries_to_points(axis_2_clean_neg, id_to_point)
             axis_2_raw_centroid_pos = _mean_raw_point_embedding(
@@ -229,17 +237,17 @@ def build_axis_projection(
             order = sorted(range(len(raw_scores)), key=lambda i: raw_scores[i])
             mid = len(order) // 2
             axis_2_neutral = [
-                embedding_set["points"][i]["label"]
+                _point_text(embedding_set["points"][i])
                 for i in order[max(0, mid - _AXIS_NEUTRAL_EXAMPLES) : mid + _AXIS_NEUTRAL_EXAMPLES]
             ]
             axis_2_keywords_neg, axis_2_keywords_pos = _extract_axis_keyword_sides(
-                [r["label"] for r in axis_2_support_neg],
-                [r["label"] for r in axis_2_support_pos],
+                _entry_texts(axis_2_support_neg, id_to_point),
+                _entry_texts(axis_2_support_pos, id_to_point),
                 axis_2_neutral,
             )
             axis_2_llm_keywords_neg, axis_2_llm_keywords_pos = _extract_axis_keyword_sides(
-                [r["label"] for r in axis_2_clean_neg],
-                [r["label"] for r in axis_2_clean_pos],
+                _entry_texts(axis_2_clean_neg, id_to_point),
+                _entry_texts(axis_2_clean_pos, id_to_point),
                 axis_2_neutral,
             )
 
@@ -271,6 +279,7 @@ def build_axis_projection(
         "axis_b_keywords_a": " | ".join(axis_2_keywords_neg) if axis_2_keywords_neg else None,
         "axis_b_keywords_b": " | ".join(axis_2_keywords_pos) if axis_2_keywords_pos else None,
         "axis_b_variance": axis_2_variance if axis_2 is not None else None,
+        "axis_b_top_residual_variance": top_residual_variance,
         "_axis_1": axis_1,
         "_axis_2": axis_2,
         "_axis_1_labels_a": axis_1_labels_a,
@@ -472,15 +481,32 @@ def critique_and_refine_axis_label(
 # ---- internals ----
 
 
-def _evenly_sample_labels(items: list[dict[str, Any]], n: int) -> list[str]:
+def _evenly_sample_texts(
+    items: list[dict[str, Any]],
+    n: int,
+    id_to_point: dict[str, dict[str, Any]],
+) -> list[str]:
     if len(items) <= n:
-        return [r["label"] for r in items]
+        return _entry_texts(items, id_to_point)
     indices = [round(i * (len(items) - 1) / (n - 1)) for i in range(n)]
-    return [items[idx]["label"] for idx in indices]
+    return _entry_texts([items[idx] for idx in indices], id_to_point)
+
+
+def _entry_texts(
+    entries: list[dict[str, Any]],
+    id_to_point: dict[str, dict[str, Any]],
+) -> list[str]:
+    texts: list[str] = []
+    for entry in entries:
+        point = id_to_point.get(str(entry["id"]))
+        text = _point_text(point) if point else ""
+        if text:
+            texts.append(text)
+    return texts
 
 
 def _point_text(point: dict[str, Any]) -> str:
-    return str(point.get("metadata", {}).get("text", "") or point.get("label", "")).strip()
+    return str(point.get("metadata", {}).get("text") or "").strip()
 
 
 def _entries_to_points(
