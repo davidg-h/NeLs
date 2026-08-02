@@ -17,6 +17,8 @@ import {
   C_SELECTED_RGB,
   hexTo01,
   resolveSnapSourceId,
+  hashString,
+  ambientJitterXY,
 } from "../rendering_common.js";
 import {
   sharedCircleTexture,
@@ -315,12 +317,20 @@ export function updateGhostAnimation(
     if (anchorIdx !== undefined) {
       gPosAttr.setXYZ(g, wx[anchorIdx], wy[anchorIdx], wz[anchorIdx]);
     } else {
-      gPosAttr.setXYZ(
-        g,
-        ghostBasePositions[g * 3],
-        ghostBasePositions[g * 3 + 1],
-        ghostBasePositions[g * 3 + 2],
-      );
+      let gx = ghostBasePositions[g * 3];
+      let gy = ghostBasePositions[g * 3 + 1];
+      let gz = ghostBasePositions[g * 3 + 2];
+      if (animate) {
+        const h = hashString(`ghost-${g}`);
+        const { dx, dy } = ambientJitterXY(h, t);
+        const pz =
+          ((Math.imul(h, 0x9e3779b9) >>> 0) & 0xffff) *
+          ((Math.PI * 2) / 0xffff);
+        gx += dx;
+        gy += dy;
+        gz += Math.sin(t * 0.5 + pz) * 0.015 + Math.sin(t * 0.3 + pz + 0.8) * 0.01;
+      }
+      gPosAttr.setXYZ(g, gx, gy, gz);
     }
   }
   gPosAttr.needsUpdate = true;

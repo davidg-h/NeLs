@@ -605,8 +605,8 @@ function updatePointCloud(t: number, animate: boolean): void {
   posAttr.needsUpdate = true;
   colAttr.needsUpdate = true;
 
-  updateOverlayAnimation(wx, wy, wz);
   updateGhostAnimation(wx, wy, wz, t, animate);
+  updateOverlayAnimation(wx, wy, wz);
 
   // Selected node labels: one pill per selected node, projected to screen each frame
   if (camera && container) {
