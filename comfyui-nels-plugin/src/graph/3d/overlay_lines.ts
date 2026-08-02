@@ -12,11 +12,19 @@ import {
   getSourceIds,
 } from "../rendering_common.js";
 import { getScene, getNodeIds, getBasePositions } from "./renderer3d.js";
+import { getGhostCloud, getGhostValidPts } from "./ghost_nodes.js";
 import { rawToDisplay3D } from "../view_mapper.js";
 
 let extraOverlayLines: Array<THREE.Line | THREE.LineSegments> = [];
 let nnOverlaySegments: THREE.LineSegments | null = null;
 let nnEndpoints: Array<[number, number]> = [];
+// lerp/slerp real-arc lines track the animated ghost point positions each frame
+let lerpArcLine: THREE.Line | null = null;
+let slerpArcLine: THREE.Line | null = null;
+let slerpControlLen = 0;
+// delta_walk reference line tracks the two source nodes live position each frame
+let deltaWalkLine: THREE.Line | null = null;
+let deltaWalkEndpoints: [number, number] | null = null;
 
 export function rebuildOverlayLines(): void {
   const scene = getScene();
@@ -89,6 +97,7 @@ export function rebuildOverlayLines(): void {
       );
       scene.add(lLine);
       extraOverlayLines.push(lLine);
+      lerpArcLine = lLine;
     }
   }
 
@@ -112,6 +121,8 @@ export function rebuildOverlayLines(): void {
       );
       scene.add(arcLine);
       extraOverlayLines.push(arcLine);
+      slerpArcLine = arcLine;
+      slerpControlLen = curvePts.length;
     }
   }
 
@@ -132,6 +143,9 @@ export function rebuildOverlayLines(): void {
         basePositions[ti * 3 + 2],
       );
       const lineGeo = new THREE.BufferGeometry().setFromPoints([p0, p1]);
+      (
+        lineGeo.getAttribute("position") as THREE.BufferAttribute
+      ).setUsage(THREE.DynamicDrawUsage);
       const line = new THREE.Line(
         lineGeo,
         new THREE.LineBasicMaterial({
@@ -142,6 +156,8 @@ export function rebuildOverlayLines(): void {
       );
       scene.add(line);
       extraOverlayLines.push(line);
+      deltaWalkLine = line;
+      deltaWalkEndpoints = [si, ti];
     }
   }
 }
@@ -163,6 +179,63 @@ export function updateOverlayAnimation(
     nnPosAttr.needsUpdate = true;
     nnOverlaySegments.computeLineDistances();
   }
+
+  if (deltaWalkLine && deltaWalkEndpoints) {
+    const [si, ti] = deltaWalkEndpoints;
+    const dPosAttr = deltaWalkLine.geometry.getAttribute(
+      "position",
+    ) as THREE.BufferAttribute;
+    dPosAttr.setXYZ(0, wx[si], wy[si], wz[si]);
+    dPosAttr.setXYZ(1, wx[ti], wy[ti], wz[ti]);
+    dPosAttr.needsUpdate = true;
+  }
+
+  if (lerpArcLine || slerpArcLine) {
+    const ghostCloud = getGhostCloud();
+    const ghostPts = getGhostValidPts();
+    const n = ghostPts.length;
+    if (ghostCloud && n) {
+      const gPosAttr = ghostCloud.geometry.getAttribute(
+        "position",
+      ) as THREE.BufferAttribute;
+      const pts: THREE.Vector3[] = [];
+      for (let g = 0; g < n; g++) {
+        pts.push(
+          new THREE.Vector3(
+            gPosAttr.getX(g),
+            gPosAttr.getY(g),
+            gPosAttr.getZ(g),
+          ),
+        );
+      }
+
+      if (lerpArcLine) {
+        const lPosAttr = lerpArcLine.geometry.getAttribute(
+          "position",
+        ) as THREE.BufferAttribute;
+        for (let g = 0; g < n && g < lPosAttr.count; g++) {
+          lPosAttr.setXYZ(g, pts[g].x, pts[g].y, pts[g].z);
+        }
+        lPosAttr.needsUpdate = true;
+      }
+
+      if (slerpArcLine && slerpControlLen === n) {
+        const smooth = new THREE.CatmullRomCurve3(
+          pts,
+          false,
+          "catmullrom",
+          0.15,
+        ).getPoints(Math.max(n * 12, 96));
+        const aPosAttr = slerpArcLine.geometry.getAttribute(
+          "position",
+        ) as THREE.BufferAttribute;
+        for (let i = 0; i < smooth.length && i < aPosAttr.count; i++) {
+          aPosAttr.setXYZ(i, smooth[i].x, smooth[i].y, smooth[i].z);
+        }
+        aPosAttr.needsUpdate = true;
+      }
+    }
+  }
 }
 
 export function disposeAndRemoveLines(): void {
@@ -180,6 +253,11 @@ export function disposeAndRemoveLines(): void {
     (obj.material as THREE.Material).dispose();
   }
   extraOverlayLines = [];
+  lerpArcLine = null;
+  slerpArcLine = null;
+  slerpControlLen = 0;
+  deltaWalkLine = null;
+  deltaWalkEndpoints = null;
 }
 
 // Ghost overlay points for lerp/slerp, snapped to the source/target nodes live position at
