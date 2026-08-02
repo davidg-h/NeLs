@@ -142,6 +142,7 @@ export interface NelsOperationResult {
   selection?: { selected_point_ids: string[] };
   trajectory?: TrajectoryStepTr[];
   trajectory_overlay?: TrajectoryOverlayPoint[];
+  fallback_to_lerp?: boolean;
   axis_projection?: AxisProjectionScore[];
   axis_label?: string;
   axis_keywords_a?: string | null;
@@ -151,6 +152,7 @@ export interface NelsOperationResult {
   axis_b_keywords_a?: string | null;
   axis_b_keywords_b?: string | null;
   axis_b_variance?: number;
+  axis_b_top_residual_variance?: number | null;
   inverse_project?: Array<{ id: string; label: string; score: number }>;
   probe_cluster?: {
     cluster_id: number | null;

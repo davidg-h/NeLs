@@ -224,6 +224,13 @@ export function OperationCard() {
                 ? "Interpolation steps along each axis. 0 = A/C-side centroid, 1 = B/D-side centroid. Each step produces one image per axis."
                 : "Defines the interpolation steps (0 = start, 1 = end). Each value produces one output point along the operation path."}
             </span>
+            {cfg.operation === "slerp" &&
+              operationResult.value?.fallback_to_lerp && (
+                <span class="nels-alpha-info">
+                  Anchors were near-collinear or near-zero, so SLERP fell back
+                  to linear interpolation for this pair.
+                </span>
+              )}
             <div class="nels-alpha-presets">
               {activePresets.map(([label, vals]) => (
                 <button
@@ -311,7 +318,7 @@ export function OperationCard() {
                   type="range"
                   class="nels-alpha-slider"
                   style={`--val: ${(cfg.variation_strength * 100).toFixed(1)}%`}
-                  min="0"
+                  min="0.05"
                   max="1"
                   step="0.05"
                   value={cfg.variation_strength}
@@ -378,30 +385,37 @@ export function OperationCard() {
             </span>
 
             {operationResult.value?.axis_b_projection ? (
-              <div class="nels-axis-mode-toggle">
-                <button
-                  class={axisColorMode.value === "a" ? "active" : ""}
-                  onClick={() => {
-                    axisColorMode.value = "a";
-                  }}
-                >
-                  Axis 1
-                </button>
-                <button
-                  class={axisColorMode.value === "b" ? "active" : ""}
-                  onClick={() => {
-                    axisColorMode.value = "b";
-                  }}
-                >
-                  Axis 2
-                </button>
-              </div>
+              <>
+                <div class="nels-axis-mode-toggle">
+                  <button
+                    class={axisColorMode.value === "a" ? "active" : ""}
+                    onClick={() => {
+                      axisColorMode.value = "a";
+                    }}
+                  >
+                    Axis 1
+                  </button>
+                  <button
+                    class={axisColorMode.value === "b" ? "active" : ""}
+                    onClick={() => {
+                      axisColorMode.value = "b";
+                    }}
+                  >
+                    Axis 2
+                  </button>
+                </div>
+                {operationResult.value.axis_b_variance != null && (
+                  <span class="nels-alpha-info">
+                    {`Axis 2 explains ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of the residual variance left over after Axis 1.`}
+                  </span>
+                )}
+              </>
             ) : (
               operationResult.value?.operation === "axis_projection" && (
                 <div class="nels-axis-no-b">
                   No axis 2 available
-                  {operationResult.value.axis_b_variance != null
-                    ? ` - after subtracting each point's A->B projection (residuals), PCA on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_variance * 100).toFixed(1)}% of residual variance (min. 5%). The dataset's semantic structure is mostly one-dimensional along your A->B axis.`
+                  {operationResult.value.axis_b_top_residual_variance != null
+                    ? ` - after subtracting each point's A->B projection (residuals), SVD on those residuals found no strong independent direction: the top component explains only ${(operationResult.value.axis_b_top_residual_variance * 100).toFixed(1)}% of residual variance (min. 5%). The dataset's semantic structure is mostly one-dimensional along your A->B axis.`
                     : " - no independent orthogonal direction found in the residuals."}
                 </div>
               )
@@ -612,7 +626,7 @@ function LatentProbeControls({ cfg }: { cfg: OperationConfig }) {
             <span>noise count</span>
             <input
               type="number"
-              min={0}
+              min={1}
               step={1}
               value={cfg.probe_noise_count}
               onChange={onChange("probe_noise_count", Number)}
@@ -622,7 +636,7 @@ function LatentProbeControls({ cfg }: { cfg: OperationConfig }) {
             <span>negative count</span>
             <input
               type="number"
-              min={0}
+              min={1}
               step={1}
               value={cfg.probe_negative_count}
               onChange={onChange("probe_negative_count", Number)}
