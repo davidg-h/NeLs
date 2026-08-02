@@ -150,9 +150,9 @@ class NelsGraphOperation:
                 seed_id = str(seed_ids[0])
                 id_to_point = {str(p["id"]): p for p in embedding_set.get("points", [])}
                 seed_pt = id_to_point.get(seed_id)
-                seed_prompt = str(seed_pt.get("label") or "") if seed_pt else ""
+                seed_prompt = str(seed_pt.get("metadata", {}).get("text") or "") if seed_pt else ""
                 if not seed_prompt:
-                    raise ValueError(f"Seed point {seed_id!r} has no label")
+                    raise ValueError(f"Seed point {seed_id!r} has no full prompt text")
                 if clip is None:
                     raise ValueError(
                         "Semantic Consistency Check requires a CLIP model - "
@@ -163,13 +163,16 @@ class NelsGraphOperation:
                     raise ValueError(
                         "Semantic Consistency Check requires a loaded dataset with a file path"
                     )
+                variation_strength = request.get("variation_strength")
                 result, trajectory = build_consistency_check_result(
                     seed_prompt=seed_prompt,
                     seed_point_id=seed_id,
                     variant_count=int(request.get("variant_count") or 5),
-                    variation_strength=float(request.get("variation_strength") or 0.3),
+                    variation_strength=max(
+                        0.05,
+                        min(1.0, float(0.3 if variation_strength is None else variation_strength)),
+                    ),
                     clip_obj=clip,
-                    embedding_set=embedding_set,
                     dataset_path=dataset_path,
                     request_id=run_id,
                     state_revision=rev,
@@ -185,8 +188,22 @@ class NelsGraphOperation:
                 probe_mode = str(request.get("probe_mode") or "2d")
                 probe_text_recon = bool(request.get("probe_text_recon", False))
                 probe_seed_count = max(1, int(request.get("probe_seed_count") or 5))
-                probe_noise_count = max(0, int(request.get("probe_noise_count") or 5))
-                probe_negative_count = max(0, int(request.get("probe_negative_count") or 5))
+                probe_noise_count = max(
+                    1,
+                    int(
+                        request.get("probe_noise_count")
+                        if request.get("probe_noise_count") is not None
+                        else 5
+                    ),
+                )
+                probe_negative_count = max(
+                    1,
+                    int(
+                        request.get("probe_negative_count")
+                        if request.get("probe_negative_count") is not None
+                        else 5
+                    ),
+                )
                 probe_recon_max_minutes = max(1, int(request.get("probe_recon_max_minutes") or 5))
                 probe_recon_max_iter = max(1, int(request.get("probe_recon_max_iter") or 10))
                 dataset_path = str(embedding_set.get("_source_config", {}).get("dataset_path", ""))
@@ -289,6 +306,20 @@ class NelsGraphOperation:
                             "noise": [{"id": i, "label": t[:80]} for _, i, t in noise_items],
                             "negatives": [{"id": i, "label": t[:80]} for _, i, t in negative_items],
                         },
+                        # save Per-iteration beam-search history
+                        "history": [
+                            {
+                                "step": snap.get("step"),
+                                "text": snap.get("text"),
+                                "cosine_sim": snap.get("cosine_sim"),
+                                "embedding": (
+                                    snap["embedding"].tolist()
+                                    if snap.get("embedding") is not None
+                                    else None
+                                ),
+                            }
+                            for snap in recon.get("snapshots", [])
+                        ],
                     }
 
                     snapshots = recon.get("snapshots", [])

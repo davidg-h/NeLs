@@ -4,7 +4,7 @@ from typing import Any
 
 import torch
 
-from .tensor_ops import nearest_neighbors, point_embedding
+from .tensor_ops import flatten_tensor, nearest_neighbors, point_embedding
 
 
 def trajectory_result_summary(
@@ -22,17 +22,23 @@ def trajectory_result_summary(
             "norm": point.get("norm"),
             "tensor_shape": point.get("tensor_shape", []),
         }
+        if point.get("tensor") is not None:
+            step["embedding"] = flatten_tensor(point["tensor"]).tolist()
         if embedding_set is not None and point.get("tensor") is not None:
             step["nearest_top_k"] = _nearest_real_samples(point["tensor"], embedding_set, k=3)
         steps.append(step)
 
-    return {
+    summary = {
         "operation": trajectory.get("operation"),
         "request_id": trajectory.get("request_id"),
         "state_revision": trajectory.get("state_revision", 0),
         "source_point_ids": trajectory.get("source_point_ids", []),
+        "source_texts": trajectory.get("source_texts", []),
         "trajectory": steps,
     }
+    if "fallback_to_lerp" in trajectory:
+        summary["fallback_to_lerp"] = trajectory["fallback_to_lerp"]
+    return summary
 
 
 # ---- internals ----
