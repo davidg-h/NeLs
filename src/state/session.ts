@@ -377,7 +377,7 @@ function applyUiStateFields(
         : operationConfig.value.variant_count,
     variation_strength:
       uiState.variation_strength != null
-        ? Math.max(0, Math.min(1, Number(uiState.variation_strength)))
+        ? Math.max(0.05, Math.min(1, Number(uiState.variation_strength)))
         : operationConfig.value.variation_strength,
     axis_group_a: Array.isArray(uiState.axis_group_a)
       ? (uiState.axis_group_a as string[]).map(String)
@@ -414,11 +414,11 @@ function applyUiStateFields(
         : operationConfig.value.probe_seed_count,
     probe_noise_count:
       uiState.probe_noise_count != null
-        ? Math.max(0, Number(uiState.probe_noise_count))
+        ? Math.max(1, Number(uiState.probe_noise_count))
         : operationConfig.value.probe_noise_count,
     probe_negative_count:
       uiState.probe_negative_count != null
-        ? Math.max(0, Number(uiState.probe_negative_count))
+        ? Math.max(1, Number(uiState.probe_negative_count))
         : operationConfig.value.probe_negative_count,
   });
 
