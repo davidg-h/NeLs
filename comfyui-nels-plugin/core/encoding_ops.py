@@ -152,7 +152,8 @@ def interpolate_optional_pooled(
     if pooled_a is None or pooled_b is None:
         return None
     if spherical:
-        return slerp(pooled_a, pooled_b, alpha).detach().float()
+        tensor, _ = slerp(pooled_a, pooled_b, alpha)
+        return tensor.detach().float()
     return torch.lerp(pooled_a, pooled_b, alpha).detach().float()
 
 
