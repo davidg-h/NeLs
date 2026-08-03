@@ -8,13 +8,13 @@ parameter-controlled latent space navigation.
 
 ## Repository structure
 
-| Path                                           | Contents                                                                                                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| [`comfyui-nels-plugin/`](comfyui-nels-plugin/) | The ComfyUI plugin - nodes + CLI for dataset creation and graph exploration ([its own README](comfyui-nels-plugin/README.md)) |
-| [`manuscript/`](manuscript/)                   | LaTeX source of the thesis (submodule)                                                                                        |
-| [`analysis/`](analysis/)                       | Evaluation scripts and results behind the thesis's quantitative chapters                                                      |
-| [`prototypes/`](prototypes/)                   | Early proof-of-concept work: raw Hugging Face `diffusers` pipelines, no ComfyUI - method validation before the plugin existed |
-| `datasets/`                                    | Datasets used for encoding/analysis (submodule, hosted on Hugging Face)                                                       |
+| Path                                                                  | Contents                                                                                                                      |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`comfyui-nels-plugin/`](comfyui-nels-plugin/)                        | The ComfyUI plugin - nodes + CLI for dataset creation and graph exploration ([its own README](comfyui-nels-plugin/README.md)) |
+| [`manuscript/`](manuscript/)                                          | LaTeX source of the thesis (submodule)                                                                                        |
+| [`analysis/`](analysis/)                                              | Evaluation scripts and results behind the thesis's quantitative chapters                                                      |
+| [`prototypes/`](prototypes/)                                          | Early proof-of-concept work: raw Hugging Face `diffusers` pipelines, no ComfyUI - method validation before the plugin existed |
+| [`datasets/`](https://huggingface.co/datasets/daveyavu/nels-datasets) | Datasets used for encoding/analysis (submodule, hosted on Hugging Face)                                                       |
 
 ## Branches
 
