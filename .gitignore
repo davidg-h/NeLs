@@ -1,0 +1,19 @@
+# Python byte-compiled / cache
+__pycache__/
+*.py[codz]
+
+# Python environments
+.env
+.venv/
+venv/
+
+# Testing / tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local scratch test suite (not committed)
+test-suite/
