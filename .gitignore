@@ -208,12 +208,6 @@ __marimo__/
 
 # Misc
 comfyUI-portable/
-governance/
-research/
 .hf_cache/
-*.md
-*.png
 test-suite/
-experiments/
-external-refs/
 archive/

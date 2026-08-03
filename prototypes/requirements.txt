@@ -3,6 +3,7 @@
 torch
 numpy
 Pillow
+python-dotenv
 
 # FLUX / Diffusers pipeline stack
 diffusers[torch]

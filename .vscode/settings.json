@@ -1,5 +1,10 @@
 {
   "python.envFile": "${workspaceFolder}/.env",
   "python.terminal.useEnvFile": true,
-  "python.analysis.extraPaths": ["./prototypes/poc"]
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/prototypes/poc",
+    "${workspaceFolder}/comfyui-nels-plugin",
+    "${workspaceFolder}/comfyUI-portable/ComfyUI-windows-portable/python_embeded/Lib/site-packages",
+    "${workspaceFolder}/comfyUI-portable/ComfyUI-windows-portable/ComfyUI"
+  ]
 }

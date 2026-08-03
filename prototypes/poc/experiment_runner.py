@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 
 METHOD_TO_SCRIPT: dict[str, str] = {
     "M1": "examples/navigation/m1_lerp_pipeline.py",
@@ -48,7 +50,14 @@ ALLOWED_TOP_LEVEL_KEYS = {
 
 
 def _repo_root() -> Path:
+    """Resolve the repo root, robust to nesting depth"""
+    shallow = Path(__file__).resolve().parents[1]
+    if (shallow / ".git").exists():
+        return shallow
     return Path(__file__).resolve().parents[2]
+
+
+load_dotenv(_repo_root() / ".env")
 
 
 def _poc_root() -> Path:

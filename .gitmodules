@@ -1,3 +1,6 @@
 [submodule "manuscript"]
 	path = manuscript
 	url = https://github.com/davidg-h/thesis-template.git
+[submodule "datasets"]
+	path = datasets
+	url = https://huggingface.co/datasets/daveyavu/nels-datasets

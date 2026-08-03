@@ -1,13 +1,21 @@
 # Node
 node_modules/
-
-# NELS datasets — not committed (can be large)
-datasets/
-!datasets/.gitkeep
-
-# Build output — generated from src/, not source-controlled
-js/nels_graph_panel.js
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
 
 # Vite / TS build caches
 .vite/
 *.tsbuildinfo
+
+# Python byte-compiled / cache
+__pycache__/
+*.py[codz]
+.ruff_cache/
+
+# Python environments
+.env
+.venv/
+venv/
